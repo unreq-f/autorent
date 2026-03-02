@@ -1,0 +1,357 @@
+{% extends 'manager/base_manager.html' %}
+{% block title %}Платежі — AutoRent Manager{% endblock %}
+
+{% block main_content %}
+
+  <div class="topbar">
+    <div class="topbar-title">Платежі · <strong>Управління транзакціями</strong></div>
+    <div style="display:flex;gap:10px;">
+      <button class="tb-btn">⬇ Експорт CSV</button>
+      <button class="tb-btn">🖨 Виписка PDF</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi-card gold">
+        <div class="kpi-icon">💰</div>
+        <div class="kpi-val">14 280</div>
+        <div class="kpi-label">USD виручка (лютий)</div>
+        <div class="kpi-delta up">↑ +12% до минулого місяця</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-val">58</div>
+        <div class="kpi-label">Успішних платежів</div>
+        <div class="kpi-delta up">сьогодні: 5</div>
+      </div>
+      <div class="kpi-card blue">
+        <div class="kpi-icon">🔒</div>
+        <div class="kpi-val">37 500</div>
+        <div class="kpi-label">USD заставних заблоковано</div>
+        <div class="kpi-delta up">15 активних застав</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-val">3</div>
+        <div class="kpi-label">Неуспішних / Очікує</div>
+        <div class="kpi-delta down">Потребують уваги</div>
+      </div>
+    </div>
+
+    <!-- MAIN CONTENT GRID -->
+    <div class="page-grid">
+      <!-- LEFT: TRANSACTIONS TABLE -->
+      <div>
+        <div class="status-tabs">
+          <div class="stab active">Всі <span class="cnt">217</span></div>
+          <div class="stab">Успішні <span class="cnt">201</span></div>
+          <div class="stab">Очікують <span class="cnt">8</span></div>
+          <div class="stab">Відхилено <span class="cnt">5</span></div>
+          <div class="stab">Повернення <span class="cnt">3</span></div>
+          <div class="stab">Застави <span class="cnt">15</span></div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-box">
+            <span style="color:var(--gray);font-size:14px">🔍</span>
+            <input type="text" placeholder="ID транзакції, ім'я клієнта...">
+          </div>
+          <input type="date" class="filter-select" style="width:140px">
+          <input type="date" class="filter-select" style="width:140px">
+          <select class="filter-select">
+            <option>Всі методи</option>
+            <option>💳 Картка</option>
+            <option>💵 Готівка</option>
+            <option>🏢 Безготівковий</option>
+          </select>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID ↕</th>
+                <th>Клієнт</th>
+                <th>Замовлення</th>
+                <th>Тип</th>
+                <th>Метод</th>
+                <th>Дата ↕</th>
+                <th>Сума ↕</th>
+                <th>Статус</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="hl">TXN-0241</td>
+                <td class="hl">Іван Іваненко</td>
+                <td>#0854</td>
+                <td>Оренда</td>
+                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
+                <td>26.02.2025 14:22</td>
+                <td class="gold-cell">1 400 USD</td>
+                <td><span class="pay-pill pp-success">Успішно</span></td>
+                <td><button class="action-ico" onclick="openDrawer('TXN-0241','Іван Іваненко','#0854','1400','success','Оренда')">📋</button></td>
+              </tr>
+              <tr>
+                <td class="hl">TXN-0240</td>
+                <td class="hl">Олена Кравець</td>
+                <td>#0853</td>
+                <td>Оренда</td>
+                <td><div class="pay-method"><span class="pay-method-icon">💵</span> Готівка</div></td>
+                <td>25.02.2025 11:05</td>
+                <td class="gold-cell">650 USD</td>
+                <td><span class="pay-pill pp-success">Успішно</span></td>
+                <td><button class="action-ico" onclick="openDrawer('TXN-0240','Олена Кравець','#0853','650','success','Оренда')">📋</button></td>
+              </tr>
+              <tr>
+                <td class="hl">TXN-0239</td>
+                <td class="hl">Дмитро Петренко</td>
+                <td>#0852</td>
+                <td>Застава</td>
+                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
+                <td>25.02.2025 09:48</td>
+                <td class="gold-cell">2 500 USD</td>
+                <td><span class="pay-pill pp-deposit">Заблокована</span></td>
+                <td><button class="action-ico" onclick="openDrawer('TXN-0239','Дмитро Петренко','#0852','2500','deposit','Застава')">📋</button></td>
+              </tr>
+              <tr>
+                <td class="hl">TXN-0238</td>
+                <td class="hl">Аліна Мороз</td>
+                <td>#0851</td>
+                <td>Оренда</td>
+                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
+                <td>24.02.2025 16:30</td>
+                <td class="gold-cell">312 USD</td>
+                <td><span class="pay-pill pp-pending">Очікує</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openDrawer('TXN-0238','Аліна Мороз','#0851','312','pending','Оренда')">📋</button>
+                  <button class="action-ico" style="color:var(--green)" title="Підтвердити">✅</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">TXN-0237</td>
+                <td class="hl">Роман Кравченко</td>
+                <td>#0850</td>
+                <td>Повернення</td>
+                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
+                <td>23.02.2025 10:15</td>
+                <td class="red-cell">−200 USD</td>
+                <td><span class="pay-pill pp-refund">Повернення</span></td>
+                <td><button class="action-ico" onclick="openDrawer('TXN-0237','Роман Кравченко','#0850','-200','refund','Повернення')">📋</button></td>
+              </tr>
+              <tr>
+                <td class="hl">TXN-0236</td>
+                <td class="hl">Сергій Василенко</td>
+                <td>#0849</td>
+                <td>Оренда</td>
+                <td><div class="pay-method"><span class="pay-method-icon">🏢</span> Безготівк.</div></td>
+                <td>22.02.2025 08:00</td>
+                <td class="gold-cell">1 750 USD</td>
+                <td><span class="pay-pill pp-success">Успішно</span></td>
+                <td><button class="action-ico" onclick="openDrawer('TXN-0236','Сергій Василенко','#0849','1750','success','Оренда')">📋</button></td>
+              </tr>
+              <tr>
+                <td class="hl">TXN-0235</td>
+                <td class="hl">Наталія Бондар</td>
+                <td>#0848</td>
+                <td>Оренда</td>
+                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
+                <td>21.02.2025 14:50</td>
+                <td class="gold-cell">165 USD</td>
+                <td><span class="pay-pill pp-failed">Відхилено</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openDrawer('TXN-0235','Наталія Бондар','#0848','165','failed','Оренда')">📋</button>
+                  <button class="action-ico" style="color:var(--orange)" title="Повторити">🔄</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">TXN-0234</td>
+                <td class="hl">Максим Шевченко</td>
+                <td>#0847</td>
+                <td>Застава → повернена</td>
+                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
+                <td>20.02.2025 09:00</td>
+                <td style="color:var(--green)">+1 500 USD</td>
+                <td><span class="pay-pill pp-refund">Розблокована</span></td>
+                <td><button class="action-ico" onclick="openDrawer('TXN-0234','Максим Шевченко','#0847','+1500','refund','Застава повернена')">📋</button></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div class="page-info">Показано 1–8 з 217 транзакцій</div>
+            <div class="page-btns">
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">…</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDEBAR -->
+      <div style="display:grid;gap:16px;align-content:start;">
+
+        <!-- REVENUE THIS MONTH -->
+        <div class="widget">
+          <div class="widget-header"><div class="widget-title">Виручка лютого</div></div>
+          <div style="margin-bottom:12px;">
+            <div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--gold);">14 280</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:4px;">USD · 26 днів пройшло</div>
+          </div>
+          <div class="mini-chart" id="miniChart"></div>
+          <div style="display:flex;justify-content:space-between;margin-top:24px;">
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">Прогноз місяця</div>
+              <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);">15 600</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">Порівняно з янв.</div>
+              <div style="font-size:16px;color:var(--green);">↑ +12%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- METHODS BREAKDOWN -->
+        <div class="widget">
+          <div class="widget-header"><div class="widget-title">Методи оплати</div></div>
+          <div class="method-list">
+            <div class="method-row">
+              <div class="method-icon-big">💳</div>
+              <div class="method-name">Картка</div>
+              <div class="method-bar-wrap"><div class="method-bar-fill" style="width:68%"></div></div>
+              <div class="method-pct">68%</div>
+            </div>
+            <div class="method-row">
+              <div class="method-icon-big">💵</div>
+              <div class="method-name">Готівка</div>
+              <div class="method-bar-wrap"><div class="method-bar-fill" style="width:22%;background:var(--blue)"></div></div>
+              <div class="method-pct" style="color:var(--blue)">22%</div>
+            </div>
+            <div class="method-row">
+              <div class="method-icon-big">🏢</div>
+              <div class="method-name">Безготівк.</div>
+              <div class="method-bar-wrap"><div class="method-bar-fill" style="width:10%;background:var(--orange)"></div></div>
+              <div class="method-pct" style="color:var(--orange)">10%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTIVE DEPOSITS -->
+        <div class="widget">
+          <div class="widget-header">
+            <div class="widget-title">Активні застави</div>
+            <span style="font-size:11px;color:var(--gold)">37 500 USD</span>
+          </div>
+          <div style="display:grid;gap:4px;">
+            <div class="deposit-row">
+              <div><div class="dep-client">Іван Іваненко</div><div class="dep-car">BMW X5 · до 04.03</div></div>
+              <div style="text-align:right"><div class="dep-amount">2 500 USD</div><span class="dep-badge dep-held">Утримується</span></div>
+            </div>
+            <div class="deposit-row">
+              <div><div class="dep-client">Олена Кравець</div><div class="dep-car">Audi A6 · до 02.03</div></div>
+              <div style="text-align:right"><div class="dep-amount">1 800 USD</div><span class="dep-badge dep-held">Утримується</span></div>
+            </div>
+            <div class="deposit-row">
+              <div><div class="dep-client">Сергій В.</div><div class="dep-car">Tesla M3 · до 28.02</div></div>
+              <div style="text-align:right"><div class="dep-amount">1 500 USD</div><span class="dep-badge dep-held">Утримується</span></div>
+            </div>
+            <div class="deposit-row">
+              <div><div class="dep-client">Наталія Бондар</div><div class="dep-car">VW Tiguan · завершено</div></div>
+              <div style="text-align:right"><div class="dep-amount">1 200 USD</div><span class="dep-badge dep-released">Звільнено</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER: Деталі транзакції -->
+<div class="modal-overlay" id="txDrawer">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Транзакція <em id="drTxId">TXN-0241</em></h2>
+      <button class="close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div class="amount-display">
+      <div class="amount-big" id="drAmt">1 400 USD</div>
+      <div class="amount-label" id="drType">Оренда · Успішно</div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Деталі</div>
+      <div class="info-row"><span class="info-label">Клієнт</span><span class="info-val" id="drClient">—</span></div>
+      <div class="info-row"><span class="info-label">Замовлення</span><span class="info-val" id="drOrder">—</span></div>
+      <div class="info-row"><span class="info-label">Метод оплати</span><span class="info-val">💳 Visa **** 4242</span></div>
+      <div class="info-row"><span class="info-label">Дата та час</span><span class="info-val">26.02.2025, 14:22:07</span></div>
+      <div class="info-row"><span class="info-label">ID транзакції банку</span><span class="info-val" style="font-size:11px;letter-spacing:1px">BNK-9871234567</span></div>
+      <div class="info-row"><span class="info-label">Статус</span><span class="info-val green" id="drStatus">Успішно</span></div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Структура суми</div>
+      <div class="info-row"><span class="info-label">Оренда (7 діб × 200 USD)</span><span class="info-val">1 400 USD</span></div>
+      <div class="info-row"><span class="info-label">Додаткові послуги</span><span class="info-val">0 USD</span></div>
+      <div class="info-row"><span class="info-label">Знижка</span><span class="info-val green">−0 USD</span></div>
+      <div class="info-row"><span class="info-label"><strong>Разом сплачено</strong></span><span class="info-val gold">1 400 USD</span></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-save" onclick="closeDrawer()">Роздрукувати чек</button>
+      <button class="btn-refund" onclick="closeDrawer()">↩ Повернення</button>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="btn-secondary" style="width:100%" onclick="closeDrawer()">Закрити</button>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+const statusMap={
+  success:'<span class="pay-pill pp-success" style="font-size:12px;padding:5px 14px;">Успішно</span>',
+  pending:'<span class="pay-pill pp-pending" style="font-size:12px;padding:5px 14px;">Очікує</span>',
+  failed:'<span class="pay-pill pp-failed" style="font-size:12px;padding:5px 14px;">Відхилено</span>',
+  refund:'<span class="pay-pill pp-refund" style="font-size:12px;padding:5px 14px;">Повернення</span>',
+  deposit:'<span class="pay-pill pp-deposit" style="font-size:12px;padding:5px 14px;">Застава</span>'
+};
+function openDrawer(id,client,order,amt,status,type){
+  document.getElementById('drTxId').textContent=id;
+  document.getElementById('drClient').textContent=client;
+  document.getElementById('drOrder').textContent=order;
+  document.getElementById('drAmt').textContent=amt+' USD';
+  document.getElementById('drType').innerHTML=type+' · '+statusMap[status];
+  document.getElementById('drStatus').innerHTML=statusMap[status];
+  document.getElementById('txDrawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('txDrawer').classList.remove('open');}
+document.getElementById('txDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
+
+// Mini chart
+const mc=document.getElementById('miniChart');
+const wData=[2800,3400,3100,4980];
+const mMax=Math.max(...wData);
+wData.forEach((v,i)=>{
+  const w=document.createElement('div');w.className='mini-bar';
+  w.style.height=(v/mMax*56)+'px';
+  w.innerHTML=`<span class="mini-bar-label">Т${i+1}</span>`;
+  mc.appendChild(w);
+});
+
+document.querySelectorAll('.stab').forEach(t=>{
+  t.onclick=function(){document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));this.classList.add('active');}
+});
+
+</script>
+{% endblock %}

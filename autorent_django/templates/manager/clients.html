@@ -1,0 +1,328 @@
+{% extends 'manager/base_manager.html' %}
+{% block title %}Клієнти — AutoRent Manager{% endblock %}
+
+{% block main_content %}
+
+  <div class="topbar">
+    <div class="topbar-title">Клієнти · <strong>Управління базою</strong></div>
+    <div style="display:flex;gap:10px;">
+      <button class="tb-btn">⬇ Експорт CSV</button>
+      <button class="tb-btn">📧 Масова розсилка</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi-card blue">
+        <div class="kpi-val">12 043</div>
+        <div class="kpi-label">👥 Всього клієнтів</div>
+        <div class="kpi-delta up">↑ +3 сьогодні</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-val">847</div>
+        <div class="kpi-label">👑 VIP-клієнти</div>
+        <div class="kpi-delta up">7% від бази</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-val">3 218</div>
+        <div class="kpi-label">🔄 Активні цього місяця</div>
+        <div class="kpi-delta up">↑ +12% до минулого</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-val">14</div>
+        <div class="kpi-label">🚫 Заблоковані</div>
+        <div class="kpi-delta down">Штрафи / порушення</div>
+      </div>
+    </div>
+
+    <!-- SEGMENT TABS -->
+    <div class="status-tabs">
+      <div class="stab active">Всі <span class="cnt">12 043</span></div>
+      <div class="stab">VIP <span class="cnt">847</span></div>
+      <div class="stab">Постійні <span class="cnt">4 211</span></div>
+      <div class="stab">Нові <span class="cnt">3 062</span></div>
+      <div class="stab">Заблоковані <span class="cnt">14</span></div>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+      <div class="search-box">
+        <span style="color:var(--gray);font-size:14px;">🔍</span>
+        <input type="text" placeholder="Ім'я, email, телефон, номер ВП...">
+      </div>
+      <select class="filter-select">
+        <option>Всі сегменти</option>
+        <option>VIP</option>
+        <option>Постійні</option>
+        <option>Нові</option>
+      </select>
+      <select class="filter-select">
+        <option>Сортування: За датою реєстрації</option>
+        <option>За кількістю замовлень</option>
+        <option>За сумою витрат</option>
+        <option>За рейтингом</option>
+        <option>За алфавітом</option>
+      </select>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Клієнт ↕</th>
+            <th>Телефон</th>
+            <th>Реєстрація ↕</th>
+            <th>Замовлень ↕</th>
+            <th>Витрачено ↕</th>
+            <th>Рейтинг ↕</th>
+            <th>Сегмент ↕</th>
+            <th>Верифікація</th>
+            <th>Дії</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="client-cell">
+                <div class="cli-avatar">ІІ</div>
+                <div>
+                  <div class="cli-name">Іван Іваненко <span class="verified-badge">✓</span></div>
+                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3dac5d2ddf3d6ded2dadf9dd0dcde">[email&#160;protected]</a></div>
+                </div>
+              </div>
+            </td>
+            <td>+38 067 000 00 01</td>
+            <td>12.03.2021</td>
+            <td style="color:var(--white);font-weight:500;">14</td>
+            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">4 820 USD</td>
+            <td><div class="rating-stars">★★★★★</div><div style="font-size:11px;color:var(--gray);">4.9</div></td>
+            <td><span class="segment-pill seg-vip">VIP</span></td>
+            <td style="color:var(--green);font-size:12px;">✓ Повна</td>
+            <td><div class="actions-cell">
+              <button class="action-ico" onclick="openDrawer('Іван Іваненко','ІІ','ivan@email.com','+38 067 000 00 01',14,'4820','4.9','vip')" title="Профіль">👤</button>
+              <button class="action-ico" title="Написати">✉️</button>
+              <button class="action-ico" title="Нове замовлення">📋</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="client-cell">
+                <div class="cli-avatar">ОК</div>
+                <div>
+                  <div class="cli-name">Олена Кравець <span class="verified-badge">✓</span></div>
+                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="dab5b6bfb4bb9abfb7bbb3b6f4b9b5b7">[email&#160;protected]</a></div>
+                </div>
+              </div>
+            </td>
+            <td>+38 067 000 00 02</td>
+            <td>08.07.2022</td>
+            <td style="color:var(--white);font-weight:500;">8</td>
+            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">2 340 USD</td>
+            <td><div class="rating-stars">★★★★★</div><div style="font-size:11px;color:var(--gray);">5.0</div></td>
+            <td><span class="segment-pill seg-vip">VIP</span></td>
+            <td style="color:var(--green);font-size:12px;">✓ Повна</td>
+            <td><div class="actions-cell">
+              <button class="action-ico" onclick="openDrawer('Олена Кравець','ОК','olena@email.com','+38 067 000 00 02',8,'2340','5.0','vip')" title="Профіль">👤</button>
+              <button class="action-ico" title="Написати">✉️</button>
+              <button class="action-ico" title="Нове замовлення">📋</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="client-cell">
+                <div class="cli-avatar">ДП</div>
+                <div>
+                  <div class="cli-name">Дмитро Петренко</div>
+                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="52363f2b26203d12373f333b3e7c313d3f">[email&#160;protected]</a></div>
+                </div>
+              </div>
+            </td>
+            <td>+38 067 000 00 03</td>
+            <td>19.01.2023</td>
+            <td style="color:var(--white);font-weight:500;">5</td>
+            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">1 150 USD</td>
+            <td><div class="rating-stars">★★★★☆</div><div style="font-size:11px;color:var(--gray);">4.4</div></td>
+            <td><span class="segment-pill seg-regular">Постійний</span></td>
+            <td style="color:var(--orange);font-size:12px;">⏳ Часткова</td>
+            <td><div class="actions-cell">
+              <button class="action-ico" onclick="openDrawer('Дмитро Петренко','ДП','dmytro@email.com','+38 067 000 00 03',5,'1150','4.4','regular')" title="Профіль">👤</button>
+              <button class="action-ico" title="Написати">✉️</button>
+              <button class="action-ico" title="Нове замовлення">📋</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="client-cell">
+                <div class="cli-avatar">НБ</div>
+                <div>
+                  <div class="cli-name">Наталія Бондар <span class="verified-badge">✓</span></div>
+                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ff919e8b9e93969ebf9a929e9693d19c9092">[email&#160;protected]</a></div>
+                </div>
+              </div>
+            </td>
+            <td>+38 067 000 00 04</td>
+            <td>03.11.2023</td>
+            <td style="color:var(--white);font-weight:500;">3</td>
+            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">680 USD</td>
+            <td><div class="rating-stars">★★★★★</div><div style="font-size:11px;color:var(--gray);">4.8</div></td>
+            <td><span class="segment-pill seg-regular">Постійний</span></td>
+            <td style="color:var(--green);font-size:12px;">✓ Повна</td>
+            <td><div class="actions-cell">
+              <button class="action-ico" onclick="openDrawer('Наталія Бондар','НБ','natalia@email.com','+38 067 000 00 04',3,'680','4.8','regular')" title="Профіль">👤</button>
+              <button class="action-ico" title="Написати">✉️</button>
+              <button class="action-ico" title="Нове замовлення">📋</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="client-cell">
+                <div class="cli-avatar" style="background:rgba(224,146,76,0.2);color:var(--orange);">АМ</div>
+                <div>
+                  <div class="cli-name">Андрій Мельник</div>
+                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3b5a555f4952427b5e565a525715585456">[email&#160;protected]</a></div>
+                </div>
+              </div>
+            </td>
+            <td>+38 067 000 00 05</td>
+            <td>14.02.2025</td>
+            <td style="color:var(--white);font-weight:500;">1</td>
+            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">165 USD</td>
+            <td><div class="rating-stars" style="color:var(--gray);">★★★★★</div><div style="font-size:11px;color:var(--gray);">—</div></td>
+            <td><span class="segment-pill seg-new">Новий</span></td>
+            <td style="color:var(--orange);font-size:12px;">⏳ Очікує</td>
+            <td><div class="actions-cell">
+              <button class="action-ico" onclick="openDrawer('Андрій Мельник','АМ','andriy@email.com','+38 067 000 00 05',1,'165','—','new')" title="Профіль">👤</button>
+              <button class="action-ico" title="Написати">✉️</button>
+              <button class="action-ico" title="Нове замовлення">📋</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="client-cell">
+                <div class="cli-avatar" style="background:rgba(207,102,121,0.15);color:var(--red);">ВС</div>
+                <div>
+                  <div class="cli-name">Василь Степаненко</div>
+                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8dfbecfef4e1cde8e0ece4e1a3eee2e0">[email&#160;protected]</a></div>
+                </div>
+              </div>
+            </td>
+            <td>+38 067 000 00 06</td>
+            <td>07.05.2022</td>
+            <td style="color:var(--white);font-weight:500;">4</td>
+            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">920 USD</td>
+            <td><div class="rating-stars" style="color:var(--red)">★★☆☆☆</div><div style="font-size:11px;color:var(--gray);">2.1</div></td>
+            <td><span class="segment-pill seg-blocked">Заблокований</span></td>
+            <td style="color:var(--red);font-size:12px;">✗ Заблоковано</td>
+            <td><div class="actions-cell">
+              <button class="action-ico" onclick="openDrawer('Василь Степаненко','ВС','vasyl@email.com','+38 067 000 00 06',4,'920','2.1','blocked')" title="Профіль">👤</button>
+              <button class="action-ico" style="color:var(--green);" title="Розблокувати">🔓</button>
+            </div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <div class="page-info">Показано 1–6 з 12 043 клієнтів</div>
+        <div class="page-btns">
+          <button class="page-btn">‹</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">…</button>
+          <button class="page-btn">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER: Профіль клієнта -->
+<div class="modal-overlay" id="clientDrawer">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Профіль <em id="drName">клієнта</em></h2>
+      <button class="close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div class="client-header">
+      <div class="client-avatar-lg" id="drAvatar">ІІ</div>
+      <div>
+        <div class="client-full" id="drFullName">Іван Іваненко</div>
+        <div class="client-meta" id="drContact"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f76697e715f7a727e7673317c7072">[email&#160;protected]</a> · +38 067 000 00 01</div>
+        <span class="segment-pill seg-vip" id="drSegment">VIP</span>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Статистика</div>
+      <div class="info-row"><span class="info-label">Всього замовлень</span><span class="info-val" id="drOrders">14</span></div>
+      <div class="info-row"><span class="info-label">Загальна сума</span><span class="info-val gold" id="drSpent">4 820 USD</span></div>
+      <div class="info-row"><span class="info-label">Рейтинг клієнта</span><span class="info-val" id="drRating">★★★★★ 4.9</span></div>
+      <div class="info-row"><span class="info-label">Улюблений клас</span><span class="info-val">VIP / BMW</span></div>
+      <div class="info-row"><span class="info-label">Середній термін оренди</span><span class="info-val">6.4 доби</span></div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Остання активність</div>
+      <div class="history-list">
+        <div class="hist-item">
+          <div class="hist-car">🏎️</div>
+          <div><div class="hist-name">BMW X5</div><div class="hist-dates">25.02 – 04.03.2025</div></div>
+          <div class="hist-sum">1 400 USD</div>
+          <div class="hist-status hist-ok">✓</div>
+        </div>
+        <div class="hist-item">
+          <div class="hist-car">👑</div>
+          <div><div class="hist-name">Audi A6</div><div class="hist-dates">10–17.01.2025</div></div>
+          <div class="hist-sum">1 260 USD</div>
+          <div class="hist-status hist-ok">✓</div>
+        </div>
+        <div class="hist-item">
+          <div class="hist-car">🚙</div>
+          <div><div class="hist-name">VW Tiguan</div><div class="hist-dates">05–08.12.2024</div></div>
+          <div class="hist-sum">390 USD</div>
+          <div class="hist-status hist-ok">✓</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Управління акаунтом</div>
+      <div class="field">
+        <label>Сегмент клієнта</label>
+        <select id="drSegSelect">
+          <option value="new">Новий</option>
+          <option value="regular">Постійний</option>
+          <option value="vip" selected>VIP</option>
+          <option value="blocked">Заблокований</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Персональна знижка (%)</label>
+        <input type="number" value="10" min="0" max="50">
+      </div>
+      <div class="field">
+        <label>Нотатка менеджера</label>
+        <textarea placeholder="Внутрішня нотатка про клієнта...">Постійний клієнт, завжди повертає авто вчасно. Перевага — BMW та Audi.</textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-save" onclick="closeDrawer()">Зберегти зміни</button>
+      <button class="btn-danger" onclick="closeDrawer()">Заблокувати</button>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+const segClasses={vip:'seg-vip',regular:'seg-regular',new:'seg-new',blocked:'seg-blocked'};
+const segLabels={vip:'VIP',regular:'Постійний',new:'Новий',blocked:'Заблокований'};
+function openDrawer(name,initials,email,phone,orders,spent,rating,seg){
+  document.getElementById('drName').textContent=name.split(' ')[0];
+  document.getElementById('drAvatar').textContent=initials;
+  document.getElementById('drFullName').textContent=name;
+  document.getElementById('drContact'
+{% endblock %}
+
+

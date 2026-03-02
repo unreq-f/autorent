@@ -1,0 +1,337 @@
+{% extends 'manager/base_manager.html' %}
+{% block title %}Замовлення — AutoRent Manager{% endblock %}
+
+{% block main_content %}
+
+  <div class="topbar">
+    <div class="topbar-title">Замовлення · <strong>Управління бронюваннями</strong></div>
+    <div style="display:flex;gap:10px;">
+      <button class="tb-btn" onclick="openNewModal()">+ Нове замовлення</button>
+      <button class="tb-btn">⬇ Експорт CSV</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- STATUS TABS -->
+    <div class="status-tabs">
+      <div class="stab active" onclick="filterStatus('all',this)">Всі <span class="cnt">62</span></div>
+      <div class="stab" onclick="filterStatus('active',this)">Активні <span class="cnt">24</span></div>
+      <div class="stab" onclick="filterStatus('pending',this)">Очікують <span class="cnt">5</span></div>
+      <div class="stab" onclick="filterStatus('completed',this)">Завершені <span class="cnt">28</span></div>
+      <div class="stab" onclick="filterStatus('cancelled',this)">Скасовані <span class="cnt">5</span></div>
+    </div>
+
+    <!-- FILTER BAR -->
+    <div class="filter-bar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" placeholder="Пошук за №, ім'ям, авто...">
+      </div>
+      <select class="filter-select">
+        <option>Всі авто</option>
+        <option>BMW X5</option>
+        <option>Mazda 3</option>
+        <option>VW Tiguan</option>
+        <option>Tesla Model 3</option>
+        <option>Audi A6</option>
+      </select>
+      <select class="filter-select">
+        <option>Всі тарифи</option>
+        <option>Base</option>
+        <option>Prime</option>
+      </select>
+      <input type="date" class="filter-select" style="width:150px;">
+      <input type="date" class="filter-select" style="width:150px;">
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>№ ↕</th>
+            <th>Клієнт ↕</th>
+            <th>Автомобіль ↕</th>
+            <th>Отримання</th>
+            <th>Повернення</th>
+            <th>Тариф</th>
+            <th>Сума ↕</th>
+            <th>Статус ↕</th>
+            <th>Дії</th>
+          </tr>
+        </thead>
+        <tbody id="bookingsBody">
+          <tr>
+            <td class="highlight">#0855</td>
+            <td class="highlight">Аліна Мороз</td>
+            <td class="highlight">Tesla Model 3</td>
+            <td>26.02.2025</td>
+            <td>28.02.2025</td>
+            <td>Prime</td>
+            <td class="gold-text">312 USD</td>
+            <td><span class="status-pill sp-pending">Очікує</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Підтвердити" onclick="confirmBooking(this)">✅</button>
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Аліна Мороз','#0855','Tesla Model 3','Prime','312','26.02–28.02','pending')">📋</button>
+              <button class="action-ico red" title="Скасувати">✕</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="highlight">#0854</td>
+            <td class="highlight">Олег Сидоренко</td>
+            <td class="highlight">BMW X5</td>
+            <td>25.02.2025</td>
+            <td>04.03.2025</td>
+            <td>Base</td>
+            <td class="gold-text">1 400 USD</td>
+            <td><span class="status-pill sp-active">Активне</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Олег Сидоренко','#0854','BMW X5','Base','1400','25.02–04.03','active')">📋</button>
+              <button class="action-ico" title="Редагувати">✏️</button>
+              <button class="action-ico red" title="Скасувати">✕</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="highlight">#0853</td>
+            <td class="highlight">Наталія Бондар</td>
+            <td class="highlight">Mazda 3</td>
+            <td>24.02.2025</td>
+            <td>27.02.2025</td>
+            <td>Base</td>
+            <td class="gold-text">165 USD</td>
+            <td><span class="status-pill sp-active">Активне</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Наталія Бондар','#0853','Mazda 3','Base','165','24.02–27.02','active')">📋</button>
+              <button class="action-ico" title="Редагувати">✏️</button>
+              <button class="action-ico red" title="Скасувати">✕</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="highlight">#0852</td>
+            <td class="highlight">Роман Кравченко</td>
+            <td class="highlight">Audi A6 Quattro</td>
+            <td>23.02.2025</td>
+            <td>26.02.2025</td>
+            <td>Prime</td>
+            <td class="gold-text">564 USD</td>
+            <td><span class="status-pill sp-pending">Очікує</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Підтвердити" onclick="confirmBooking(this)">✅</button>
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Роман Кравченко','#0852','Audi A6','Prime','564','23.02–26.02','pending')">📋</button>
+              <button class="action-ico red" title="Скасувати">✕</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="highlight">#0851</td>
+            <td class="highlight">Іван Іваненко</td>
+            <td class="highlight">VW Tiguan</td>
+            <td>22.02.2025</td>
+            <td>01.03.2025</td>
+            <td>Base</td>
+            <td class="gold-text">910 USD</td>
+            <td><span class="status-pill sp-active">Активне</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Іван Іваненко','#0851','VW Tiguan','Base','910','22.02–01.03','active')">📋</button>
+              <button class="action-ico" title="Редагувати">✏️</button>
+              <button class="action-ico red" title="Скасувати">✕</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="highlight">#0850</td>
+            <td class="highlight">Катерина Лисенко</td>
+            <td class="highlight">BMW 318D</td>
+            <td>20.02.2025</td>
+            <td>25.02.2025</td>
+            <td>Prime</td>
+            <td class="gold-text">1 170 USD</td>
+            <td><span class="status-pill sp-completed">Завершено</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Катерина Лисенко','#0850','BMW 318D','Prime','1170','20.02–25.02','completed')">📋</button>
+              <button class="action-ico" title="Виставити штраф">⚠️</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="highlight">#0849</td>
+            <td class="highlight">Максим Шевченко</td>
+            <td class="highlight">VW Transporter</td>
+            <td>18.02.2025</td>
+            <td>22.02.2025</td>
+            <td>Base</td>
+            <td class="gold-text">560 USD</td>
+            <td><span class="status-pill sp-completed">Завершено</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Максим Шевченко','#0849','VW Transporter','Base','560','18.02–22.02','completed')">📋</button>
+            </div></td>
+          </tr>
+          <tr>
+            <td class="highlight">#0848</td>
+            <td class="highlight">Дарина Пономар</td>
+            <td class="highlight">Nissan Juke</td>
+            <td>15.02.2025</td>
+            <td>17.02.2025</td>
+            <td>Base</td>
+            <td class="gold-text">160 USD</td>
+            <td><span class="status-pill sp-cancelled">Скасовано</span></td>
+            <td><div class="actions-cell">
+              <button class="action-ico" title="Деталі" onclick="openDrawer('Дарина Пономар','#0848','Nissan Juke','Base','160','15.02–17.02','cancelled')">📋</button>
+            </div></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="pagination">
+        <div class="page-info">Показано 1–8 з 62 записів</div>
+        <div class="page-btns">
+          <button class="page-btn">‹</button>
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">…</button>
+          <button class="page-btn">8</button>
+          <button class="page-btn">›</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER: Деталі замовлення -->
+<div class="modal-overlay" id="drawer">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Замовлення <em id="drNum">#0854</em></h2>
+      <button class="close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Клієнт</div>
+      <div class="info-row"><span class="info-label">Ім'я</span><span class="info-val" id="drClient">—</span></div>
+      <div class="info-row"><span class="info-label">Телефон</span><span class="info-val">+38 067 000 00 00</span></div>
+      <div class="info-row"><span class="info-label">Email</span><span class="info-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f596999c909b81b59098949c99db969a98">[email&#160;protected]</a></span></div>
+      <div class="info-row"><span class="info-label">ВП</span><span class="info-val">ААА 123456 · стаж 7 років</span></div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Деталі оренди</div>
+      <div class="info-row"><span class="info-label">Автомобіль</span><span class="info-val" id="drCar">—</span></div>
+      <div class="info-row"><span class="info-label">Тариф</span><span class="info-val" id="drTariff">—</span></div>
+      <div class="info-row"><span class="info-label">Термін</span><span class="info-val" id="drDates">—</span></div>
+      <div class="info-row"><span class="info-label">Місце видачі</span><span class="info-val">Офіс, вул. Клочківська</span></div>
+      <div class="info-row"><span class="info-label">Додаткові послуги</span><span class="info-val">GPS, Дитяче крісло</span></div>
+      <div class="info-row"><span class="info-label">Сума</span><span class="info-val gold" id="drTotal">—</span></div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Зміна статусу</div>
+      <div class="field">
+        <label>Статус замовлення</label>
+        <select id="drStatus">
+          <option value="pending">Очікує підтвердження</option>
+          <option value="active">Активне</option>
+          <option value="completed">Завершено</option>
+          <option value="cancelled">Скасовано</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Примітка менеджера</label>
+        <textarea placeholder="Внутрішня нотатка..."></textarea>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Штраф / Додатковий збір</div>
+      <div class="field">
+        <label>Причина</label>
+        <select>
+          <option>Без штрафу</option>
+          <option>Запізнення повернення</option>
+          <option>Пошкодження кузову</option>
+          <option>Пошкодження салону</option>
+          <option>Неповний бак</option>
+          <option>Інше</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Сума штрафу (USD)</label>
+        <input type="number" placeholder="0">
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-save" onclick="closeDrawer()">Зберегти зміни</button>
+      <button class="btn-danger" onclick="closeDrawer()">Скасувати замовлення</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Нове замовлення -->
+<div class="modal-center" id="newModal">
+  <div class="modal-box">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Нове <em>замовлення</em></h2>
+      <button class="close-btn" onclick="closeNewModal()">✕</button>
+    </div>
+    <div class="form-grid-2">
+      <div class="field"><label>Клієнт</label>
+        <select><option>Іван Іваненко</option><option>Наталія Бондар</option><option>Новий клієнт...</option></select>
+      </div>
+      <div class="field"><label>Автомобіль</label>
+        <select><option>BMW X5</option><option>Mazda 3</option><option>VW Tiguan</option><option>Tesla Model 3</option><option>Audi A6</option></select>
+      </div>
+      <div class="field"><label>Дата отримання</label><input type="date"></div>
+      <div class="field"><label>Дата повернення</label><input type="date"></div>
+      <div class="field"><label>Час отримання</label><input type="time" value="10:00"></div>
+      <div class="field"><label>Місце отримання</label>
+        <select><option>Офіс, Клочківська</option><option>Аеропорт</option><option>Вокзал</option></select>
+      </div>
+      <div class="field"><label>Тариф</label>
+        <select><option>Base (зі заставою)</option><option>Prime (без застави)</option></select>
+      </div>
+      <div class="field"><label>Спосіб оплати</label>
+        <select><option>Картка</option><option>Готівка</option><option>Безготівковий</option></select>
+      </div>
+    </div>
+    <div class="field"><label>Додаткові послуги</label>
+      <select multiple style="height:80px">
+        <option>GPS-навігатор (+5 USD/доба)</option>
+        <option>Дитяче крісло (+5 USD/доба)</option>
+        <option>Wi-Fi роутер (+8 USD/доба)</option>
+        <option>Додатковий водій</option>
+      </select>
+    </div>
+    <div class="field"><label>Примітка</label><textarea placeholder="Особливі умови, побажання..."></textarea></div>
+    <div class="btn-row">
+      <button class="btn-save" onclick="closeNewModal()">Створити замовлення</button>
+      <button class="tb-btn" onclick="closeNewModal()" style="flex:1;padding:13px;">Скасувати</button>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+function openDrawer(client,num,car,tariff,total,dates,status){
+  document.getElementById('drClient').textContent=client;
+  document.getElementById('drNum').textContent=num;
+  document.getElementById('drCar').textContent=car;
+  document.getElementById('drTariff').textContent=tariff;
+  document.getElementById('drTotal').textContent=total+' USD';
+  document.getElementById('drDates').textContent=dates;
+  document.getElementById('drStatus').value=status;
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('drawer').classList.remove('open');}
+function openNewModal(){document.getElementById('newModal').classList.add('open');}
+function closeNewModal(){document.getElementById('newModal').classList.remove('open');}
+document.getElementById('drawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
+document.getElementById('newModal').addEventListener('click',function(e){if(e.target===this)closeNewModal();});
+function filterStatus(status,btn){
+  document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+}
+function confirmBooking(btn){
+  const row=btn.closest('tr');
+  const pill=row.querySelector('.status-pill');
+  pill.className='status-pill sp-active';
+  pill.textContent='Активне';
+  btn.r
+{% endblock %}
+
+

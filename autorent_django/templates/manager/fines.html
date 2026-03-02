@@ -1,0 +1,368 @@
+{% extends 'manager/base_manager.html' %}
+{% block title %}Штрафи — AutoRent Manager{% endblock %}
+
+{% block main_content %}
+
+  <div class="topbar">
+    <div class="topbar-title">Штрафи · <strong>Управління порушеннями</strong></div>
+    <div style="display:flex;gap:10px;">
+      <button class="tb-btn primary" onclick="openDrawer()">+ Виставити штраф</button>
+      <button class="tb-btn">⬇ Експорт</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- KPI -->
+    <div class="kpi-row">
+      <div class="kpi-card red">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-val">3</div>
+        <div class="kpi-label">Непогашених штрафів</div>
+        <div class="kpi-delta down">Потребують стягнення</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-icon">💸</div>
+        <div class="kpi-val">2 850</div>
+        <div class="kpi-label">USD до отримання</div>
+        <div class="kpi-delta down">3 активних справи</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-val">4 120</div>
+        <div class="kpi-label">USD стягнуто (лютий)</div>
+        <div class="kpi-delta up">↑ +18% до минулого</div>
+      </div>
+      <div class="kpi-card gold">
+        <div class="kpi-icon">📋</div>
+        <div class="kpi-val">47</div>
+        <div class="kpi-label">Всього штрафів (рік)</div>
+        <div class="kpi-delta up">Середній: 185 USD</div>
+      </div>
+    </div>
+
+    <!-- PAGE GRID -->
+    <div class="page-grid">
+      <!-- TABLE SIDE -->
+      <div>
+        <div class="status-tabs">
+          <div class="stab active">Всі <span class="cnt">47</span></div>
+          <div class="stab">Непогашені <span class="cnt">3</span></div>
+          <div class="stab">Сплачені <span class="cnt">38</span></div>
+          <div class="stab">Часткові <span class="cnt">2</span></div>
+          <div class="stab">Оскаржені <span class="cnt">2</span></div>
+          <div class="stab">Скасовані <span class="cnt">2</span></div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="search-box">
+            <span style="color:var(--gray);font-size:14px">🔍</span>
+            <input type="text" placeholder="Клієнт, авто, причина...">
+          </div>
+          <select class="filter-select">
+            <option>Всі типи</option>
+            <option>Запізнення повернення</option>
+            <option>Пошкодження кузову</option>
+            <option>Пошкодження салону</option>
+            <option>Неповний бак</option>
+            <option>ДТП</option>
+            <option>Штраф ДАІ</option>
+            <option>Інше</option>
+          </select>
+          <select class="filter-select">
+            <option>Будь-яка серйозність</option>
+            <option>Критична</option>
+            <option>Середня</option>
+            <option>Мінімальна</option>
+          </select>
+          <input type="date" class="filter-select" style="width:140px">
+        </div>
+
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Клієнт</th>
+                <th>Авто</th>
+                <th>Причина</th>
+                <th>Серйозність</th>
+                <th>Дата</th>
+                <th>Сума ↕</th>
+                <th>Статус</th>
+                <th>Дії</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="hl">F-047</td>
+                <td class="hl">Василь Степаненко</td>
+                <td>BMW X5</td>
+                <td>🔨 Пошкодження кузову</td>
+                <td><span class="sev sev-high">Критична</span></td>
+                <td>25.02.2025</td>
+                <td class="red-cell">1 800 USD</td>
+                <td><span class="fine-pill fp-unpaid">Непогашений</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openFineDrawer('F-047','Василь Степаненко','BMW X5','Пошкодження кузову','1800','unpaid','high')" title="Деталі">📋</button>
+                  <button class="action-ico" title="Стягнути" style="color:var(--green)">💳</button>
+                  <button class="action-ico" title="Скасувати" style="color:var(--red)">✕</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">F-046</td>
+                <td class="hl">Дмитро Петренко</td>
+                <td>VW Tiguan</td>
+                <td>⏰ Запізнення 3 год</td>
+                <td><span class="sev sev-med">Середня</span></td>
+                <td>24.02.2025</td>
+                <td class="red-cell">450 USD</td>
+                <td><span class="fine-pill fp-unpaid">Непогашений</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openFineDrawer('F-046','Дмитро Петренко','VW Tiguan','Запізнення повернення','450','unpaid','med')" title="Деталі">📋</button>
+                  <button class="action-ico" title="Стягнути" style="color:var(--green)">💳</button>
+                  <button class="action-ico" title="Скасувати" style="color:var(--red)">✕</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">F-045</td>
+                <td class="hl">Аліна Мороз</td>
+                <td>Mazda 3</td>
+                <td>⛽ Неповний бак</td>
+                <td><span class="sev sev-low">Мінімальна</span></td>
+                <td>23.02.2025</td>
+                <td class="red-cell">80 USD</td>
+                <td><span class="fine-pill fp-disputed">Оскаржується</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openFineDrawer('F-045','Аліна Мороз','Mazda 3','Неповний бак','80','disputed','low')" title="Деталі">📋</button>
+                  <button class="action-ico" title="Скасувати">✕</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">F-044</td>
+                <td class="hl">Сергій Василенко</td>
+                <td>Tesla Model 3</td>
+                <td>🚗 Штраф ДАІ (парк.)</td>
+                <td><span class="sev sev-low">Мінімальна</span></td>
+                <td>20.02.2025</td>
+                <td style="color:var(--gray)">120 USD</td>
+                <td><span class="fine-pill fp-paid">Сплачений</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openFineDrawer('F-044','Сергій Василенко','Tesla Model 3','Штраф ДАІ','120','paid','low')" title="Деталі">📋</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">F-043</td>
+                <td class="hl">Роман Кравченко</td>
+                <td>Audi A6</td>
+                <td>🪑 Пошкодження салону</td>
+                <td><span class="sev sev-med">Середня</span></td>
+                <td>18.02.2025</td>
+                <td style="color:var(--gray)">600 USD</td>
+                <td><span class="fine-pill fp-partial">Часткова</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openFineDrawer('F-043','Роман Кравченко','Audi A6','Пошкодження салону','600','partial','med')" title="Деталі">📋</button>
+                  <button class="action-ico" title="Донарахувати" style="color:var(--gold)">💳</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">F-042</td>
+                <td class="hl">Наталія Бондар</td>
+                <td>BMW 318D</td>
+                <td>💥 ДТП (незначне)</td>
+                <td><span class="sev sev-high">Критична</span></td>
+                <td>15.02.2025</td>
+                <td style="color:var(--gray)">3 200 USD</td>
+                <td><span class="fine-pill fp-paid">Сплачений</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openFineDrawer('F-042','Наталія Бондар','BMW 318D','ДТП','3200','paid','high')" title="Деталі">📋</button>
+                </div></td>
+              </tr>
+              <tr>
+                <td class="hl">F-041</td>
+                <td class="hl">Максим Шевченко</td>
+                <td>VW Transporter</td>
+                <td>⛽ Неповний бак</td>
+                <td><span class="sev sev-low">Мінімальна</span></td>
+                <td>12.02.2025</td>
+                <td style="color:var(--gray)">60 USD</td>
+                <td><span class="fine-pill fp-waived">Скасований</span></td>
+                <td><div class="actions-cell">
+                  <button class="action-ico" onclick="openFineDrawer('F-041','Максим Шевченко','VW Transporter','Неповний бак','60','waived','low')" title="Деталі">📋</button>
+                </div></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="pagination">
+            <div class="page-info">Показано 1–7 з 47 штрафів</div>
+            <div class="page-btns">
+              <button class="page-btn">‹</button>
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDEBAR -->
+      <div style="display:grid;gap:16px;align-content:start;">
+
+        <!-- CATEGORIES -->
+        <div class="widget">
+          <div class="widget-header"><div class="widget-title">Типи штрафів (рік)</div></div>
+          <div style="display:grid;gap:2px;">
+            <div class="fine-category">
+              <div class="fc-left"><div class="fc-icon">🔨</div><div><div class="fc-name">Пошкодження кузову</div><div class="fc-count">12 випадків</div></div></div>
+              <div class="fc-right"><div class="fc-amt">8 640 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:38%"></div></div></div>
+            </div>
+            <div class="fine-category">
+              <div class="fc-left"><div class="fc-icon">⏰</div><div><div class="fc-name">Запізнення</div><div class="fc-count">18 випадків</div></div></div>
+              <div class="fc-right"><div class="fc-amt">4 050 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:28%"></div></div></div>
+            </div>
+            <div class="fine-category">
+              <div class="fc-left"><div class="fc-icon">🪑</div><div><div class="fc-name">Пошкодження салону</div><div class="fc-count">7 випадків</div></div></div>
+              <div class="fc-right"><div class="fc-amt">3 150 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:22%"></div></div></div>
+            </div>
+            <div class="fine-category">
+              <div class="fc-left"><div class="fc-icon">⛽</div><div><div class="fc-name">Неповний бак</div><div class="fc-count">8 випадків</div></div></div>
+              <div class="fc-right"><div class="fc-amt">680 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:6%"></div></div></div>
+            </div>
+            <div class="fine-category">
+              <div class="fc-left"><div class="fc-icon">💥</div><div><div class="fc-name">ДТП</div><div class="fc-count">2 випадки</div></div></div>
+              <div class="fc-right"><div class="fc-amt">5 400 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:35%;background:var(--red)"></div></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT ACTIVITY -->
+        <div class="widget">
+          <div class="widget-header"><div class="widget-title">Остання активність</div></div>
+          <div style="display:grid;gap:12px;">
+            <div style="display:flex;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span style="font-size:16px">🔴</span>
+              <div><div style="font-size:13px;color:var(--white)">F-047 виставлено Василю С.</div><div style="font-size:11px;color:var(--gray);margin-top:2px">1 800 USD · Пошкодження · 25.02</div></div>
+            </div>
+            <div style="display:flex;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span style="font-size:16px">🟢</span>
+              <div><div style="font-size:13px;color:var(--white)">F-044 сплачений Сергієм В.</div><div style="font-size:11px;color:var(--gray);margin-top:2px">120 USD · 20.02</div></div>
+            </div>
+            <div style="display:flex;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span style="font-size:16px">🔵</span>
+              <div><div style="font-size:13px;color:var(--white)">F-045 оскаржено Аліною М.</div><div style="font-size:11px;color:var(--gray);margin-top:2px">Запит на перегляд · 23.02</div></div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <span style="font-size:16px">⚪</span>
+              <div><div style="font-size:13px;color:var(--white)">F-041 скасовано (клієнт VIP)</div><div style="font-size:11px;color:var(--gray);margin-top:2px">60 USD · 12.02</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DRAWER: Деталі штрафу / Новий штраф -->
+<div class="modal-overlay" id="fineDrawer">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title" id="drTitle">Штраф <em id="drFineId">F-047</em></h2>
+      <button class="close-btn" onclick="closeDrawer()">✕</button>
+    </div>
+
+    <div class="fine-amount-card" id="fineAmtCard">
+      <div class="fine-amount-big" id="drFineAmt">1 800 USD</div>
+      <div class="fine-amount-sub" id="drFineStatus">Непогашений · Критична</div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Деталі порушення</div>
+      <div class="info-row"><span class="info-label">Клієнт</span><span class="info-val" id="drFineClient">—</span></div>
+      <div class="info-row"><span class="info-label">Автомобіль</span><span class="info-val" id="drFineCar">—</span></div>
+      <div class="info-row"><span class="info-label">Причина</span><span class="info-val" id="drFineReason">—</span></div>
+      <div class="info-row"><span class="info-label">Дата виявлення</span><span class="info-val">25.02.2025</span></div>
+      <div class="info-row"><span class="info-label">Менеджер</span><span class="info-val">Марина Коваль</span></div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Фото матеріали</div>
+      <div class="photo-zone">
+        <div class="photo-zone-icon">📸</div>
+        <div class="photo-zone-text">Завантажте фото пошкоджень</div>
+        <div style="font-size:10px;color:var(--gray);margin-top:4px">JPG, PNG до 10MB кожне</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <div style="width:60px;height:50px;background:var(--dark3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px">📷</div>
+        <div style="width:60px;height:50px;background:var(--dark3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px">📷</div>
+      </div>
+    </div>
+
+    <div class="info-section">
+      <div class="info-section-title">Управління</div>
+      <div class="field">
+        <label>Статус штрафу</label>
+        <select id="fineStatusSel">
+          <option value="unpaid">Непогашений</option>
+          <option value="paid">Сплачений</option>
+          <option value="partial">Часткова оплата</option>
+          <option value="disputed">Оскаржується</option>
+          <option value="waived">Скасований</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Сума штрафу (USD)</label>
+        <input type="number" id="fineAmtInput" value="1800">
+      </div>
+      <div class="field">
+        <label>Примітка</label>
+        <textarea placeholder="Деталі порушення, умови врегулювання..."></textarea>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-save" onclick="closeDrawer()">Зберегти</button>
+      <button class="btn-danger" onclick="closeDrawer()">Скасувати штраф</button>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="btn-secondary" style="width:100%" onclick="location.href='manager-clients.html'">Перейти до профілю клієнта →</button>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+const statusLabels={unpaid:'Непогашений',paid:'Сплачений',partial:'Часткова оплата',disputed:'Оскаржується',waived:'Скасований'};
+const sevLabels={high:'Критична',med:'Середня',low:'Мінімальна'};
+function openDrawer(){
+  document.getElementById('drTitle').innerHTML='Новий <em>штраф</em>';
+  document.getElementById('drFineId').textContent='';
+  document.getElementById('fineAmtCard').style.display='none';
+  document.getElementById('drFineClient').textContent='—';
+  document.getElementById('drFineCar').textContent='—';
+  document.getElementById('drFineReason').textContent='—';
+  document.getElementById('fineAmtInput').value='';
+  document.getElementById('fineDrawer').classList.add('open');
+}
+function openFineDrawer(id,client,car,reason,amt,status,sev){
+  document.getElementById('drTitle').innerHTML='Штраф <em>'+id+'</em>';
+  document.getElementById('fineAmtCard').style.display='block';
+  document.getElementById('drFineAmt').textContent=amt+' USD';
+  document.getElementById('drFineStatus').textContent=statusLabels[status]+' · '+sevLabels[sev];
+  document.getElementById('drFineClient').textContent=client;
+  document.getElementById('drFineCar').textContent=car;
+  document.getElementById('drFineReason').textContent=reason;
+  document.getElementById('fineStatusSel').value=status;
+  document.getElementById('fineAmtInput').value=amt;
+  document.getElementById('fineDrawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('fineDrawer').classList.remove('open');}
+document.getElementById('fineDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
+document.querySelectorAll('.stab').forEach(t=>{
+  t.onclick=function(){document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));this.classList.add('active');}
+});
+
+</script>
+{% endblock %}

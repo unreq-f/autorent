@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+{% block title %}AutoRent Харків — Прокат автомобілів{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── HERO ── */
+.hero{min-height:100vh;display:flex;align-items:center;padding:120px 60px 80px;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(201,168,76,0.08) 0%,transparent 60%),linear-gradient(135deg,#0a0a0a 0%,#111 100%);}
+.hero-grid{position:absolute;inset:0;opacity:0.04;background-image:linear-gradient(var(--gold) 1px,transparent 1px),linear-gradient(90deg,var(--gold) 1px,transparent 1px);background-size:60px 60px;}
+.hero-content{position:relative;max-width:640px;}
+.hero-tag{display:inline-block;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);border:1px solid var(--border);padding:6px 16px;margin-bottom:32px;animation:fadeUp .6s ease both;}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(48px,6vw,80px);font-weight:900;line-height:1.05;color:var(--white);animation:fadeUp .7s .1s ease both;}
+.hero h1 em{font-style:italic;color:var(--gold);}
+.hero-sub{margin-top:24px;font-size:16px;line-height:1.7;color:var(--gray);max-width:480px;animation:fadeUp .7s .2s ease both;}
+.hero-actions{display:flex;gap:16px;margin-top:48px;animation:fadeUp .7s .3s ease both;}
+.btn-primary{background:var(--gold);color:var(--black);padding:16px 36px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:1px;text-transform:uppercase;border:none;cursor:pointer;text-decoration:none;display:inline-block;transition:background .3s,transform .2s;}
+.btn-primary:hover{background:var(--gold-light);transform:translateY(-2px);}
+.btn-outline{background:transparent;color:var(--white);padding:16px 36px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;letter-spacing:1px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.2);cursor:pointer;text-decoration:none;display:inline-block;transition:border-color .3s,color .3s;}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold);}
+.hero-stats{display:flex;gap:48px;margin-top:64px;animation:fadeUp .7s .4s ease both;}
+.stat-num{font-family:'Playfair Display',serif;font-size:36px;font-weight:700;color:var(--gold);line-height:1;}
+.stat-label{font-size:12px;color:var(--gray);letter-spacing:1px;margin-top:4px;}
+
+/* ── SEARCH ── */
+.search-section{padding:0 60px;margin-top:-1px;}
+.search-box{background:var(--dark2);border:1px solid var(--border);padding:40px 48px;display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:24px;align-items:end;}
+.field label{display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.field select,.field input{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .3s;appearance:none;}
+.field select:focus,.field input:focus{border-color:var(--gold);}
+
+/* ── SECTIONS ── */
+.section{padding:100px 60px;}
+.section-header{margin-bottom:60px;}
+.section-tag{font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:16px;}
+.section-title{font-family:'Playfair Display',serif;font-size:clamp(32px,4vw,52px);font-weight:700;color:var(--white);line-height:1.1;}
+.section-title em{font-style:italic;color:var(--gold);}
+
+/* ── CATEGORIES ── */
+.categories-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;}
+.cat-card{position:relative;background:var(--dark2);padding:40px 32px;border:1px solid var(--border);cursor:pointer;overflow:hidden;transition:background .3s;text-decoration:none;display:block;}
+.cat-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transition:transform .3s;}
+.cat-card:hover{background:var(--dark3);}
+.cat-card:hover::before{transform:scaleX(1);}
+.cat-icon{font-size:32px;margin-bottom:20px;display:block;}
+.cat-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:8px;}
+.cat-count{font-size:12px;color:var(--gray);}
+.cat-price{margin-top:20px;}
+.cat-price span{font-size:11px;color:var(--gray);}
+.cat-price strong{display:block;font-size:18px;color:var(--gold);font-family:'Playfair Display',serif;}
+
+/* ── CARS ── */
+.cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+.car-card{background:var(--dark2);border:1px solid var(--border);overflow:hidden;transition:transform .3s,border-color .3s;}
+.car-card:hover{transform:translateY(-6px);border-color:var(--gold);}
+.car-img{height:200px;background:linear-gradient(135deg,#1a1a1a,#222);display:flex;align-items:center;justify-content:center;font-size:72px;position:relative;overflow:hidden;}
+.car-img::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(201,168,76,0.05),transparent);}
+.car-badge{position:absolute;top:16px;left:16px;background:var(--gold);color:var(--black);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;font-weight:500;}
+.car-body{padding:28px;}
+.car-class{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+.car-name{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:8px 0 16px;}
+.car-specs{display:flex;gap:20px;font-size:12px;color:var(--gray);margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.car-spec{display:flex;align-items:center;gap:6px;}
+.car-footer{display:flex;align-items:center;justify-content:space-between;}
+.car-price strong{font-family:'Playfair Display',serif;font-size:26px;color:var(--gold);}
+.car-price span{font-size:12px;color:var(--gray);}
+.car-btn{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:10px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .3s,color .3s;text-decoration:none;display:inline-block;}
+.car-btn:hover{background:var(--gold);color:var(--black);}
+
+/* ── WHY ── */
+.why-section{padding:100px 60px;background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.why-grid{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;}
+.why-features{display:grid;gap:40px;}
+.why-feature{display:flex;gap:24px;align-items:flex-start;}
+.why-icon{width:52px;height:52px;flex-shrink:0;background:rgba(201,168,76,0.1);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.why-feature h3{font-size:16px;color:var(--white);margin-bottom:6px;font-weight:500;}
+.why-feature p{font-size:14px;color:var(--gray);line-height:1.6;}
+
+/* ── TESTIMONIALS ── */
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
+.testi-card{background:var(--dark2);border:1px solid var(--border);padding:36px;}
+.testi-stars{color:var(--gold);font-size:14px;margin-bottom:16px;}
+.testi-text{font-size:14px;color:var(--gray);line-height:1.7;font-style:italic;margin-bottom:24px;}
+.testi-author{font-size:13px;color:var(--white);font-weight:500;}
+.testi-car{font-size:11px;color:var(--gold);margin-top:2px;}
+
+/* ── FOOTER FULL ── */
+footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60px 40px;}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:60px;margin-bottom:60px;}
+.footer-logo-text{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold);margin-bottom:16px;display:block;text-decoration:none;}
+.footer-logo-text span{color:var(--white);}
+.footer-desc{font-size:14px;color:var(--gray);line-height:1.7;max-width:280px;}
+.footer-col h4{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:20px;}
+.footer-col ul{list-style:none;display:grid;gap:10px;}
+.footer-col ul a{font-size:14px;color:var(--gray);text-decoration:none;transition:color .2s;}
+.footer-col ul a:hover{color:var(--white);}
+.footer-bottom{border-top:1px solid var(--border);padding-top:30px;display:flex;justify-content:space-between;align-items:center;}
+.footer-copy{font-size:12px;color:var(--gray);}
+.footer-phone-bottom{font-size:16px;color:var(--gold);font-family:'Playfair Display',serif;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag">Прокат автомобілів · Харків</div>
+    <h1>Свобода<br>руху — <em>твій</em><br>вибір</h1>
+    <p class="hero-sub">Преміум автомобілі в оренду без зайвих формальностей. Від економ до VIP — підберемо авто під будь-яке завдання.</p>
+    <div class="hero-actions">
+      <a href="{% url 'catalog' %}" class="btn-primary">Переглянути каталог</a>
+      <a href="{% url 'conditions' %}" class="btn-outline">Умови прокату</a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">150+</div>
+        <div class="stat-label">Автомобілів</div>
+      </div>
+      <div>
+        <div class="stat-num">10+</div>
+        <div class="stat-label">Років досвіду</div>
+      </div>
+      <div>
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">Підтримка</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEARCH -->
+<section class="search-section">
+  <form method="get" action="{% url 'catalog' %}" class="search-box">
+    <div class="field">
+      <label>Місце отримання</label>
+      <select name="_location">
+        <option>Офіс, вул. Клочківська, 94а</option>
+        <option>Аеропорт «Харків»</option>
+        <option>Залізничний вокзал</option>
+        <option>Доставка по місту</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Дата отримання</label>
+      <input type="date" name="_date_from">
+    </div>
+    <div class="field">
+      <label>Дата повернення</label>
+      <input type="date" name="_date_to">
+    </div>
+    <div class="field">
+      <button type="submit" class="btn-primary" style="width:100%;padding:14px 24px;font-size:13px;border:none;cursor:pointer;">
+        Знайти авто
+      </button>
+    </div>
+  </form>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section">
+  <div class="section-header">
+    <span class="section-tag">Класи автомобілів</span>
+    <h2 class="section-title">Оберіть свій <em>клас</em></h2>
+  </div>
+  <div class="categories-grid">
+    <a href="{% url 'catalog' %}?class=economy" class="cat-card">
+      <span class="cat-icon">🚗</span>
+      <div class="cat-name">Економ</div>
+      <div class="cat-count">12 автомобілів</div>
+      <div class="cat-price"><span>від</span><strong>18 USD / доба</strong></div>
+    </a>
+    <a href="{% url 'catalog' %}?class=comfort" class="cat-card">
+      <span class="cat-icon">🚙</span>
+      <div class="cat-name">Комфорт</div>
+      <div class="cat-count">24 автомобілі</div>
+      <div class="cat-price"><span>від</span><strong>45 USD / доба</strong></div>
+    </a>
+    <a href="{% url 'catalog' %}?class=business" class="cat-card">
+      <span class="cat-icon">🏎️</span>
+      <div class="cat-name">Бізнес</div>
+      <div class="cat-count">18 автомобілів</div>
+      <div class="cat-price"><span>від</span><strong>90 USD / доба</strong></div>
+    </a>
+    <a href="{% url 'catalog' %}?class=vip" class="cat-card">
+      <span class="cat-icon">👑</span>
+      <div class="cat-name">VIP</div>
+      <div class="cat-count">8 автомобілів</div>
+      <div class="cat-price"><span>від</span><strong>180 USD / доба</strong></div>
+    </a>
+  </div>
+</section>
+
+<!-- FEATURED CARS -->
+<section class="section" style="padding-top:0">
+  <div class="section-header">
+    <span class="section-tag">Популярні авто</span>
+    <h2 class="section-title">Топ вибір <em>клієнтів</em></h2>
+  </div>
+  <div class="cars-grid">
+    {% for car in featured %}
+    <div class="car-card">
+      <div class="car-img">
+        {% if car.image %}
+          <img src="{{ car.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        {% else %}
+          {{ car.emoji }}
+        {% endif %}
+        <span class="car-badge">{{ car.get_car_class_display }}</span>
+      </div>
+      <div class="car-body">
+        <div class="car-class">{{ car.get_fuel_display }}</div>
+        <div class="car-name">{{ car.full_name }}</div>
+        <div class="car-specs">
+          <div class="car-spec">⚙️ {{ car.transmission }}</div>
+          <div class="car-spec">⛽ {{ car.get_fuel_display }}</div>
+          <div class="car-spec">👥 {{ car.seats }} місць</div>
+        </div>
+        <div class="car-footer">
+          <div class="car-price">
+            <strong>{{ car.price_base }} USD</strong>
+            <span> / доба</span>
+          </div>
+          <a href="{% url 'order_car' car.pk %}" class="car-btn">Орендувати</a>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div class="car-card">
+      <div class="car-img">🚗<span class="car-badge">Комфорт</span></div>
+      <div class="car-body">
+        <div class="car-class">Sedan</div>
+        <div class="car-name">Mazda 3</div>
+        <div class="car-specs">
+          <div class="car-spec">⚙️ Автомат</div>
+          <div class="car-spec">⛽ Бензин</div>
+          <div class="car-spec">👥 5 місць</div>
+        </div>
+        <div class="car-footer">
+          <div class="car-price"><strong>55 USD</strong><span> / доба</span></div>
+          <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
+        </div>
+      </div>
+    </div>
+    <div class="car-card">
+      <div class="car-img">🚙<span class="car-badge">Кросовер</span></div>
+      <div class="car-body">
+        <div class="car-class">SUV</div>
+        <div class="car-name">Volkswagen Tiguan</div>
+        <div class="car-specs">
+          <div class="car-spec">⚙️ Автомат</div>
+          <div class="car-spec">⛽ Дизель</div>
+          <div class="car-spec">👥 5 місць</div>
+        </div>
+        <div class="car-footer">
+          <div class="car-price"><strong>130 USD</strong><span> / доба</span></div>
+          <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
+        </div>
+      </div>
+    </div>
+    <div class="car-card">
+      <div class="car-img">🏎️<span class="car-badge">VIP</span></div>
+      <div class="car-body">
+        <div class="car-class">Sedan</div>
+        <div class="car-name">BMW X5</div>
+        <div class="car-specs">
+          <div class="car-spec">⚙️ Автомат</div>
+          <div class="car-spec">⛽ Бензин</div>
+          <div class="car-spec">👥 5 місць</div>
+        </div>
+        <div class="car-footer">
+          <div class="car-price"><strong>200 USD</strong><span> / доба</span></div>
+          <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- WHY -->
+<section class="why-section" id="why">
+  <div class="why-grid">
+    <div>
+      <span class="section-tag">Чому ми</span>
+      <h2 class="section-title" style="margin-bottom:16px">Ваш надійний<br><em>партнер</em> у дорозі</h2>
+      <p style="color:var(--gray);font-size:15px;line-height:1.7;margin-top:20px">Більше 10 років ми забезпечуємо комфортне та безпечне пересування клієнтів по Харкову та Україні. Прозорі умови, якісний автопарк, підтримка 24/7.</p>
+    </div>
+    <div class="why-features">
+      <div class="why-feature">
+        <div class="why-icon">🛡️</div>
+        <div>
+          <h3>Повне страхування</h3>
+          <p>Весь автопарк застрахований за ОСЦПВ та КАСКО. Тариф «Повне покриття» — без застави.</p>
+        </div>
+      </div>
+      <div class="why-feature">
+        <div class="why-icon">🚀</div>
+        <div>
+          <h3>Доставка за 60 хвилин</h3>
+          <p>Привеземо авто до вашого готелю, офісу, аеропорту або будь-якої точки міста.</p>
+        </div>
+      </div>
+      <div class="why-feature">
+        <div class="why-icon">💳</div>
+        <div>
+          <h3>Зручна оплата</h3>
+          <p>Готівка, картка, безготівковий розрахунок для юридичних осіб. Гнучкі тарифи.</p>
+        </div>
+      </div>
+      <div class="why-feature">
+        <div class="why-icon">📞</div>
+        <div>
+          <h3>Підтримка 24/7</h3>
+          <p>Наш менеджер завжди на зв'язку. Асистанс у будь-якій ситуації на дорозі.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="section">
+  <div class="section-header">
+    <span class="section-tag">Відгуки</span>
+    <h2 class="section-title">Що кажуть <em>клієнти</em></h2>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">«Чудовий сервіс! Авто було подано вчасно, чисте та у відмінному стані. Менеджер допоміг підібрати оптимальний тариф.»</p>
+      <div class="testi-author">Олексій Коваленко</div>
+      <div class="testi-car">Volkswagen Tiguan</div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">«Брав BMW X5 на тиждень. Все оформили за 15 хвилин. Ціна справедлива, авто — вогонь. Рекомендую усім!»</p>
+      <div class="testi-author">Марина Іваненко</div>
+      <div class="testi-car">BMW X5</div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★☆</div>
+      <p class="testi-text">«Дуже зручно, що можна отримати авто прямо в аеропорту. Документи мінімальні, умови прозорі. Буду звертатись ще.»</p>
+      <div class="testi-author">Дмитро Петренко</div>
+      <div class="testi-car">Mazda 3</div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set min date for search inputs to today
+const today = new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type=date]').forEach(inp => inp.min = today);
+</script>
+{% endblock %}
+
+{% block footer %}
+<footer id="contacts">
+  <div class="footer-grid">
+    <div>
+      <span class="footer-logo-text">Auto<span>Rent</span></span>
+      <p class="footer-desc">Прокат автомобілів у Харкові. Економ, комфорт, бізнес та VIP класи. Доставка по місту та в аеропорт.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Навігація</h4>
+      <ul>
+        <li><a href="{% url 'catalog' %}">Каталог авто</a></li>
+        <li><a href="{% url 'conditions' %}">Умови прокату</a></li>
+        <li><a href="#why">Про компанію</a></li>
+        <li><a href="#contacts">Контакти</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Класи авто</h4>
+      <ul>
+        <li><a href="{% url 'catalog' %}?class=economy">Економ</a></li>
+        <li><a href="{% url 'catalog' %}?class=comfort">Комфорт</a></li>
+        <li><a href="{% url 'catalog' %}?class=business">Бізнес</a></li>
+        <li><a href="{% url 'catalog' %}?class=vip">VIP</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Контакти</h4>
+      <ul>
+        <li><a href="tel:+380670000000">+38 067 000 00 00</a></li>
+        <li><a href="mailto:info@autorent.ua">info@autorent.ua</a></li>
+        <li><a href="#">вул. Клочківська, 94а</a></li>
+        <li><a href="#">Пн–Нд: 8:00–22:00</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2024 AutoRent Харків. Всі права захищені.</div>
+    <div class="footer-phone-bottom">+38 067 000 00 00</div>
+  </div>
+</footer>
+{% endblock %}

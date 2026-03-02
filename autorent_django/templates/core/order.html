@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% block title %}Оформлення замовлення — AutoRent Харків{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb"><a href="{% url 'index' %}">Головна</a> → <a href="{% url 'catalog' %}">Каталог</a> → Оформлення</div>
+  <h1>Оформлення <em>замовлення</em></h1>
+  <p>Заповніть форму нижче для бронювання автомобіля.</p>
+</div>
+
+<section style="padding:40px 60px 80px;">
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start;">
+
+    <!-- FORM -->
+    <div>
+      <form method="post" id="orderForm">
+        {% csrf_token %}
+
+        {% if not car %}
+        <!-- Car Selection -->
+        <div class="order-block">
+          <div class="order-block-title">1. Оберіть автомобіль</div>
+          <select name="car" required class="order-select">
+            <option value="">— Оберіть авто —</option>
+            {% for c in cars %}
+            <option value="{{ c.pk }}" data-price-base="{{ c.price_base }}" data-price-prime="{{ c.price_prime }}" data-deposit="{{ c.deposit }}">
+              {{ c.full_name }} ({{ c.year }}) — від ${{ c.price_base }}/доба
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% else %}
+        <input type="hidden" name="car" value="{{ car.pk }}">
+        {% endif %}
+
+        <!-- Dates -->
+        <div class="order-block">
+          <div class="order-block-title">{% if car %}1{% else %}2{% endif %}. Дати та час</div>
+          <div class="order-grid-2">
+            <div class="order-field">
+              <label>Дата отримання</label>
+              <input type="date" name="date_from" id="dateFrom" required>
+            </div>
+            <div class="order-field">
+              <label>Дата повернення</label>
+              <input type="date" name="date_to" id="dateTo" required>
+            </div>
+          </div>
+          <div class="order-field" style="max-width:200px;">
+            <label>Час отримання</label>
+            <input type="time" name="time_from" value="10:00">
+          </div>
+        </div>
+
+        <!-- Pickup -->
+        <div class="order-block">
+          <div class="order-block-title">{% if car %}2{% else %}3{% endif %}. Місце отримання</div>
+          {% for val, label in pickups %}
+          <label class="radio-option">
+            <input type="radio" name="pickup_location" value="{{ val }}" {% if forloop.first %}checked{% endif %}>
+            <span class="radio-label">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+
+        <!-- Tariff -->
+        <div class="order-block">
+          <div class="order-block-title">{% if car %}3{% else %}4{% endif %}. Тариф</div>
+          <div class="tariff-grid">
+            <label class="tariff-option">
+              <input type="radio" name="tariff" value="base" checked>
+              <div class="tariff-card">
+                <div class="tariff-name">Base</div>
+                {% if car %}<div class="tariff-price">${{ car.price_base }}/доба</div>{% endif %}
+                <div class="tariff-desc">Зі заставою ${{ car.deposit|default:'1500' }}</div>
+              </div>
+            </label>
+            <label class="tariff-option">
+              <input type="radio" name="tariff" value="prime">
+              <div class="tariff-card">
+                <div class="tariff-name">Prime</div>
+                {% if car %}<div class="tariff-price">${{ car.price_prime }}/доба</div>{% endif %}
+                <div class="tariff-desc">Без застави (дорожче)</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Payment -->
+        <div class="order-block">
+          <div class="order-block-title">{% if car %}4{% else %}5{% endif %}. Спосіб оплати</div>
+          {% for val, label in payments %}
+          <label class="radio-option">
+            <input type="radio" name="payment_method" value="{{ val }}" {% if forloop.first %}checked{% endif %}>
+            <span class="radio-label">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+
+        <!-- Extras -->
+        <div class="order-block">
+          <div class="order-block-title">{% if car %}5{% else %}6{% endif %}. Додаткові послуги</div>
+          <div class="extras-grid">
+            <label class="extra-option"><input type="checkbox" id="extra_gps" name="extra_gps"><span>📡 GPS навігатор <em>+$5/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_child_seat" name="extra_child_seat"><span>🪑 Дитяче крісло <em>+$5/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_wifi" name="extra_wifi"><span>📶 Wi-Fi роутер <em>+$8/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_driver" name="extra_driver"><span>👤 Додатковий водій <em>безкоштовно</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_tire" name="extra_tire"><span>🛞 Захист шин <em>+$10/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_green_card" name="extra_green_card"><span>🌿 Зелена картка <em>+$15</em></span></label>
+          </div>
+        </div>
+
+        <!-- Promo -->
+        <div class="order-block">
+          <div class="order-field" style="max-width:300px;">
+            <label>Промокод (за наявності)</label>
+            <input type="text" name="promo_code" placeholder="AUTORENT2025">
+          </div>
+        </div>
+
+        <button type="submit" class="btn-order-submit">Підтвердити замовлення</button>
+      </form>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="order-summary" style="position:sticky;top:88px;">
+      {% if car %}
+      <div class="sum-car">
+        <div class="sum-car-img">{{ car.emoji }}</div>
+        <div>
+          <div class="sum-car-name">{{ car.full_name }}</div>
+          <div class="sum-car-class">{{ car.get_car_class_display }} · {{ car.year }}</div>
+        </div>
+      </div>
+      {% endif %}
+      <div class="sum-block">
+        <div class="sum-row"><span>Тривалість</span><span id="sumDays">— днів</span></div>
+        <div class="sum-row"><span>Тарифна вартість</span><span id="sumBase">$—</span></div>
+        <div class="sum-row"><span>Додаткові послуги</span><span id="sumExtras">$0</span></div>
+        <div class="sum-divider"></div>
+        <div class="sum-row sum-total"><span>До сплати</span><span id="sumTotal">$—</span></div>
+        <div class="sum-row"><span style="color:var(--gray);">Застава</span><span id="sumDeposit" style="color:var(--gray);">{% if car %}${{ car.deposit }}{% else %}$—{% endif %}</span></div>
+      </div>
+      <div class="sum-note">📋 Замовлення потребує підтвердження менеджером протягом 30 хвилин.</div>
+    </div>
+
+  </div>
+</section>
+
+<style>
+.order-block{background:var(--dark2);border:1px solid var(--border);padding:24px;margin-bottom:16px;}
+.order-block-title{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);margin-bottom:18px;}
+.order-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.order-field{margin-bottom:14px;}
+.order-field label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.order-field input,.order-select{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .3s;}
+.order-field input:focus,.order-select:focus{border-color:var(--gold);}
+.radio-option{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--dark3);border:1px solid rgba(255,255,255,0.04);cursor:pointer;margin-bottom:6px;transition:.2s;}
+.radio-option:hover{border-color:var(--border);}
+.radio-option input{accent-color:var(--gold);}
+.radio-label{font-size:13px;color:var(--white);}
+.tariff-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.tariff-option{cursor:pointer;}
+.tariff-option input{display:none;}
+.tariff-card{background:var(--dark3);border:2px solid rgba(255,255,255,0.06);padding:16px;transition:.2s;}
+.tariff-option:has(input:checked) .tariff-card{border-color:var(--gold);background:rgba(201,168,76,0.06);}
+.tariff-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);margin-bottom:4px;}
+.tariff-price{font-size:20px;color:var(--gold);font-family:'Playfair Display',serif;margin-bottom:4px;}
+.tariff-desc{font-size:12px;color:var(--gray);}
+.extras-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.extra-option{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--dark3);border:1px solid rgba(255,255,255,0.04);cursor:pointer;font-size:13px;color:var(--gray);}
+.extra-option em{color:var(--gold);font-style:normal;}
+.extra-option input{accent-color:var(--gold);}
+.btn-order-submit{width:100%;background:var(--gold);color:var(--black);padding:17px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;border:none;cursor:pointer;transition:background .3s;margin-top:8px;}
+.btn-order-submit:hover{background:var(--gold-light);}
+.order-summary{background:var(--dark2);border:1px solid var(--border);padding:24px;}
+.sum-car{display:flex;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:16px;}
+.sum-car-img{font-size:40px;}
+.sum-car-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);}
+.sum-car-class{font-size:12px;color:var(--gray);margin-top:2px;}
+.sum-block{}
+.sum-row{display:flex;justify-content:space-between;padding:10px 0;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,0.03);}
+.sum-row span:last-child{color:var(--white);}
+.sum-total{font-size:16px!important;font-weight:500;}
+.sum-total span:last-child{color:var(--gold)!important;font-family:'Playfair Display',serif;font-size:20px!important;}
+.sum-divider{height:1px;background:var(--border);margin:8px 0;}
+.sum-note{margin-top:16px;font-size:12px;color:var(--gray);line-height:1.6;padding:12px;background:rgba(201,168,76,0.05);border:1px solid var(--border);}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  // --- Дані авто з Django-контексту ---
+  {% if car %}
+  var PRICE_BASE  = {{ car.price_base }};
+  var PRICE_PRIME = {{ car.price_prime }};
+  var DEPOSIT     = {{ car.deposit }};
+  {% else %}
+  var PRICE_BASE = 0, PRICE_PRIME = 0, DEPOSIT = 0;
+  {% endif %}
+
+  var days = 0;
+
+  function pluralDays(n) {
+    if (n % 10 === 1 && n % 100 !== 11) return 'день';
+    if ([2,3,4].includes(n % 10) && ![12,13,14].includes(n % 100)) return 'дні';
+    return 'днів';
+  }
+
+  function calcDays() {
+    var from = document.getElementById('dateFrom').value;
+    var to   = document.getElementById('dateTo').value;
+    if (from && to) {
+      var d = Math.round((new Date(to) - new Date(from)) / 86400000);
+      days = d > 0 ? d : 0;
+    } else {
+      days = 0;
+    }
+    updateSummary();
+  }
+
+  function updateSummary() {
+    var isPrime   = document.querySelector('input[name=tariff][value=prime]').checked;
+    var dailyRate = isPrime ? PRICE_PRIME : PRICE_BASE;
+    var base      = dailyRate * days;
+
+    var extras = 0;
+    if (document.getElementById('extra_gps').checked)        extras += 5  * days;
+    if (document.getElementById('extra_child_seat').checked) extras += 5  * days;
+    if (document.getElementById('extra_wifi').checked)       extras += 8  * days;
+    if (document.getElementById('extra_tire').checked)       extras += 10 * days;
+    if (document.getElementById('extra_green_card').checked) extras += 15;
+
+    document.getElementById('sumDays').textContent    = days > 0 ? days + ' ' + pluralDays(days) : '— днів';
+    document.getElementById('sumBase').textContent    = days > 0 ? '$' + base : '$—';
+    document.getElementById('sumExtras').textContent  = '$' + extras;
+    document.getElementById('sumTotal').textContent   = days > 0 ? '$' + (base + extras) : '$—';
+    document.getElementById('sumDeposit').textContent = isPrime ? '$0 (Prime тариф)' : (DEPOSIT > 0 ? '$' + DEPOSIT : '$—');
+  }
+
+  // --- Ініціалізація після завантаження DOM ---
+  document.addEventListener('DOMContentLoaded', function() {
+
+    // Мін. дата — сьогодні
+    var today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateFrom').min = today;
+    document.getElementById('dateTo').min   = today;
+
+    // Якщо авто вибирається з дропдауну (без прив'язаного авто)
+    {% if not car %}
+    var carSel = document.querySelector('select[name=car]');
+    if (carSel) {
+      carSel.addEventListener('change', function() {
+        var opt = this.options[this.selectedIndex];
+        PRICE_BASE  = parseFloat(opt.dataset.priceBase  || 0);
+        PRICE_PRIME = parseFloat(opt.dataset.pricePrime || 0);
+        DEPOSIT     = parseFloat(opt.dataset.deposit    || 0);
+        updateSummary();
+      });
+    }
+    {% endif %}
+
+    // Дати
+    document.getElementById('dateFrom').addEventListener('change', calcDays);
+    document.getElementById('dateTo').addEventListener('change', calcDays);
+
+    // Тариф
+    document.querySelectorAll('input[name=tariff]').forEach(function(r) {
+      r.addEventListener('change', updateSummary);
+    });
+
+    // Додаткові послуги — через id
+    ['extra_gps','extra_child_seat','extra_wifi','extra_driver','extra_tire','extra_green_card'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('change', updateSummary);
+    });
+
+    // Валідація
+    document.getElementById('orderForm').addEventListener('submit', function(e) {
+      var from = document.getElementById('dateFrom').value;
+      var to   = document.getElementById('dateTo').value;
+      if (!from || !to) {
+        e.preventDefault();
+        alert('Будь ласка, вкажіть дати оренди!');
+        return;
+      }
+      if (new Date(to) <= new Date(from)) {
+        e.preventDefault();
+        alert('Дата повернення має бути пізніше дати отримання!');
+      }
+    });
+
+    // Початковий розрахунок
+    updateSummary();
+  });
+})();
+</script>
+{% endblock %}

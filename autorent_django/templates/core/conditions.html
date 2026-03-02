@@ -1,0 +1,459 @@
+{% extends 'base.html' %}
+{% block title %}Умови прокату — AutoRent Харків{% endblock %}
+
+{% block extra_css %}
+<style>
+
+:root {
+  --gold: #c9a84c; --gold-light: #e8c96a;
+  --black: #0a0a0a; --dark: #111111; --dark2: #1a1a1a; --dark3: #222222;
+  --white: #f5f0e8; --gray: #888880; --border: rgba(201,168,76,0.2);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-serif; font-weight:300; }
+
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 60px; height:72px;
+  background:rgba(10,10,10,0.95); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--gold); letter-spacing:2px; text-decoration:none; }
+.logo span { color:var(--white); }
+.nav-links { display:flex; gap:36px; list-style:none; }
+.nav-links a { color:var(--gray); text-decoration:none; font-size:13px; letter-spacing:1px; text-transform:uppercase; transition:color .3s; }
+.nav-links a:hover, .nav-links a.active { color:var(--gold); }
+.nav-cta { background:var(--gold); color:var(--black) !important; padding:10px 24px; font-weight:500 !important; }
+.nav-phone { font-size:13px; color:var(--white); }
+
+.page-header {
+  padding:140px 60px 60px;
+  background:linear-gradient(180deg,var(--dark2) 0%,var(--black) 100%);
+  border-bottom:1px solid var(--border);
+}
+.breadcrumb { font-size:12px; color:var(--gray); margin-bottom:20px; }
+.breadcrumb a { color:var(--gold); text-decoration:none; }
+.page-header h1 { font-family:'Playfair Display',serif; font-size:clamp(36px,5vw,60px); font-weight:900; }
+.page-header h1 em { font-style:italic; color:var(--gold); }
+.page-header p { color:var(--gray); font-size:15px; margin-top:12px; max-width:560px; line-height:1.6; }
+
+/* TABS */
+.tabs-nav {
+  display:flex; gap:0;
+  padding:0 60px;
+  border-bottom:1px solid var(--border);
+  background:var(--dark2);
+  overflow-x:auto;
+}
+.tab-btn {
+  padding:20px 32px;
+  background:none; border:none; color:var(--gray);
+  font-family:'DM Sans',sans-serif; font-size:13px; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; border-bottom:3px solid transparent;
+  transition:color .3s, border-color .3s;
+  white-space:nowrap;
+}
+.tab-btn:hover { color:var(--white); }
+.tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); }
+
+.tab-content { display:none; }
+.tab-content.active { display:block; }
+
+/* CONTENT */
+.content-layout { display:grid; grid-template-columns:1fr 340px; gap:60px; padding:60px 60px; }
+
+.prose h2 {
+  font-family:'Playfair Display',serif; font-size:28px;
+  color:var(--white); margin-bottom:20px; margin-top:48px;
+}
+.prose h2:first-child { margin-top:0; }
+.prose h2 em { font-style:italic; color:var(--gold); }
+.prose p { font-size:15px; color:var(--gray); line-height:1.8; margin-bottom:16px; }
+.prose ul { list-style:none; margin-bottom:20px; display:grid; gap:10px; }
+.prose ul li {
+  font-size:14px; color:var(--gray); line-height:1.6;
+  padding:12px 16px 12px 40px;
+  position:relative;
+  background:rgba(201,168,76,0.04);
+  border-left:2px solid var(--border);
+}
+.prose ul li::before { content:'→'; position:absolute; left:14px; color:var(--gold); }
+.prose ul li strong { color:var(--white); }
+
+.highlight-box {
+  background:rgba(201,168,76,0.06);
+  border:1px solid var(--border);
+  padding:24px 28px;
+  margin:28px 0;
+}
+.highlight-box p { font-size:14px; color:var(--white); margin:0; }
+.highlight-box .highlight-tag { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:10px; display:block; }
+
+/* PRICING TABLE */
+.price-table { width:100%; border-collapse:collapse; margin:24px 0; }
+.price-table th {
+  background:var(--dark3); color:var(--gold);
+  font-size:11px; letter-spacing:2px; text-transform:uppercase;
+  padding:14px 20px; text-align:left; border-bottom:1px solid var(--border);
+}
+.price-table td { padding:14px 20px; font-size:14px; color:var(--gray); border-bottom:1px solid rgba(255,255,255,0.04); }
+.price-table tr:hover td { background:rgba(255,255,255,0.02); color:var(--white); }
+.price-table .highlight { color:var(--gold); font-family:'Playfair Display',serif; font-size:16px; }
+
+/* FAQ */
+.faq-item { border-bottom:1px solid var(--border); }
+.faq-q {
+  width:100%; background:none; border:none; color:var(--white);
+  padding:20px 0; display:flex; justify-content:space-between; align-items:center;
+  font-family:'DM Sans',sans-serif; font-size:15px; cursor:pointer;
+  text-align:left; transition:color .2s;
+}
+.faq-q:hover { color:var(--gold); }
+.faq-arrow { color:var(--gold); font-size:18px; transition:transform .3s; flex-shrink:0; margin-left:16px; }
+.faq-item.open .faq-arrow { transform:rotate(45deg); }
+.faq-a { display:none; padding:0 0 20px; font-size:14px; color:var(--gray); line-height:1.7; }
+.faq-item.open .faq-a { display:block; }
+
+/* SIDEBAR */
+.sidebar-sticky { position:sticky; top:100px; }
+.info-card {
+  background:var(--dark2); border:1px solid var(--border);
+  padding:32px; margin-bottom:20px;
+}
+.info-card h3 { font-family:'Playfair Display',serif; font-size:18px; color:var(--white); margin-bottom:20px; }
+.info-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+.info-row:last-child { border:none; }
+.info-label { font-size:12px; color:var(--gray); }
+.info-value { font-size:13px; color:var(--white); font-weight:500; }
+.info-value.gold { color:var(--gold); }
+
+.cta-card {
+  background:var(--gold); padding:32px;
+}
+.cta-card h3 { font-family:'Playfair Display',serif; font-size:20px; color:var(--black); margin-bottom:12px; }
+.cta-card p { font-size:13px; color:rgba(0,0,0,0.7); line-height:1.6; margin-bottom:20px; }
+.cta-card a {
+  display:block; text-align:center;
+  background:var(--black); color:var(--gold);
+  padding:14px; font-size:12px; letter-spacing:1.5px; text-transform:uppercase;
+  text-decoration:none; font-weight:500;
+  transition:background .3s;
+}
+.cta-card a:hover { background:#111; }
+
+footer {
+  background:var(--dark); border-top:1px solid var(--border);
+  padding:40px 60px;
+  display:flex; justify-content:space-between; align-items:center;
+  margin-top:40px;
+}
+.footer-logo { font-family:'Playfair Display',serif; font-size:20px; color:var(--gold); text-decoration:none; }
+.footer-logo span { color:var(--white); }
+.footer-copy { font-size:12px; color:var(--gray); }
+.footer-phone { font-size:15px; color:var(--gold); font-family:'Playfair Display',serif; }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb"><a href="{% url 'index' %}">Головна</a> → Умови прокату</div>
+  <h1>Умови <em>прокату</em></h1>
+  <p>Прозорі та зрозумілі умови оренди автомобілів. Ніяких прихованих платежів та неприємних сюрпризів.</p>
+</div>
+
+<!-- TABS NAV -->
+<div class="tabs-nav">
+  <button class="tab-btn active" onclick="showTab('docs')">Документи</button>
+  <button class="tab-btn" onclick="showTab('prices')">Тарифи</button>
+  <button class="tab-btn" onclick="showTab('insurance')">Страхування</button>
+  <button class="tab-btn" onclick="showTab('delivery')">Доставка</button>
+  <button class="tab-btn" onclick="showTab('faq')">Часті запитання</button>
+</div>
+
+<!-- TAB: DOCUMENTS -->
+<div id="tab-docs" class="tab-content active">
+  <div class="content-layout">
+    <div class="prose">
+      <h2>Необхідні <em>документи</em></h2>
+      <p>Для оформлення договору оренди автомобіля клієнту необхідно надати мінімальний пакет документів. Ми цінуємо ваш час і намагаємося зробити процес максимально швидким.</p>
+      <ul>
+        <li><strong>Паспорт</strong> громадянина України або закордонний паспорт для іноземців</li>
+        <li><strong>Ідентифікаційний код</strong> (ІПН) для громадян України</li>
+        <li><strong>Водійське посвідчення</strong> категорії B (або відповідної категорії)</li>
+        <li><strong>Кредитна або дебетова картка</strong> для блокування застави</li>
+      </ul>
+
+      <div class="highlight-box">
+        <span class="highlight-tag">Важливо</span>
+        <p>Водійський стаж орендаря має бути не менше 2 років з моменту отримання посвідчення.</p>
+      </div>
+
+      <h2>Вікові <em>обмеження</em></h2>
+      <ul>
+        <li>Від <strong>21 року</strong> — автомобілі класу економ, комфорт, бізнес</li>
+        <li>Від <strong>23 років</strong> — автомобілі класу VIP та кабріолети</li>
+        <li>Верхнього вікового обмеження немає</li>
+      </ul>
+
+      <h2>Виїзд за <em>кордон</em></h2>
+      <p>Виїзд за межі України на орендованому автомобілі можливий лише за попередньою письмовою згодою компанії. Необхідно повідомити менеджера при підписанні договору та сплатити додатковий збір.</p>
+      <ul>
+        <li>Дозвіл на виїзд оформлюється безкоштовно за 24 години</li>
+        <li>Доступні напрямки: Польща, Словаччина, Угорщина, Румунія</li>
+        <li>Необхідний міжнародний поліс страхування (Green Card)</li>
+      </ul>
+    </div>
+    <div class="sidebar-sticky">
+      <div class="info-card">
+        <h3>Коротко про умови</h3>
+        <div class="info-row"><span class="info-label">Мінімальний вік</span><span class="info-value">21 рік</span></div>
+        <div class="info-row"><span class="info-label">Стаж водіння</span><span class="info-value">від 2 років</span></div>
+        <div class="info-row"><span class="info-label">Мінімальний термін</span><span class="info-value">1 доба</span></div>
+        <div class="info-row"><span class="info-label">Застава (Base)</span><span class="info-value gold">500–3000 USD</span></div>
+        <div class="info-row"><span class="info-label">Застава (Prime)</span><span class="info-value gold">0 USD</span></div>
+        <div class="info-row"><span class="info-label">Робочі години</span><span class="info-value">24/7</span></div>
+      </div>
+      <div class="cta-card">
+        <h3>Є питання?</h3>
+        <p>Наші менеджери готові відповісти на будь-які запитання щодо умов оренди.</p>
+        <a href="tel:+380670000000">Зателефонувати</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: PRICES -->
+<div id="tab-prices" class="tab-content">
+  <div class="content-layout">
+    <div class="prose">
+      <h2>Тарифні <em>плани</em></h2>
+      <p>Ми пропонуємо два тарифні плани: <strong>Base</strong> (зі заставою) та <strong>Prime</strong> (без застави, повне страхування включено). Чим довший термін оренди — тим вигідніша ціна.</p>
+
+      <table class="price-table">
+        <thead>
+          <tr><th>Клас авто</th><th>1–2 доби</th><th>3–5 діб</th><th>8–14 діб</th><th>29+ діб</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Економ</td><td class="highlight">18 USD</td><td>16 USD</td><td>14 USD</td><td>12 USD</td></tr>
+          <tr><td>Комфорт</td><td class="highlight">55 USD</td><td>49 USD</td><td>45 USD</td><td>32 USD</td></tr>
+          <tr><td>Бізнес</td><td class="highlight">100 USD</td><td>90 USD</td><td>80 USD</td><td>60 USD</td></tr>
+          <tr><td>Кросовер</td><td class="highlight">80 USD</td><td>70 USD</td><td>60 USD</td><td>50 USD</td></tr>
+          <tr><td>VIP</td><td class="highlight">200 USD</td><td>180 USD</td><td>160 USD</td><td>140 USD</td></tr>
+          <tr><td>Мінівен</td><td class="highlight">140 USD</td><td>130 USD</td><td>120 USD</td><td>99 USD</td></tr>
+        </tbody>
+      </table>
+
+      <div class="highlight-box">
+        <span class="highlight-tag">Додаткові послуги</span>
+        <p>GPS-навігатор: +5 USD/доба · Дитяче крісло: +5 USD/доба · Wi-Fi роутер: +8 USD/доба · Доставка по місту: від 200 грн</p>
+      </div>
+
+      <h2>Умови <em>оплати</em></h2>
+      <ul>
+        <li>Готівка в офісі при отриманні автомобіля</li>
+        <li>Банківська картка (Visa/Mastercard)</li>
+        <li>Безготівковий розрахунок для юридичних осіб</li>
+        <li>Застава блокується на картці, повертається після повернення авто</li>
+      </ul>
+    </div>
+    <div class="sidebar-sticky">
+      <div class="info-card">
+        <h3>Тариф Prime</h3>
+        <div class="info-row"><span class="info-label">Застава</span><span class="info-value gold">0 USD</span></div>
+        <div class="info-row"><span class="info-label">Франшиза</span><span class="info-value gold">0 USD</span></div>
+        <div class="info-row"><span class="info-label">Доплата до Base</span><span class="info-value">+30%</span></div>
+        <div class="info-row"><span class="info-label">Страхування</span><span class="info-value">Повне</span></div>
+      </div>
+      <div class="cta-card">
+        <h3>Обрати авто</h3>
+        <p>Переглянути наявні автомобілі та вибрати зручний тариф.</p>
+        <a href="{% url 'catalog' %}">Перейти до каталогу</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: INSURANCE -->
+<div id="tab-insurance" class="tab-content">
+  <div class="content-layout">
+    <div class="prose">
+      <h2>Страхування <em>автомобілів</em></h2>
+      <p>Весь автопарк компанії застрахований за ОСЦПВ та КАСКО. Ми пропонуємо два рівні страхового захисту залежно від обраного тарифу.</p>
+
+      <h2>Тариф <em>Base</em> — з заставою</h2>
+      <ul>
+        <li>ОСЦПВ — обов'язкове страхування цивільної відповідальності</li>
+        <li>КАСКО — від пошкоджень та угону, <strong>франшиза від 500 USD</strong></li>
+        <li>Застава блокується на картці клієнта</li>
+        <li>При ДТП з вини орендаря сплачується франшиза в розмірі застави</li>
+      </ul>
+
+      <h2>Тариф <em>Prime</em> — без застави</h2>
+      <ul>
+        <li>ОСЦПВ + КАСКО <strong>без франшизи</strong></li>
+        <li>Застава не потрібна</li>
+        <li>При ДТП з вини орендаря — <strong>нульова відповідальність</strong></li>
+        <li>Включено захист від угону, стихійних лих, вандалізму</li>
+      </ul>
+
+      <div class="highlight-box">
+        <span class="highlight-tag">Не покривається страхуванням</span>
+        <p>Пошкодження під впливом алкоголю або наркотиків · Умисне пошкодження · Порушення умов договору · Пошкодження шин та дисків (якщо не ДТП)</p>
+      </div>
+    </div>
+    <div class="sidebar-sticky">
+      <div class="info-card">
+        <h3>Порівняння тарифів</h3>
+        <div class="info-row"><span class="info-label">ОСЦПВ</span><span class="info-value gold">Base + Prime</span></div>
+        <div class="info-row"><span class="info-label">КАСКО</span><span class="info-value gold">Base + Prime</span></div>
+        <div class="info-row"><span class="info-label">Нульова франшиза</span><span class="info-value gold">Лише Prime</span></div>
+        <div class="info-row"><span class="info-label">Без застави</span><span class="info-value gold">Лише Prime</span></div>
+      </div>
+      <div class="cta-card">
+        <h3>Рекомендуємо Prime</h3>
+        <p>Їздіть без турбот. Доплата лише +30% до базового тарифу.</p>
+        <a href="{% url 'catalog' %}">Обрати авто</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: DELIVERY -->
+<div id="tab-delivery" class="tab-content">
+  <div class="content-layout">
+    <div class="prose">
+      <h2>Доставка та <em>видача</em> автомобіля</h2>
+      <p>Для вашої зручності ми пропонуємо кілька варіантів отримання та повернення автомобіля.</p>
+
+      <h2>Пункти <em>отримання</em></h2>
+      <ul>
+        <li><strong>Офіс компанії</strong> — вул. Клочківська, 94а (безкоштовно)</li>
+        <li><strong>Аеропорт «Харків»</strong> — зустріч у зоні прильоту (безкоштовно)</li>
+        <li><strong>Залізничний вокзал</strong> — біля головного входу (безкоштовно)</li>
+        <li><strong>Доставка по місту</strong> — будь-яка адреса у межах міста (+200 грн)</li>
+        <li><strong>Доставка за місто</strong> — за узгодженням, від 500 грн</li>
+      </ul>
+
+      <h2>Повернення <em>автомобіля</em></h2>
+      <ul>
+        <li>Повернення в офіс або будь-який зручний пункт</li>
+        <li>Вивезення авто водієм компанії — від 200 грн</li>
+        <li>Повернення в іншому місті — за попередньою домовленістю</li>
+        <li>При затримці понад 2 години стягується добова вартість</li>
+      </ul>
+
+      <div class="highlight-box">
+        <span class="highlight-tag">Стан при поверненні</span>
+        <p>Автомобіль повертається у тому ж стані, що й при отриманні. Паливо — повний бак. Пошкодження фіксуються в акті приймання-передачі.</p>
+      </div>
+    </div>
+    <div class="sidebar-sticky">
+      <div class="info-card">
+        <h3>Графік роботи</h3>
+        <div class="info-row"><span class="info-label">Офіс</span><span class="info-value">8:00 – 22:00</span></div>
+        <div class="info-row"><span class="info-label">Аеропорт</span><span class="info-value">24/7</span></div>
+        <div class="info-row"><span class="info-label">Вокзал</span><span class="info-value">8:00 – 22:00</span></div>
+        <div class="info-row"><span class="info-label">Підтримка</span><span class="info-value gold">24/7</span></div>
+      </div>
+      <div class="cta-card">
+        <h3>Потрібна доставка?</h3>
+        <p>Зателефонуйте нам — узгодимо зручне місце і час.</p>
+        <a href="tel:+380670000000">+38 067 000 00 00</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB: FAQ -->
+<div id="tab-faq" class="tab-content">
+  <div class="content-layout">
+    <div class="prose">
+      <h2>Часті <em>запитання</em></h2>
+
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Які документи потрібні для оренди?
+          <span class="faq-arrow">+</span>
+        </button>
+        <div class="faq-a">Паспорт, ідентифікаційний код, водійське посвідчення та картка для блокування застави. Весь процес займає 10–15 хвилин.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Чи можна орендувати авто без застави?
+          <span class="faq-arrow">+</span>
+        </button>
+        <div class="faq-a">Так, при виборі тарифу Prime застава не потрібна. Вартість трохи вища (+30%), але ви їдете спокійно — без замороженої суми на картці.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Чи можна виїхати на орендованому авто за кордон?
+          <span class="faq-arrow">+</span>
+        </button>
+        <div class="faq-a">Так, але необхідна попередня письмова згода компанії та міжнародний страховий поліс (Green Card). Повідомте менеджера при оформленні договору.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Що буде, якщо я поверну авто із запізненням?
+          <span class="faq-arrow">+</span>
+        </button>
+        <div class="faq-a">Допустиме запізнення — 2 години. При затримці понад 2 години стягується повна вартість додаткової доби. Якщо знаєте, що затримаєтесь — зателефонуйте нам заздалегідь, спробуємо вирішити питання.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Чи є доставка авто в аеропорт?
+          <span class="faq-arrow">+</span>
+        </button>
+        <div class="faq-a">Так, доставка та зустріч в аеропорту «Харків» безкоштовна. Також безкоштовно зустрінемо на залізничному вокзалі.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Як скасувати бронювання?
+          <span class="faq-arrow">+</span>
+        </button>
+        <div class="faq-a">Безкоштовне скасування можливе за 24 години до початку оренди. При скасуванні менш ніж за 24 години утримується вартість 1 доби.</div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q" onclick="toggleFaq(this)">
+          Чи можна передати кермо іншій людині?
+          <span class="faq-arrow">+</span>
+        </button>
+        <div class="faq-a">Так, можна вписати додаткового водія в договір. Необхідно надати його паспорт та водійське посвідчення. Послуга безкоштовна.</div>
+      </div>
+    </div>
+    <div class="sidebar-sticky">
+      <div class="info-card">
+        <h3>Не знайшли відповідь?</h3>
+        <div style="font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:20px">Зв'яжіться з нашим менеджером — відповімо на будь-яке питання.</div>
+        <div class="info-row"><span class="info-label">Телефон</span><span class="info-value gold">067 000 00 00</span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bcd5d2dad3fcddc9c8d3ced9d2c892c9dd">[email&#160;protected]</a></span></div>
+        <div class="info-row"><span class="info-label">Telegram</span><span class="info-value">@autorent_kh</span></div>
+      </div>
+      <div class="cta-card">
+        <h3>Готові їхати?</h3>
+        <p>Оберіть авто та оформіть бронювання онлайн за 2 хвилини.</p>
+        <a href="{% url 'catalog' %}">Перейти до каталогу</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  docu
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  docu
+</script>
+{% endblock %}

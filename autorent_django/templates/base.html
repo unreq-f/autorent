@@ -1,0 +1,86 @@
+{% load static %}<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}AutoRent Харків — Прокат автомобілів{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/main.css' %}">
+<style>
+/* Django-specific additions */
+.nav-auth { display:flex; align-items:center; gap:12px; }
+.nav-user-btn { font-size:12px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; border:1px solid var(--border); padding:9px 18px; text-decoration:none; transition:.2s; white-space:nowrap; }
+.nav-user-btn:hover { border-color:var(--gold); background:rgba(201,168,76,0.06); }
+.nav-logout { font-size:12px; color:var(--gray); text-decoration:none; letter-spacing:1px; text-transform:uppercase; padding:4px; transition:color .2s; }
+.nav-logout:hover { color:var(--red, #cf6679); }
+.nav-manager-btn { font-size:11px; color:var(--gray); padding:8px 14px; border:1px solid rgba(255,255,255,0.08); text-decoration:none; letter-spacing:1px; text-transform:uppercase; transition:.2s; }
+.nav-manager-btn:hover { border-color:var(--border); color:var(--white); }
+.django-messages { position:fixed; top:80px; right:20px; z-index:999; display:grid; gap:8px; max-width:400px; pointer-events:none; }
+.django-msg { background:#1a1a1a; border:1px solid var(--border); padding:14px 48px 14px 18px; font-size:13px; color:var(--white); position:relative; pointer-events:all; animation:msgIn .3s ease; box-shadow:0 4px 24px rgba(0,0,0,0.5); }
+.django-msg button { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray); cursor:pointer; font-size:20px; line-height:1; }
+.django-msg.success { border-left:3px solid #4caf7d; }
+.django-msg.error { border-left:3px solid #cf6679; }
+.django-msg.warning { border-left:3px solid #e0924c; }
+.django-msg.info { border-left:3px solid #5b9bd5; }
+@keyframes msgIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+</style>
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<nav>
+  <a href="{% url 'index' %}" class="logo">Auto<span>Rent</span></a>
+  <ul class="nav-links">
+    <li><a href="{% url 'catalog' %}" {% if request.resolver_match.url_name == 'catalog' %}class="active"{% endif %}>Каталог</a></li>
+    <li><a href="{% url 'conditions' %}" {% if request.resolver_match.url_name == 'conditions' %}class="active"{% endif %}>Умови</a></li>
+    <li><a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}class="active"{% endif %}>Про нас</a></li>
+    <li><a href="{% url 'contacts' %}" {% if request.resolver_match.url_name == 'contacts' %}class="active"{% endif %}>Контакти</a></li>
+    <li><a href="{% url 'booking_quick' %}" class="nav-cta">Забронювати</a></li>
+  </ul>
+  <div class="nav-auth">
+    <div class="nav-phone"><a href="tel:+380670000000" style="color:var(--white);text-decoration:none;">+38 067 000 00 00</a></div>
+    {% if user.is_authenticated %}
+      {% if user.is_staff %}<a href="{% url 'manager_dashboard' %}" class="nav-manager-btn">⚙ Менеджер</a>{% endif %}
+      <a href="{% url 'profile' %}" class="nav-user-btn">👤 {{ user.first_name|default:user.username }}</a>
+      <a href="{% url 'logout' %}" class="nav-logout">Вийти</a>
+    {% else %}
+      <a href="{% url 'auth' %}" class="nav-user-btn">Увійти</a>
+    {% endif %}
+  </div>
+</nav>
+
+{% if messages %}
+<div class="django-messages">
+  {% for msg in messages %}
+  <div class="django-msg {{ msg.tags }}">
+    {{ msg }}
+    <button onclick="this.parentElement.remove()">×</button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+{% block footer %}
+<footer>
+  <a href="{% url 'index' %}" class="footer-logo">Auto<span>Rent</span></a>
+  <div class="footer-copy">© 2025 AutoRent Харків</div>
+  <div class="footer-phone">+38 067 000 00 00</div>
+</footer>
+{% endblock %}
+
+<script src="{% static 'js/main.js' %}"></script>
+{% block extra_js %}{% endblock %}
+<script>
+  // Auto-dismiss messages after 5s
+  setTimeout(() => {
+    document.querySelectorAll('.django-msg').forEach(m => {
+      m.style.transition = 'opacity .4s';
+      m.style.opacity = '0';
+      setTimeout(() => m.remove(), 400);
+    });
+  }, 5000);
+</script>
+</body>
+</html>

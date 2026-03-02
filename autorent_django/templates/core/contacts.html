@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Контакти — AutoRent Харків{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb"><a href="{% url 'index' %}">Головна</a> → Контакти</div>
+  <h1>Зв'яжіться <em>з нами</em></h1>
+  <p>Ми завжди на зв'язку. Напишіть, зателефонуйте або завітайте до нашого офісу.</p>
+</div>
+
+<section class="contacts-section">
+  <div class="contacts-grid">
+    <div>
+      <div class="contact-blocks">
+        <div class="contact-block">
+          <div class="cb-icon">📞</div>
+          <div>
+            <div class="cb-label">Телефон</div>
+            <div class="cb-value"><a href="tel:+380670000000">+38 067 000 00 00</a></div>
+            <div class="cb-sub">Цілодобово, 7 днів на тиждень</div>
+          </div>
+        </div>
+        <div class="contact-block">
+          <div class="cb-icon">✉️</div>
+          <div>
+            <div class="cb-label">Email</div>
+            <div class="cb-value"><a href="mailto:info@autorent.ua">info@autorent.ua</a></div>
+            <div class="cb-sub">Відповідаємо протягом 1 години</div>
+          </div>
+        </div>
+        <div class="contact-block">
+          <div class="cb-icon">📍</div>
+          <div>
+            <div class="cb-label">Головний офіс</div>
+            <div class="cb-value">вул. Клочківська, 94а</div>
+            <div class="cb-sub">Харків, Україна · Пн–Нд 8:00–22:00</div>
+          </div>
+        </div>
+        <div class="contact-block">
+          <div class="cb-icon">✈️</div>
+          <div>
+            <div class="cb-label">Аеропорт «Харків»</div>
+            <div class="cb-value">Термінал прильоту, стійка AutoRent</div>
+            <div class="cb-sub">Цілодобово</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:28px;">
+        <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;">Ми в соцмережах</div>
+        <div class="social-row">
+          <a class="soc-btn" href="#">📘</a>
+          <a class="soc-btn" href="#">✈️</a>
+          <a class="soc-btn" href="#">📸</a>
+          <a class="soc-btn" href="#">💬</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <h2 class="form-title">Напишіть <em>нам</em></h2>
+      <p class="form-sub">Є запитання або хочете уточнити деталі? Заповніть форму — ми відповімо якнайшвидше.</p>
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="field"><label>Ім'я</label><input type="text" name="name" placeholder="Іван"></div>
+          <div class="field"><label>Телефон</label><input type="tel" name="phone" placeholder="+38 067..."></div>
+        </div>
+        <div class="field"><label>Email</label><input type="email" name="email" placeholder="ivan@email.com"></div>
+        <div class="field">
+          <label>Тема звернення</label>
+          <select name="subject">
+            <option>Питання щодо бронювання</option>
+            <option>Умови прокату</option>
+            <option>Технічна підтримка</option>
+            <option>Корпоративне співробітництво</option>
+            <option>Інше</option>
+          </select>
+        </div>
+        <div class="field"><label>Повідомлення</label><textarea name="message" placeholder="Опишіть ваше питання..."></textarea></div>
+        <button class="btn-send" type="submit">Надіслати повідомлення</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<section class="map-section">
+  <div class="map-box">
+    <div class="map-pin">📍</div>
+    <div class="map-address">вул. Клочківська, 94а, Харків</div>
+    <div class="map-sub">Головний офіс AutoRent · Поруч з метро «Університет»</div>
+    <a href="https://maps.google.com/?q=вул.+Клочківська+94а+Харків" target="_blank" class="map-btn">Відкрити в Google Maps</a>
+  </div>
+</section>
+
+<section class="schedule-section">
+  <h2 class="schedule-title">Наші <em>пункти</em></h2>
+  <div class="schedule-grid">
+    <div class="schedule-item">
+      <div class="sch-point">Головний офіс</div>
+      <div class="sch-name">вул. Клочківська, 94а</div>
+      <div class="sch-address">Харківський район, центр міста</div>
+      <div class="sch-hours">Пн–Нд: <span>8:00 – 22:00</span></div>
+    </div>
+    <div class="schedule-item">
+      <div class="sch-point">Аеропорт</div>
+      <div class="sch-name">Аеропорт «Харків»</div>
+      <div class="sch-address">Зона прильоту, стійка AutoRent</div>
+      <div class="sch-hours"><span>Цілодобово 24/7</span></div>
+    </div>
+    <div class="schedule-item">
+      <div class="sch-point">Вокзал</div>
+      <div class="sch-name">Залізничний вокзал</div>
+      <div class="sch-address">Привокзальна площа, 1</div>
+      <div class="sch-hours">Пн–Нд: <span>8:00 – 22:00</span></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

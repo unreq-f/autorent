@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}{{ car.full_name }} {{ car.year }} — AutoRent Харків{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="{% url 'index' %}">Головна</a> →
+    <a href="{% url 'catalog' %}">Каталог</a> →
+    {{ car.full_name }}
+  </div>
+  <h1>{{ car.brand }} <em>{{ car.model }}</em></h1>
+  <p>{{ car.year }} · {{ car.get_car_class_display }} · {{ car.get_fuel_display }} · {{ car.transmission }}</p>
+</div>
+
+<section class="car-detail-section">
+  <div class="car-detail-grid">
+
+    <!-- LEFT: Image + Gallery -->
+    <div class="car-media">
+      <div class="car-main-img">
+        {% if car.image %}
+        <img src="{{ car.image.url }}" alt="{{ car.full_name }}">
+        {% else %}
+        <div class="car-emoji-large">{{ car.emoji }}</div>
+        {% endif %}
+        <div class="car-status-overlay {% if car.is_available %}available{% else %}unavailable{% endif %}">
+          {% if car.is_available %}✅ Вільний{% else %}🔒 {{ car.get_status_display }}{% endif %}
+        </div>
+      </div>
+      <div class="car-badges-row">
+        <span class="badge-item">🏷 {{ car.get_car_class_display }}</span>
+        <span class="badge-item">⛽ {{ car.get_fuel_display }}</span>
+        <span class="badge-item">⚙️ {{ car.transmission }}</span>
+        <span class="badge-item">👥 {{ car.seats }} місць</span>
+        {% if car.drive %}<span class="badge-item">🔧 {{ car.drive }}</span>{% endif %}
+        {% if car.engine %}<span class="badge-item">🔩 {{ car.engine }}</span>{% endif %}
+      </div>
+    </div>
+
+    <!-- RIGHT: Info + Booking -->
+    <div class="car-detail-info">
+      <div class="car-pricing-card">
+        <div class="pricing-header">
+          <div>
+            <div class="pricing-label">Тариф Base</div>
+            <div class="pricing-price">${{ car.price_base }} <span>/ доба</span></div>
+            <div class="pricing-sub">Застава: ${{ car.deposit }}</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="pricing-label">Тариф Prime</div>
+            <div class="pricing-price">${{ car.price_prime }} <span>/ доба</span></div>
+            <div class="pricing-sub">Без застави</div>
+          </div>
+        </div>
+        {% if car.is_available %}
+        <a href="{% url 'order_car' car.pk %}" class="btn-book-detail">Забронювати зараз</a>
+        {% else %}
+        <div class="btn-book-detail unavail">Авто недоступне</div>
+        {% endif %}
+        {% if user.is_authenticated %}
+        <button class="btn-wishlist-detail {% if in_wishlist %}active{% endif %}" onclick="toggleWishlist({{ car.pk }}, this)">
+          {% if in_wishlist %}❤️ В обраних{% else %}🤍 Додати до обраних{% endif %}
+        </button>
+        {% endif %}
+      </div>
+
+      <!-- Specs -->
+      <div class="spec-grid">
+        <div class="spec-item"><div class="spec-label">Рік випуску</div><div class="spec-val">{{ car.year }}</div></div>
+        <div class="spec-item"><div class="spec-label">Колір</div><div class="spec-val">{{ car.color }}</div></div>
+        <div class="spec-item"><div class="spec-label">Пробіг</div><div class="spec-val">{{ car.mileage|floatformat:0 }} км</div></div>
+        <div class="spec-item"><div class="spec-label">Держ. номер</div><div class="spec-val">{{ car.plate }}</div></div>
+        {% if car.engine %}<div class="spec-item"><div class="spec-label">Двигун</div><div class="spec-val">{{ car.engine }}</div></div>{% endif %}
+        {% if car.drive %}<div class="spec-item"><div class="spec-label">Привід</div><div class="spec-val">{{ car.drive }}</div></div>{% endif %}
+      </div>
+
+      {% if car.description %}
+      <div class="car-desc">
+        <div class="spec-label" style="margin-bottom:8px;">Опис</div>
+        <p style="color:var(--gray);font-size:14px;line-height:1.7;">{{ car.description }}</p>
+      </div>
+      {% endif %}
+
+      {% if car.features_list %}
+      <div class="car-features">
+        <div class="spec-label" style="margin-bottom:12px;">Комплектація</div>
+        <div class="features-list">
+          {% for f in car.features_list %}
+          <span class="feature-tag">✓ {{ f }}</span>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Similar Cars -->
+  {% if similar %}
+  <div class="similar-section">
+    <h2 style="font-family:'Playfair Display',serif;font-size:28px;margin-bottom:24px;">Схожі <em style="color:var(--gold);font-style:italic;">авто</em></h2>
+    <div class="similar-grid">
+      {% for c in similar %}
+      <a href="{% url 'car_detail' c.pk %}" class="similar-card">
+        <div class="similar-img">{{ c.emoji }}</div>
+        <div class="similar-name">{{ c.full_name }}</div>
+        <div class="similar-price">від ${{ c.price_base }} / доба</div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<style>
+.car-detail-section{padding:40px 60px 80px;}
+.car-detail-grid{display:grid;grid-template-columns:1fr 420px;gap:40px;margin-bottom:60px;}
+.car-main-img{height:320px;background:linear-gradient(135deg,#161616,#222);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1px solid var(--border);}
+.car-main-img img{width:100%;height:100%;object-fit:cover;}
+.car-emoji-large{font-size:120px;}
+.car-status-overlay{position:absolute;bottom:16px;left:16px;padding:8px 16px;font-size:13px;font-weight:500;}
+.car-status-overlay.available{background:rgba(76,175,125,0.15);color:#4caf7d;border:1px solid rgba(76,175,125,0.3);}
+.car-status-overlay.unavailable{background:rgba(207,102,121,0.15);color:#cf6679;border:1px solid rgba(207,102,121,0.3);}
+.car-badges-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.badge-item{background:var(--dark2);border:1px solid var(--border);font-size:12px;color:var(--gray);padding:6px 14px;}
+.car-pricing-card{background:var(--dark2);border:1px solid var(--border);padding:24px;margin-bottom:20px;}
+.pricing-header{display:flex;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.pricing-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.pricing-price{font-family:'Playfair Display',serif;font-size:28px;color:var(--white);}
+.pricing-price span{font-size:14px;color:var(--gray);}
+.pricing-sub{font-size:12px;color:var(--gray);margin-top:4px;}
+.btn-book-detail{display:block;width:100%;background:var(--gold);color:var(--black);padding:15px;text-align:center;font-size:13px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:background .3s;margin-bottom:10px;}
+.btn-book-detail:hover{background:var(--gold-light);}
+.btn-book-detail.unavail{background:var(--dark3);color:var(--gray);cursor:not-allowed;}
+.btn-wishlist-detail{display:block;width:100%;background:transparent;border:1px solid var(--border);color:var(--gray);padding:11px;font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-wishlist-detail:hover,.btn-wishlist-detail.active{border-color:var(--gold);color:var(--gold);}
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px;}
+.spec-item{background:var(--dark2);border:1px solid var(--border);padding:14px;}
+.spec-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+.spec-val{font-size:14px;color:var(--white);}
+.car-desc,.car-features{background:var(--dark2);border:1px solid var(--border);padding:20px;margin-bottom:16px;}
+.features-list{display:flex;gap:8px;flex-wrap:wrap;}
+.feature-tag{background:rgba(201,168,76,0.08);border:1px solid var(--border);color:var(--gray);font-size:12px;padding:5px 12px;}
+.similar-section{}
+.similar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+.similar-card{background:var(--dark2);border:1px solid var(--border);padding:20px;text-decoration:none;transition:border-color .3s;display:block;}
+.similar-card:hover{border-color:var(--gold);}
+.similar-img{font-size:48px;margin-bottom:12px;}
+.similar-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);margin-bottom:6px;}
+.similar-price{font-size:13px;color:var(--gold);}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleWishlist(carId, btn) {
+  fetch("{% url 'toggle_wishlist' %}", {
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':'{{ csrf_token }}'},
+    body:`car_id=${carId}`
+  }).then(r=>r.json()).then(data=>{
+    if(data.status==='added'){btn.textContent='❤️ В обраних';btn.classList.add('active');}
+    else{btn.textContent='🤍 Додати до обраних';btn.classList.remove('active');}
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Каталог авто — AutoRent Харків{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="breadcrumb"><a href="{% url 'index' %}">Головна</a> → Каталог</div>
+  <h1>Наш <em>автопарк</em></h1>
+  <p>{{ total }} автомобілів у каталозі. Від економ до VIP — підберемо авто під будь-яке завдання.</p>
+</div>
+
+<section class="catalog-section">
+  <!-- FILTERS -->
+  <div class="catalog-filters">
+    <form method="get" class="filter-form">
+      <div class="filter-row">
+        <div class="filter-field">
+          <label>Пошук</label>
+          <input type="text" name="q" placeholder="Марка або модель..." value="{{ filters.q }}">
+        </div>
+        <div class="filter-field">
+          <label>Клас авто</label>
+          <select name="class">
+            <option value="">Всі класи</option>
+            {% for val, label in car_classes %}
+            <option value="{{ val }}" {% if filters.class == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>Паливо</label>
+          <select name="fuel">
+            <option value="">Всі типи</option>
+            {% for val, label in fuel_types %}
+            <option value="{{ val }}" {% if filters.fuel == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="filter-field">
+          <label>Макс. ціна ($/доба)</label>
+          <input type="number" name="price_max" placeholder="500" value="{{ filters.price_max }}">
+        </div>
+        <button type="submit" class="btn-filter">Застосувати</button>
+        <a href="{% url 'catalog' %}" class="btn-filter-reset">Скинути</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- CLASS TABS -->
+  <div class="filter-tabs">
+    <a href="{% url 'catalog' %}" class="filter-tab {% if not filters.class %}active{% endif %}">Всі</a>
+    {% for val, label in car_classes %}
+    <a href="?class={{ val }}" class="filter-tab {% if filters.class == val %}active{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  <!-- CARS GRID -->
+  <div class="cars-grid">
+    {% for car in cars %}
+    <div class="car-card">
+      <div class="car-img">
+        {% if car.image %}
+        <img src="{{ car.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;">
+        {% else %}
+        <span style="font-size:72px;display:flex;align-items:center;justify-content:center;height:100%;">{{ car.emoji }}</span>
+        {% endif %}
+        <div class="car-class-badge">{{ car.get_car_class_display }}</div>
+        <div class="car-status-badge {% if car.is_available %}status-available{% else %}status-rented{% endif %}">
+          {% if car.is_available %}Вільний{% else %}{{ car.get_status_display }}{% endif %}
+        </div>
+        {% if user.is_authenticated %}
+        <button class="wishlist-btn {% if car.pk in wishlist_ids %}active{% endif %}"
+                onclick="toggleWishlist({{ car.pk }}, this)" title="До обраних">
+          {% if car.pk in wishlist_ids %}❤️{% else %}🤍{% endif %}
+        </button>
+        {% endif %}
+      </div>
+      <div class="car-info">
+        <h3 class="car-name">{{ car.full_name }}</h3>
+        <div class="car-specs-row">
+          <span>{{ car.year }}</span>
+          <span>{{ car.get_fuel_display }}</span>
+          <span>{{ car.transmission }}</span>
+          <span>{{ car.seats }} місць</span>
+        </div>
+        <div class="car-footer">
+          <div>
+            <div class="car-price">від ${{ car.price_base }}</div>
+            <div class="car-period">/ доба</div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <a href="{% url 'car_detail' car.pk %}" class="btn-details">Детальніше</a>
+            {% if car.is_available %}
+            <a href="{% url 'order_car' car.pk %}" class="btn-book">Забронювати</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="grid-column:1/-1;text-align:center;padding:80px 20px;">
+      <div style="font-size:48px;margin-bottom:16px;">🔍</div>
+      <div style="font-family:'Playfair Display',serif;font-size:24px;color:var(--white);margin-bottom:8px;">Авто не знайдено</div>
+      <p style="color:var(--gray);">Спробуйте змінити фільтри або <a href="{% url 'catalog' %}" style="color:var(--gold);">переглянути весь каталог</a></p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="text-align:center;color:var(--gray);font-size:13px;margin-top:24px;">
+    Показано {{ cars|length }} з {{ total }} автомобілів
+  </div>
+</section>
+
+<style>
+.catalog-section{padding:40px 60px 80px;}
+.filter-form{margin-bottom:28px;}
+.filter-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
+.filter-field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px;}
+.filter-field label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+.filter-field input,.filter-field select{background:var(--dark2);border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+.filter-field input:focus,.filter-field select:focus{border-color:var(--gold);}
+.btn-filter{background:var(--gold);color:var(--black);padding:10px 24px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
+.btn-filter-reset{background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;white-space:nowrap;cursor:pointer;}
+.filter-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:28px;}
+.filter-tab{padding:9px 20px;background:var(--dark2);border:1px solid var(--border);color:var(--gray);font-size:12px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;transition:.2s;}
+.filter-tab:hover,.filter-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08);}
+.cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
+.car-card{background:var(--dark2);border:1px solid var(--border);overflow:hidden;transition:border-color .3s;}
+.car-card:hover{border-color:rgba(201,168,76,0.4);}
+.car-img{height:190px;background:linear-gradient(135deg,#161616,#222);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.car-class-badge{position:absolute;top:12px;left:12px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);border:1px solid var(--border);padding:4px 10px;background:rgba(10,10,10,0.8);}
+.car-status-badge{position:absolute;top:12px;right:12px;font-size:10px;padding:4px 10px;}
+.status-available{background:rgba(76,175,125,0.15);color:#4caf7d;}
+.status-rented{background:rgba(201,168,76,0.12);color:var(--gold);}
+.wishlist-btn{position:absolute;bottom:12px;right:12px;background:rgba(10,10,10,0.7);border:none;cursor:pointer;font-size:18px;padding:6px;border-radius:50%;transition:transform .2s;}
+.wishlist-btn:hover{transform:scale(1.2);}
+.car-info{padding:20px;}
+.car-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:10px;}
+.car-specs-row{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--gray);margin-bottom:16px;}
+.car-footer{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid rgba(255,255,255,0.04);}
+.car-price{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);}
+.car-period{font-size:11px;color:var(--gray);}
+.btn-details,.btn-book{font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:9px 16px;cursor:pointer;transition:.2s;text-decoration:none;display:inline-block;}
+.btn-details{border:1px solid var(--border);color:var(--gray);}
+.btn-details:hover{border-color:var(--gold);color:var(--gold);}
+.btn-book{background:var(--gold);color:var(--black);}
+.btn-book:hover{background:var(--gold-light);}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleWishlist(carId, btn) {
+  const csrfToken = '{{ csrf_token }}';
+  fetch("{% url 'toggle_wishlist' %}", {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
+    body: `car_id=${carId}`
+  }).then(r => r.json()).then(data => {
+    btn.textContent = data.status === 'added' ? '❤️' : '🤍';
+    btn.classList.toggle('active', data.status === 'added');
+  });
+}
+</script>
+{% endblock %}

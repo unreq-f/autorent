@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% block title %}Мій профіль — AutoRent Харків{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1><em>{{ user.first_name|default:user.username }}</em>, ваш кабінет</h1>
+  <p>Управляйте бронюваннями, профілем та списком бажань.</p>
+</div>
+
+<section style="padding:40px 60px 80px;">
+  <div style="display:grid;grid-template-columns:260px 1fr;gap:28px;align-items:start;">
+
+    <!-- Sidebar -->
+    <div style="background:var(--dark2);border:1px solid var(--border);padding:28px;position:sticky;top:88px;">
+      <div style="width:72px;height:72px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:var(--black);margin:0 auto 14px;">
+        {{ profile.initials }}
+      </div>
+      <div style="font-family:'Playfair Display',serif;font-size:18px;text-align:center;margin-bottom:4px;">
+        {{ user.get_full_name|default:user.username }}
+      </div>
+      <div style="display:block;text-align:center;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:20px;">
+        {{ profile.get_segment_display }}
+      </div>
+      <div id="sideNav">
+        <div class="p-nav-item active" onclick="showTab('bookings',this)">📋 Замовлення
+          {% if active_bookings %}<span class="p-badge">{{ active_bookings|length }}</span>{% endif %}
+        </div>
+        <div class="p-nav-item" onclick="showTab('history',this)">📁 Історія</div>
+        <div class="p-nav-item" onclick="showTab('wishlist',this)">❤️ Обрані
+          {% if wishlist %}<span class="p-badge">{{ wishlist|length }}</span>{% endif %}
+        </div>
+        <div class="p-nav-item" onclick="showTab('fines',this)">⚠️ Штрафи
+          {% if fines %}<span class="p-badge red">{{ fines|length }}</span>{% endif %}
+        </div>
+        <div class="p-nav-item" onclick="showTab('settings',this)">⚙️ Налаштування</div>
+      </div>
+      <a href="{% url 'logout' %}" style="display:block;margin-top:20px;text-align:center;font-size:12px;color:var(--gray);text-decoration:none;letter-spacing:1px;text-transform:uppercase;padding:10px;border:1px solid var(--border);">Вийти з акаунту</a>
+    </div>
+
+    <!-- Main Content -->
+    <div>
+
+      <!-- ACTIVE BOOKINGS TAB -->
+      <div class="p-tab active" id="tab-bookings">
+        <div class="tab-title">Активні замовлення</div>
+        {% if active_bookings %}
+        {% for b in active_bookings %}
+        <div class="booking-card">
+          <div class="booking-card-header">
+            <div>
+              <div class="bc-number">{{ b.number }}</div>
+              <div class="bc-car">{{ b.car.full_name }} ({{ b.car.year }})</div>
+            </div>
+            <div class="bc-status sp-{{ b.status }}">{{ b.get_status_display }}</div>
+          </div>
+          <div class="booking-card-body">
+            <div class="bc-info-row">
+              <span>📅 {{ b.date_from }} — {{ b.date_to }}</span>
+              <span>{{ b.days }} днів</span>
+            </div>
+            <div class="bc-info-row">
+              <span>📍 {{ b.get_pickup_location_display }}</span>
+              <span class="bc-price">${{ b.total_price }}</span>
+            </div>
+          </div>
+          {% if b.status == 'pending' %}
+          <form method="post" style="margin-top:14px;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancel_booking">
+            <input type="hidden" name="booking_id" value="{{ b.pk }}">
+            <button type="submit" class="btn-cancel-booking" onclick="return confirm('Скасувати замовлення {{ b.number }}?')">Скасувати</button>
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <div class="empty-title">Немає активних замовлень</div>
+          <a href="{% url 'catalog' %}" class="btn-empty">Перейти до каталогу</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- HISTORY TAB -->
+      <div class="p-tab" id="tab-history">
+        <div class="tab-title">Історія замовлень</div>
+        {% if past_bookings %}
+        {% for b in past_bookings %}
+        <div class="booking-card">
+          <div class="booking-card-header">
+            <div>
+              <div class="bc-number">{{ b.number }}</div>
+              <div class="bc-car">{{ b.car.full_name }}</div>
+            </div>
+            <div class="bc-status sp-{{ b.status }}">{{ b.get_status_display }}</div>
+          </div>
+          <div class="booking-card-body">
+            <div class="bc-info-row">
+              <span>📅 {{ b.date_from }} — {{ b.date_to }}</span>
+              <span class="bc-price">${{ b.total_price }}</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state"><div class="empty-icon">📁</div><div class="empty-title">Ще немає завершених замовлень</div></div>
+        {% endif %}
+      </div>
+
+      <!-- WISHLIST TAB -->
+      <div class="p-tab" id="tab-wishlist">
+        <div class="tab-title">Список бажань</div>
+        {% if wishlist %}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
+          {% for w in wishlist %}
+          <div class="wishlist-card">
+            <div class="wc-img">{{ w.car.emoji }}</div>
+            <div class="wc-name">{{ w.car.full_name }}</div>
+            <div class="wc-price">від ${{ w.car.price_base }}/доба</div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <a href="{% url 'car_detail' w.car.pk %}" class="wc-btn-detail">Детальніше</a>
+              {% if w.car.is_available %}
+              <a href="{% url 'order_car' w.car.pk %}" class="wc-btn-book">Замовити</a>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><div class="empty-icon">❤️</div><div class="empty-title">Список порожній</div><a href="{% url 'catalog' %}" class="btn-empty">Переглянути каталог</a></div>
+        {% endif %}
+      </div>
+
+      <!-- FINES TAB -->
+      <div class="p-tab" id="tab-fines">
+        <div class="tab-title">Мої штрафи</div>
+        {% if fines %}
+        {% for f in fines %}
+        <div class="booking-card" style="border-left:3px solid {% if f.status == 'unpaid' %}#cf6679{% elif f.status == 'paid' %}#4caf7d{% else %}var(--gold){% endif %};">
+          <div class="booking-card-header">
+            <div>
+              <div class="bc-number">{{ f.number }}</div>
+              <div class="bc-car">{{ f.get_fine_type_display }}</div>
+            </div>
+            <div style="font-family:'Playfair Display',serif;font-size:20px;color:{% if f.status == 'unpaid' %}#cf6679{% else %}var(--gold){% endif %};">${{ f.amount }}</div>
+          </div>
+          <div class="booking-card-body">
+            <div class="bc-info-row">
+              <span>Замовлення: {{ f.booking.number }}</span>
+              <span class="bc-status sp-{{ f.status }}">{{ f.get_status_display }}</span>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Штрафів немає</div></div>
+        {% endif %}
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="p-tab" id="tab-settings">
+        <div class="tab-title">Налаштування профілю</div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="update_profile">
+          <div style="background:var(--dark2);border:1px solid var(--border);padding:28px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="s-field"><label>Ім'я</label><input type="text" name="first_name" value="{{ user.first_name }}"></div>
+              <div class="s-field"><label>Прізвище</label><input type="text" name="last_name" value="{{ user.last_name }}"></div>
+            </div>
+            <div class="s-field"><label>Email</label><input type="email" name="email" value="{{ user.email }}"></div>
+            <div class="s-field"><label>Телефон</label><input type="tel" name="phone" value="{{ profile.phone }}" placeholder="+38 067 000 00 00"></div>
+            <div class="s-field"><label>Місто</label><input type="text" name="city" value="{{ profile.city }}" placeholder="Харків"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div class="s-field"><label>Водійське посвідчення</label><input type="text" name="driver_license" value="{{ profile.driver_license }}"></div>
+              <div class="s-field"><label>Стаж (років)</label><input type="number" name="experience_years" value="{{ profile.experience_years }}" min="0" max="60"></div>
+            </div>
+            <button type="submit" style="background:var(--gold);color:var(--black);padding:13px 32px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-top:8px;">Зберегти зміни</button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<style>
+.p-nav-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;color:var(--gray);font-size:13px;cursor:pointer;transition:.2s;border-radius:2px;}
+.p-nav-item:hover{color:var(--white);background:rgba(255,255,255,0.03);}
+.p-nav-item.active{color:var(--gold);background:rgba(201,168,76,0.07);}
+.p-badge{background:var(--gold);color:var(--black);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;min-width:18px;text-align:center;}
+.p-badge.red{background:#cf6679;color:var(--white);}
+.p-tab{display:none;}
+.p-tab.active{display:block;}
+.tab-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin-bottom:20px;}
+.booking-card{background:var(--dark2);border:1px solid var(--border);padding:20px;margin-bottom:12px;transition:border-color .3s;}
+.booking-card:hover{border-color:rgba(201,168,76,0.3);}
+.booking-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.bc-number{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
+.bc-car{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);}
+.booking-card-body{border-top:1px solid rgba(255,255,255,0.04);padding-top:12px;}
+.bc-info-row{display:flex;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px;}
+.bc-price{color:var(--gold);font-family:'Playfair Display',serif;font-size:16px;}
+.bc-status{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;}
+.sp-pending{background:rgba(224,146,76,.12);color:#e0924c;}
+.sp-active{background:rgba(76,175,125,.15);color:#4caf7d;}
+.sp-completed{background:rgba(201,168,76,.12);color:var(--gold);}
+.sp-cancelled{background:rgba(207,102,121,.12);color:#cf6679;}
+.sp-unpaid{background:rgba(207,102,121,.12);color:#cf6679;}
+.sp-paid{background:rgba(76,175,125,.15);color:#4caf7d;}
+.btn-cancel-booking{background:transparent;border:1px solid rgba(207,102,121,0.3);color:#cf6679;padding:8px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-cancel-booking:hover{background:rgba(207,102,121,0.1);}
+.empty-state{text-align:center;padding:60px 20px;}
+.empty-icon{font-size:48px;margin-bottom:16px;}
+.empty-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:16px;}
+.btn-empty{display:inline-block;background:var(--gold);color:var(--black);padding:12px 28px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;}
+.wishlist-card{background:var(--dark2);border:1px solid var(--border);padding:20px;}
+.wc-img{font-size:48px;margin-bottom:10px;}
+.wc-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);margin-bottom:4px;}
+.wc-price{font-size:13px;color:var(--gold);}
+.wc-btn-detail,.wc-btn-book{font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;text-decoration:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.wc-btn-detail{border:1px solid var(--border);color:var(--gray);}
+.wc-btn-book{background:var(--gold);color:var(--black);}
+.s-field{margin-bottom:14px;}
+.s-field label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
+.s-field input{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .3s;}
+.s-field input:focus{border-color:var(--gold);}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showTab(name, el) {
+  document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.p-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+{% endblock %}
