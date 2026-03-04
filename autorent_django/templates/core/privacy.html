@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Політика конфіденційності — AutoRent{% endblock %}
+{% block content %}
+<div style="max-width:820px;margin:60px auto;padding:0 24px 80px;">
+  <div style="margin-bottom:40px;">
+    <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Правові документи</div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:42px;color:var(--white);margin:0 0 16px;">Політика <em style="color:var(--gold);font-style:italic;">конфіденційності</em></h1>
+    <div style="font-size:13px;color:var(--gray);">Останнє оновлення: 01 січня 2025 року</div>
+  </div>
+
+  <div style="font-size:14px;color:var(--gray);line-height:1.9;">
+
+    <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);padding:16px 20px;margin-bottom:32px;font-size:13px;">
+      AutoRent поважає вашу конфіденційність і зобов'язується захищати ваші персональні дані відповідно до законодавства України та Регламенту ЄС 2016/679 (GDPR).
+    </div>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">1. Які дані ми збираємо</h2>
+    <p>Ми збираємо наступні персональні дані:</p>
+    <ul style="margin:12px 0 12px 20px;display:flex;flex-direction:column;gap:6px;">
+      <li><span style="color:var(--white);">Ідентифікаційні дані</span> — ім'я, прізвище, по батькові, дата народження</li>
+      <li><span style="color:var(--white);">Контактні дані</span> — електронна пошта, номер телефону, адреса</li>
+      <li><span style="color:var(--white);">Документи</span> — серія та номер паспорту/ID, водійське посвідчення</li>
+      <li><span style="color:var(--white);">Платіжні дані</span> — часткові реквізити картки (останні 4 цифри), статус транзакцій</li>
+      <li><span style="color:var(--white);">Технічні дані</span> — IP-адреса, тип браузера, cookies</li>
+    </ul>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">2. Навіщо ми збираємо дані</h2>
+    <p>Ваші персональні дані використовуються для:</p>
+    <ul style="margin:12px 0 12px 20px;display:flex;flex-direction:column;gap:6px;">
+      <li>Обробки та виконання замовлень оренди</li>
+      <li>Ідентифікації клієнта при отриманні автомобіля</li>
+      <li>Зв'язку щодо статусу замовлення та підтримки</li>
+      <li>Дотримання вимог законодавства (договірні зобов'язання, фінансова звітність)</li>
+      <li>Покращення якості сервісу та персоналізації пропозицій</li>
+    </ul>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">3. Зберігання даних</h2>
+    <p>Персональні дані зберігаються на захищених серверах на території України. Дані клієнтів зберігаються протягом 5 років після останньої активності відповідно до вимог податкового законодавства, після чого підлягають видаленню або анонімізації.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">4. Передача третім особам</h2>
+    <p>Ми не продаємо та не передаємо ваші персональні дані третім особам, крім:</p>
+    <ul style="margin:12px 0 12px 20px;display:flex;flex-direction:column;gap:6px;">
+      <li>Платіжних систем для обробки транзакцій (передаються лише необхідні дані)</li>
+      <li>Державних органів на обґрунтований законний запит</li>
+      <li>Страхових компаній у разі ДТП або страхового випадку</li>
+    </ul>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">5. Cookies</h2>
+    <p>Наш сайт використовує файли cookie для забезпечення роботи авторизації, збереження налаштувань та аналітики. Ви можете відключити cookies у налаштуваннях браузера, але це може обмежити функціональність сайту.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">6. Ваші права</h2>
+    <p>Відповідно до законодавства ви маєте право:</p>
+    <ul style="margin:12px 0 12px 20px;display:flex;flex-direction:column;gap:6px;">
+      <li><span style="color:var(--white);">Доступу</span> — отримати копію своїх персональних даних</li>
+      <li><span style="color:var(--white);">Виправлення</span> — оновити неточні або застарілі дані</li>
+      <li><span style="color:var(--white);">Видалення</span> — вимагати видалення даних («право на забуття»)</li>
+      <li><span style="color:var(--white);">Обмеження</span> — обмежити обробку ваших даних</li>
+      <li><span style="color:var(--white);">Заперечення</span> — відмовитись від маркетингових комунікацій</li>
+    </ul>
+    <p style="margin-top:12px;">Для реалізації прав надішліть запит на <span style="color:var(--gold);">privacy@autorent.ua</span></p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">7. Зміни до політики</h2>
+    <p>Ми залишаємо за собою право оновлювати цю політику. Про суттєві зміни ми повідомлятимемо електронною поштою або через сповіщення на сайті. Продовження використання сервісу після змін означає їх прийняття.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">8. Контакти</h2>
+    <p>З питань конфіденційності та захисту персональних даних: <span style="color:var(--gold);">privacy@autorent.ua</span></p>
+  </div>
+
+  <div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);display:flex;gap:16px;">
+    <a href="/terms/" style="color:var(--gold);text-decoration:none;font-size:13px;">Умови використання →</a>
+    <a href="/" style="color:var(--gray);text-decoration:none;font-size:13px;">← Повернутись на головну</a>
+  </div>
+</div>
+{% endblock %}

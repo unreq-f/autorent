@@ -1,0 +1,86 @@
+{% extends 'manager/base_manager.html' %}
+{% block title %}Замовити ТО — {{ car }} — AutoRent Manager{% endblock %}
+
+{% block main_content %}
+<div class="topbar">
+  <div class="topbar-title">
+    <a href="{% url 'manager_cars' %}" style="color:var(--gray);text-decoration:none;">Автопарк</a>
+    &nbsp;·&nbsp; <strong>Замовити ТО — {{ car.brand }} {{ car.model }}</strong>
+  </div>
+  <a href="{% url 'manager_cars' %}" class="tb-btn">&#8592; Назад</a>
+</div>
+
+<div class="content">
+  <div style="max-width:560px;">
+
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;background:var(--dark2);border:1px solid var(--border);border-left:3px solid var(--orange);padding:20px 24px;">
+      <div style="width:80px;height:60px;overflow:hidden;background:var(--dark3);border:1px solid var(--border);flex-shrink:0;">
+        {% if car.photos.first %}<img src="{{ car.photos.first.image.url }}" style="width:100%;height:100%;object-fit:cover;">{% elif car.image %}<img src="{{ car.image.url }}" style="width:100%;height:100%;object-fit:cover;">{% else %}<img src="/static/img/car_placeholder.svg" style="width:100%;height:100%;object-fit:cover;">{% endif %}
+      </div>
+      <div>
+        <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--white);">{{ car.brand }} {{ car.model }}</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px;">{{ car.plate }} &nbsp;·&nbsp; {{ car.year }} &nbsp;·&nbsp; {{ car.mileage|floatformat:0 }} км</div>
+      </div>
+      <span style="margin-left:auto;font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border:1px solid;color:var(--orange);border-color:rgba(224,146,76,.3);background:rgba(224,146,76,.08);">{{ car.get_status_display }}</span>
+    </div>
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="info-section">
+        <div class="info-section-title">Деталі обслуговування</div>
+        <div class="field">
+          <label>Тип ТО</label>
+          <select name="service_type">
+            <option value="planned">Планове ТО (кожні 10 000 км)</option>
+            <option value="oil">Заміна масла та фільтрів</option>
+            <option value="tires">Заміна / перевзування шин</option>
+            <option value="brakes">Гальмівна система</option>
+            <option value="diagnostics">Комп'ютерна діагностика</option>
+            <option value="bodywork">Кузовний ремонт</option>
+            <option value="unplanned">Позаплановий ремонт</option>
+          </select>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="field">
+            <label>Дата початку ТО</label>
+            <input type="date" name="service_date" required style="color-scheme:dark;">
+          </div>
+          <div class="field">
+            <label>Орієнтовна дата завершення</label>
+            <input type="date" name="service_date_end" style="color-scheme:dark;">
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Статус авто під час ТО</label>
+          <select name="set_status">
+            <option value="service" selected>На ТО</option>
+            <option value="broken">Несправний (вимагає ремонту)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Опис робіт / примітка</label>
+          <textarea name="service_note" rows="4" placeholder="Виявлені несправності, перелік необхідних робіт..."></textarea>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Поточний стан</div>
+        <div class="info-row"><span class="info-label">Поточний пробіг</span><span class="info-val">{{ car.mileage|floatformat:0 }} км</span></div>
+        <div class="info-row"><span class="info-label">Попереднє ТО</span>
+          <span class="info-val">{% if car.next_service %}{{ car.next_service|date:"d.m.Y" }}{% else %}<span style="opacity:.4">—</span>{% endif %}</span>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn-save">&#128295; Призначити ТО</button>
+        <a href="{% url 'manager_cars' %}" class="btn-secondary" style="flex:1;padding:13px;text-align:center;text-decoration:none;">Скасувати</a>
+      </div>
+    </form>
+
+  </div>
+</div>
+{% endblock %}

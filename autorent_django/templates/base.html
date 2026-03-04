@@ -8,13 +8,68 @@
 <link rel="stylesheet" href="{% static 'css/main.css' %}">
 <style>
 /* Django-specific additions */
-.nav-auth { display:flex; align-items:center; gap:12px; }
+nav { flex-wrap:nowrap; height:72px; padding:0 40px; gap:12px; position:relative; }
+.nav-links { display:flex; gap:16px 24px; flex-wrap:nowrap; }
+.nav-auth { display:flex; align-items:center; gap:10px; flex-wrap:nowrap; }
+.nav-phone { display:none; }
 .nav-user-btn { font-size:12px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; border:1px solid var(--border); padding:9px 18px; text-decoration:none; transition:.2s; white-space:nowrap; }
 .nav-user-btn:hover { border-color:var(--gold); background:rgba(201,168,76,0.06); }
-.nav-logout { font-size:12px; color:var(--gray); text-decoration:none; letter-spacing:1px; text-transform:uppercase; padding:4px; transition:color .2s; }
-.nav-logout:hover { color:var(--red, #cf6679); }
-.nav-manager-btn { font-size:11px; color:var(--gray); padding:8px 14px; border:1px solid rgba(255,255,255,0.08); text-decoration:none; letter-spacing:1px; text-transform:uppercase; transition:.2s; }
+.nav-logout { font-size:12px; color:var(--gray); text-decoration:none; letter-spacing:1px; text-transform:uppercase; padding:4px; transition:color .2s; white-space:nowrap; }
+.nav-logout:hover { color:#cf6679; }
+.nav-manager-btn { font-size:11px; color:var(--gray); padding:8px 14px; border:1px solid rgba(255,255,255,0.08); text-decoration:none; letter-spacing:1px; text-transform:uppercase; transition:.2s; white-space:nowrap; }
 .nav-manager-btn:hover { border-color:var(--border); color:var(--white); }
+
+/* Burger button */
+.nav-burger {
+  display:none;
+  flex-direction:column; gap:5px; cursor:pointer;
+  background:none; border:none; padding:6px; margin-left:auto;
+}
+.nav-burger span {
+  display:block; width:24px; height:2px;
+  background:var(--gold); transition:all .3s;
+}
+.nav-burger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
+.nav-burger.open span:nth-child(2) { opacity:0; }
+.nav-burger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+
+/* Mobile nav overlay */
+.nav-mobile {
+  display:none;
+  position:fixed; top:72px; left:0; right:0;
+  background:rgba(10,10,10,0.98);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:24px 40px 32px;
+  flex-direction:column; gap:0;
+  z-index:99;
+}
+.nav-mobile.open { display:flex; }
+.nav-mobile a {
+  display:block; padding:14px 0;
+  color:var(--gray); text-decoration:none;
+  font-size:14px; letter-spacing:1px; text-transform:uppercase;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  transition:color .2s;
+}
+.nav-mobile a:hover, .nav-mobile a.active { color:var(--gold); }
+.nav-mobile .nav-cta {
+  margin-top:16px; text-align:center; padding:14px;
+  background:var(--gold); color:var(--black) !important;
+  font-weight:500; border-bottom:none;
+}
+.nav-mobile .nav-cta:hover { background:var(--gold-light); }
+.nav-mobile-auth { display:flex; gap:12px; margin-top:16px; flex-wrap:wrap; }
+
+@media (max-width: 960px) {
+  .nav-links { display:none; }
+  .nav-auth { display:none; }
+  .nav-burger { display:flex; }
+}
+@media (max-width: 600px) {
+  nav { padding:0 20px; }
+}
+
 .django-messages { position:fixed; top:80px; right:20px; z-index:999; display:grid; gap:8px; max-width:400px; pointer-events:none; }
 .django-msg { background:#1a1a1a; border:1px solid var(--border); padding:14px 48px 14px 18px; font-size:13px; color:var(--white); position:relative; pointer-events:all; animation:msgIn .3s ease; box-shadow:0 4px 24px rgba(0,0,0,0.5); }
 .django-msg button { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--gray); cursor:pointer; font-size:20px; line-height:1; }
@@ -27,7 +82,6 @@
 {% block extra_css %}{% endblock %}
 </head>
 <body>
-
 <nav>
   <a href="{% url 'index' %}" class="logo">Auto<span>Rent</span></a>
   <ul class="nav-links">
@@ -38,7 +92,6 @@
     <li><a href="{% url 'booking_quick' %}" class="nav-cta">Забронювати</a></li>
   </ul>
   <div class="nav-auth">
-    <div class="nav-phone"><a href="tel:+380670000000" style="color:var(--white);text-decoration:none;">+38 067 000 00 00</a></div>
     {% if user.is_authenticated %}
       {% if user.is_staff %}<a href="{% url 'manager_dashboard' %}" class="nav-manager-btn">⚙ Менеджер</a>{% endif %}
       <a href="{% url 'profile' %}" class="nav-user-btn">👤 {{ user.first_name|default:user.username }}</a>
@@ -47,7 +100,29 @@
       <a href="{% url 'auth' %}" class="nav-user-btn">Увійти</a>
     {% endif %}
   </div>
+  <!-- Burger button (mobile) -->
+  <button class="nav-burger" id="navBurger" aria-label="Меню">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- Mobile menu -->
+<div class="nav-mobile" id="navMobile">
+  <a href="{% url 'catalog' %}" {% if request.resolver_match.url_name == 'catalog' %}class="active"{% endif %}>Каталог</a>
+  <a href="{% url 'conditions' %}" {% if request.resolver_match.url_name == 'conditions' %}class="active"{% endif %}>Умови</a>
+  <a href="{% url 'about' %}" {% if request.resolver_match.url_name == 'about' %}class="active"{% endif %}>Про нас</a>
+  <a href="{% url 'contacts' %}" {% if request.resolver_match.url_name == 'contacts' %}class="active"{% endif %}>Контакти</a>
+  <a href="{% url 'booking_quick' %}" class="nav-cta">Забронювати</a>
+  <div class="nav-mobile-auth">
+    {% if user.is_authenticated %}
+      {% if user.is_staff %}<a href="{% url 'manager_dashboard' %}" class="nav-manager-btn">⚙ Менеджер</a>{% endif %}
+      <a href="{% url 'profile' %}" class="nav-user-btn">👤 {{ user.first_name|default:user.username }}</a>
+      <a href="{% url 'logout' %}" class="nav-logout">Вийти</a>
+    {% else %}
+      <a href="{% url 'auth' %}" class="nav-user-btn">Увійти</a>
+    {% endif %}
+  </div>
+</div>
 
 {% if messages %}
 <div class="django-messages">
@@ -63,22 +138,72 @@
 {% block content %}{% endblock %}
 
 {% block footer %}
-<footer>
-  <a href="{% url 'index' %}" class="footer-logo">Auto<span>Rent</span></a>
-  <div class="footer-copy">© 2025 AutoRent Харків</div>
-  <div class="footer-phone">+38 067 000 00 00</div>
+<footer id="contacts">
+  <div class="footer-grid">
+    <div>
+      <span class="footer-logo-text">Auto<span>Rent</span></span>
+      <p class="footer-desc">Прокат автомобілів у Харкові. Економ, комфорт, бізнес та VIP класи. Доставка по місту та в аеропорт.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Навігація</h4>
+      <ul>
+        <li><a href="{% url 'catalog' %}">Каталог авто</a></li>
+        <li><a href="{% url 'conditions' %}">Умови прокату</a></li>
+        <li><a href="{% url 'about' %}">Про компанію</a></li>
+        <li><a href="{% url 'contacts' %}">Контакти</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Класи авто</h4>
+      <ul>
+        <li><a href="{% url 'catalog' %}?class=economy">Економ</a></li>
+        <li><a href="{% url 'catalog' %}?class=comfort">Комфорт</a></li>
+        <li><a href="{% url 'catalog' %}?class=business">Бізнес</a></li>
+        <li><a href="{% url 'catalog' %}?class=vip">VIP</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Контакти</h4>
+      <ul>
+        <li><a href="tel:+380670000000">+38 067 000 00 00</a></li>
+        <li><a href="mailto:info@autorent.ua">info@autorent.ua</a></li>
+        <li><a href="{% url 'contacts' %}">вул. Клочківська, 94а</a></li>
+        <li><a href="{% url 'contacts' %}">Пн–Нд: 8:00–22:00</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 AutoRent Харків. Всі права захищені.</div>
+    <div class="footer-phone-bottom">+38 067 000 00 00</div>
+  </div>
 </footer>
 {% endblock %}
 
 <script src="{% static 'js/main.js' %}"></script>
 {% block extra_js %}{% endblock %}
 <script>
+  // Burger menu
+  var burger = document.getElementById('navBurger');
+  var mobileNav = document.getElementById('navMobile');
+  if (burger && mobileNav) {
+    burger.addEventListener('click', function() {
+      burger.classList.toggle('open');
+      mobileNav.classList.toggle('open');
+    });
+    // Close on link click
+    mobileNav.querySelectorAll('a').forEach(function(a) {
+      a.addEventListener('click', function() {
+        burger.classList.remove('open');
+        mobileNav.classList.remove('open');
+      });
+    });
+  }
   // Auto-dismiss messages after 5s
-  setTimeout(() => {
-    document.querySelectorAll('.django-msg').forEach(m => {
+  setTimeout(function() {
+    document.querySelectorAll('.django-msg').forEach(function(m) {
       m.style.transition = 'opacity .4s';
       m.style.opacity = '0';
-      setTimeout(() => m.remove(), 400);
+      setTimeout(function() { m.remove(); }, 400);
     });
   }, 5000);
 </script>

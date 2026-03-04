@@ -131,34 +131,6 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
   </div>
 </section>
 
-<!-- SEARCH -->
-<section class="search-section">
-  <form method="get" action="{% url 'catalog' %}" class="search-box">
-    <div class="field">
-      <label>Місце отримання</label>
-      <select name="_location">
-        <option>Офіс, вул. Клочківська, 94а</option>
-        <option>Аеропорт «Харків»</option>
-        <option>Залізничний вокзал</option>
-        <option>Доставка по місту</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Дата отримання</label>
-      <input type="date" name="_date_from">
-    </div>
-    <div class="field">
-      <label>Дата повернення</label>
-      <input type="date" name="_date_to">
-    </div>
-    <div class="field">
-      <button type="submit" class="btn-primary" style="width:100%;padding:14px 24px;font-size:13px;border:none;cursor:pointer;">
-        Знайти авто
-      </button>
-    </div>
-  </form>
-</section>
-
 <!-- CATEGORIES -->
 <section class="section">
   <div class="section-header">
@@ -170,25 +142,25 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
       <span class="cat-icon">🚗</span>
       <div class="cat-name">Економ</div>
       <div class="cat-count">12 автомобілів</div>
-      <div class="cat-price"><span>від</span><strong>18 USD / доба</strong></div>
+      <div class="cat-price"><span>від</span><strong>₴18/доба</strong></div>
     </a>
     <a href="{% url 'catalog' %}?class=comfort" class="cat-card">
       <span class="cat-icon">🚙</span>
       <div class="cat-name">Комфорт</div>
       <div class="cat-count">24 автомобілі</div>
-      <div class="cat-price"><span>від</span><strong>45 USD / доба</strong></div>
+      <div class="cat-price"><span>від</span><strong>₴45/доба</strong></div>
     </a>
     <a href="{% url 'catalog' %}?class=business" class="cat-card">
       <span class="cat-icon">🏎️</span>
       <div class="cat-name">Бізнес</div>
       <div class="cat-count">18 автомобілів</div>
-      <div class="cat-price"><span>від</span><strong>90 USD / доба</strong></div>
+      <div class="cat-price"><span>від</span><strong>₴90/доба</strong></div>
     </a>
     <a href="{% url 'catalog' %}?class=vip" class="cat-card">
       <span class="cat-icon">👑</span>
       <div class="cat-name">VIP</div>
       <div class="cat-count">8 автомобілів</div>
-      <div class="cat-price"><span>від</span><strong>180 USD / доба</strong></div>
+      <div class="cat-price"><span>від</span><strong>₴180/доба</strong></div>
     </a>
   </div>
 </section>
@@ -203,10 +175,12 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
     {% for car in featured %}
     <div class="car-card">
       <div class="car-img">
-        {% if car.image %}
+        {% if car.photos.first %}
+          <img src="{{ car.photos.first.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        {% elif car.image %}
           <img src="{{ car.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
         {% else %}
-          {{ car.emoji }}
+          <div style="font-size:48px;display:flex;align-items:center;justify-content:center;height:100%;">{{ car.emoji }}</div>
         {% endif %}
         <span class="car-badge">{{ car.get_car_class_display }}</span>
       </div>
@@ -220,7 +194,7 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
         </div>
         <div class="car-footer">
           <div class="car-price">
-            <strong>{{ car.price_base }} USD</strong>
+            <strong>₴{{ car.price_base }}</strong>
             <span> / доба</span>
           </div>
           <a href="{% url 'order_car' car.pk %}" class="car-btn">Орендувати</a>
@@ -239,7 +213,7 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
           <div class="car-spec">👥 5 місць</div>
         </div>
         <div class="car-footer">
-          <div class="car-price"><strong>55 USD</strong><span> / доба</span></div>
+          <div class="car-price"><strong>₴55</strong><span> / доба</span></div>
           <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
         </div>
       </div>
@@ -255,7 +229,7 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
           <div class="car-spec">👥 5 місць</div>
         </div>
         <div class="car-footer">
-          <div class="car-price"><strong>130 USD</strong><span> / доба</span></div>
+          <div class="car-price"><strong>₴130</strong><span> / доба</span></div>
           <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
         </div>
       </div>
@@ -271,7 +245,7 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
           <div class="car-spec">👥 5 місць</div>
         </div>
         <div class="car-footer">
-          <div class="car-price"><strong>200 USD</strong><span> / доба</span></div>
+          <div class="car-price"><strong>₴200</strong><span> / доба</span></div>
           <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
         </div>
       </div>

@@ -53,7 +53,7 @@
         </div>
         <div class="form-options">
           <label class="remember"><input type="checkbox"><span>Запам'ятати мене</span></label>
-          <a href="#" class="forgot-link">Забули пароль?</a>
+          <a href="#" class="forgot-link" onclick="openForgot(event)">Забули пароль?</a>
         </div>
         <button class="btn-auth" type="submit">Увійти</button>
       </form>
@@ -77,13 +77,13 @@
         <div class="field">
           <label>Пароль</label>
           <input type="password" name="password" id="regPass" placeholder="Мінімум 6 символів" required oninput="checkStrength(this.value)" autocomplete="new-password">
-          <button type="button" class="eye-btn" onclick="togglePass('regPass',this)">👁</button>
+          <button type="button" class="eye-btn" onclick="togglePass('regPass',this)">🔓</button>
           <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
           <div class="strength-label" id="strengthLabel"></div>
         </div>
         <div class="terms-check">
           <input type="checkbox" id="terms" required>
-          <span>Я погоджуюся з <a href="#">умовами використання</a> та <a href="#">політикою конфіденційності</a></span>
+          <span>Я погоджуюся з <a href="/terms/" target="_blank" style="color:var(--gold);">умовами використання</a> та <a href="/privacy/" target="_blank" style="color:var(--gold);">політикою конфіденційності</a></span>
         </div>
         <button class="btn-auth" type="submit">Зареєструватись</button>
       </form>
@@ -108,7 +108,7 @@ function switchTabByName(id){
 function togglePass(id,btn){
   const inp=document.getElementById(id);
   inp.type=inp.type==='password'?'text':'password';
-  btn.textContent=inp.type==='password'?'👁':'🙈';
+  btn.textContent=inp.type==='password'?'🔓':'🔒';
 }
 function checkStrength(val){
   const fill=document.getElementById('strengthFill');
@@ -126,3 +126,66 @@ function checkStrength(val){
 </script>
 </body>
 </html>
+
+<!-- Forgot password modal -->
+<div id="forgotOverlay" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;" onclick="if(event.target===this)closeForgot()">
+  <div style="background:var(--dark,#111);border:1px solid rgba(201,168,76,.3);width:100%;max-width:420px;padding:40px;position:relative;animation:fadeUp .25s ease;">
+    <button onclick="closeForgot()" style="position:absolute;top:16px;right:16px;background:none;border:none;color:#888;font-size:22px;cursor:pointer;line-height:1;">&#10005;</button>
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#c9a84c;margin-bottom:8px;">Відновлення доступу</div>
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:#fff;margin:0 0 8px;">Забули пароль?</h2>
+    <p style="font-size:13px;color:#888;margin:0 0 24px;line-height:1.6;">Введіть email вашого акаунту. Ми надішлемо інструкції для відновлення паролю.</p>
+    <div id="forgotSuccess" style="display:none;background:rgba(76,175,125,.1);border:1px solid rgba(76,175,125,.3);padding:14px 16px;color:#4caf7d;font-size:13px;margin-bottom:20px;line-height:1.6;">
+      ✅ Якщо акаунт з такою поштою існує — ви отримаєте листа з інструкціями протягом кількох хвилин.
+    </div>
+    <div id="forgotForm">
+      <div style="margin-bottom:20px;">
+        <label style="display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#888;margin-bottom:8px;">Email адреса</label>
+        <input type="email" id="forgotEmail" placeholder="your@email.com" autocomplete="email"
+          style="width:100%;background:#1a1a1a;border:1px solid rgba(255,255,255,.1);color:#fff;padding:12px 14px;font-size:14px;outline:none;box-sizing:border-box;font-family:inherit;"
+          onkeydown="if(event.key==='Enter')submitForgot()">
+        <div id="forgotError" style="display:none;color:#cf6679;font-size:12px;margin-top:6px;"></div>
+      </div>
+      <button onclick="submitForgot()" style="width:100%;background:#c9a84c;color:#000;border:none;padding:13px;font-family:inherit;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;">
+        Надіслати інструкції
+      </button>
+    </div>
+    <p style="text-align:center;margin-top:20px;font-size:12px;color:#666;">
+      Згадали пароль? <a href="#" onclick="closeForgot()" style="color:#c9a84c;text-decoration:none;">Повернутись до входу</a>
+    </p>
+  </div>
+</div>
+
+<style>
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+</style>
+
+<script>
+function openForgot(e) {
+  e && e.preventDefault();
+  document.getElementById('forgotOverlay').style.display = 'flex';
+  document.getElementById('forgotEmail').focus();
+  document.getElementById('forgotSuccess').style.display = 'none';
+  document.getElementById('forgotForm').style.display = 'block';
+  document.getElementById('forgotError').style.display = 'none';
+  document.getElementById('forgotEmail').value = '';
+}
+function closeForgot() {
+  document.getElementById('forgotOverlay').style.display = 'none';
+}
+function submitForgot() {
+  var email = document.getElementById('forgotEmail').value.trim();
+  var errEl = document.getElementById('forgotError');
+  if (!email || !email.includes('@')) {
+    errEl.textContent = 'Введіть коректну email адресу.';
+    errEl.style.display = 'block';
+    return;
+  }
+  errEl.style.display = 'none';
+  // Show success (actual email sending not implemented yet)
+  document.getElementById('forgotForm').style.display = 'none';
+  document.getElementById('forgotSuccess').style.display = 'block';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeForgot();
+});
+</script>

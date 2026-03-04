@@ -3,40 +3,11 @@
 
 {% block extra_css %}
 <style>
-
-:root {
-  --gold: #c9a84c; --gold-light: #e8c96a;
-  --black: #0a0a0a; --dark: #111111; --dark2: #1a1a1a; --dark3: #222222;
-  --white: #f5f0e8; --gray: #888880; --border: rgba(201,168,76,0.2);
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--black); color:var(--white); font-family:'DM Sans',sans-serif; font-weight:300; }
-
-nav {
-  position:fixed; top:0; left:0; right:0; z-index:100;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 60px; height:72px;
-  background:rgba(10,10,10,0.95); backdrop-filter:blur(12px);
-  border-bottom:1px solid var(--border);
-}
-.logo { font-family:'Playfair Display',serif; font-size:22px; font-weight:700; color:var(--gold); letter-spacing:2px; text-decoration:none; }
-.logo span { color:var(--white); }
-.nav-links { display:flex; gap:36px; list-style:none; }
-.nav-links a { color:var(--gray); text-decoration:none; font-size:13px; letter-spacing:1px; text-transform:uppercase; transition:color .3s; }
-.nav-links a:hover, .nav-links a.active { color:var(--gold); }
-.nav-cta { background:var(--gold); color:var(--black) !important; padding:10px 24px; font-weight:500 !important; }
-.nav-phone { font-size:13px; color:var(--white); }
-
 .page-header {
-  padding:140px 60px 60px;
+  padding:112px 60px 48px;
   background:linear-gradient(180deg,var(--dark2) 0%,var(--black) 100%);
   border-bottom:1px solid var(--border);
 }
-.breadcrumb { font-size:12px; color:var(--gray); margin-bottom:20px; }
-.breadcrumb a { color:var(--gold); text-decoration:none; }
-.page-header h1 { font-family:'Playfair Display',serif; font-size:clamp(36px,5vw,60px); font-weight:900; }
-.page-header h1 em { font-style:italic; color:var(--gold); }
-.page-header p { color:var(--gray); font-size:15px; margin-top:12px; max-width:560px; line-height:1.6; }
 
 /* TABS */
 .tabs-nav {
@@ -45,12 +16,14 @@ nav {
   border-bottom:1px solid var(--border);
   background:var(--dark2);
   overflow-x:auto;
+  max-width:100%;
+  box-sizing:border-box;
 }
 .tab-btn {
-  padding:20px 32px;
+  padding:20px 28px;
   background:none; border:none; color:var(--gray);
-  font-family:'DM Sans',sans-serif; font-size:13px; letter-spacing:1px; text-transform:uppercase;
-  cursor:pointer; border-bottom:3px solid transparent;
+  font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; border-bottom:3px solid transparent; flex-shrink:0;
   transition:color .3s, border-color .3s;
   white-space:nowrap;
 }
@@ -89,6 +62,9 @@ nav {
 }
 .highlight-box p { font-size:14px; color:var(--white); margin:0; }
 .highlight-box .highlight-tag { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:10px; display:block; }
+.highlight-box ul { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+.highlight-box ul li { font-size:14px; color:var(--white); padding-left:16px; position:relative; }
+.highlight-box ul li::before { content:'—'; position:absolute; left:0; color:var(--gold); }
 
 /* PRICING TABLE */
 .price-table { width:100%; border-collapse:collapse; margin:24px 0; }
@@ -142,16 +118,7 @@ nav {
 }
 .cta-card a:hover { background:#111; }
 
-footer {
-  background:var(--dark); border-top:1px solid var(--border);
-  padding:40px 60px;
-  display:flex; justify-content:space-between; align-items:center;
-  margin-top:40px;
-}
-.footer-logo { font-family:'Playfair Display',serif; font-size:20px; color:var(--gold); text-decoration:none; }
-.footer-logo span { color:var(--white); }
-.footer-copy { font-size:12px; color:var(--gray); }
-.footer-phone { font-size:15px; color:var(--gold); font-family:'Playfair Display',serif; }
+
 
 </style>
 {% endblock %}
@@ -185,18 +152,6 @@ footer {
         <li><strong>Кредитна або дебетова картка</strong> для блокування застави</li>
       </ul>
 
-      <div class="highlight-box">
-        <span class="highlight-tag">Важливо</span>
-        <p>Водійський стаж орендаря має бути не менше 2 років з моменту отримання посвідчення.</p>
-      </div>
-
-      <h2>Вікові <em>обмеження</em></h2>
-      <ul>
-        <li>Від <strong>21 року</strong> — автомобілі класу економ, комфорт, бізнес</li>
-        <li>Від <strong>23 років</strong> — автомобілі класу VIP та кабріолети</li>
-        <li>Верхнього вікового обмеження немає</li>
-      </ul>
-
       <h2>Виїзд за <em>кордон</em></h2>
       <p>Виїзд за межі України на орендованому автомобілі можливий лише за попередньою письмовою згодою компанії. Необхідно повідомити менеджера при підписанні договору та сплатити додатковий збір.</p>
       <ul>
@@ -211,8 +166,8 @@ footer {
         <div class="info-row"><span class="info-label">Мінімальний вік</span><span class="info-value">21 рік</span></div>
         <div class="info-row"><span class="info-label">Стаж водіння</span><span class="info-value">від 2 років</span></div>
         <div class="info-row"><span class="info-label">Мінімальний термін</span><span class="info-value">1 доба</span></div>
-        <div class="info-row"><span class="info-label">Застава (Base)</span><span class="info-value gold">500–3000 USD</span></div>
-        <div class="info-row"><span class="info-label">Застава (Prime)</span><span class="info-value gold">0 USD</span></div>
+        <div class="info-row"><span class="info-label">Застава (Base)</span><span class="info-value gold">500–₴3000 </span></div>
+        <div class="info-row"><span class="info-label">Застава (Prime)</span><span class="info-value gold">₴0 </span></div>
         <div class="info-row"><span class="info-label">Робочі години</span><span class="info-value">24/7</span></div>
       </div>
       <div class="cta-card">
@@ -233,22 +188,19 @@ footer {
 
       <table class="price-table">
         <thead>
-          <tr><th>Клас авто</th><th>1–2 доби</th><th>3–5 діб</th><th>8–14 діб</th><th>29+ діб</th></tr>
+          <tr><th>Послуга</th><th>Вартість</th><th>Тип</th></tr>
         </thead>
         <tbody>
-          <tr><td>Економ</td><td class="highlight">18 USD</td><td>16 USD</td><td>14 USD</td><td>12 USD</td></tr>
-          <tr><td>Комфорт</td><td class="highlight">55 USD</td><td>49 USD</td><td>45 USD</td><td>32 USD</td></tr>
-          <tr><td>Бізнес</td><td class="highlight">100 USD</td><td>90 USD</td><td>80 USD</td><td>60 USD</td></tr>
-          <tr><td>Кросовер</td><td class="highlight">80 USD</td><td>70 USD</td><td>60 USD</td><td>50 USD</td></tr>
-          <tr><td>VIP</td><td class="highlight">200 USD</td><td>180 USD</td><td>160 USD</td><td>140 USD</td></tr>
-          <tr><td>Мінівен</td><td class="highlight">140 USD</td><td>130 USD</td><td>120 USD</td><td>99 USD</td></tr>
+          <tr><td>GPS-навігатор</td><td class="highlight">+₴80</td><td>за добу</td></tr>
+          <tr><td>Дитяче крісло</td><td class="highlight">+₴120</td><td>за добу</td></tr>
+          <tr><td>Wi-Fi роутер</td><td class="highlight">+₴150</td><td>за добу</td></tr>
+          <tr><td>Додатковий водій</td><td class="highlight">+₴200</td><td>за добу</td></tr>
+          <tr><td>Захист шин</td><td class="highlight">+₴250</td><td>за добу</td></tr>
+          <tr><td>Зелена картка (міжнародна)</td><td class="highlight">+₴800</td><td>разово</td></tr>
+          <tr><td>Доставка по місту</td><td class="highlight">+₴200</td><td>разово</td></tr>
+          <tr><td>Доставка за місто</td><td class="highlight">+₴500</td><td>разово</td></tr>
         </tbody>
       </table>
-
-      <div class="highlight-box">
-        <span class="highlight-tag">Додаткові послуги</span>
-        <p>GPS-навігатор: +5 USD/доба · Дитяче крісло: +5 USD/доба · Wi-Fi роутер: +8 USD/доба · Доставка по місту: від 200 грн</p>
-      </div>
 
       <h2>Умови <em>оплати</em></h2>
       <ul>
@@ -261,8 +213,8 @@ footer {
     <div class="sidebar-sticky">
       <div class="info-card">
         <h3>Тариф Prime</h3>
-        <div class="info-row"><span class="info-label">Застава</span><span class="info-value gold">0 USD</span></div>
-        <div class="info-row"><span class="info-label">Франшиза</span><span class="info-value gold">0 USD</span></div>
+        <div class="info-row"><span class="info-label">Застава</span><span class="info-value gold">₴0 </span></div>
+        <div class="info-row"><span class="info-label">Франшиза</span><span class="info-value gold">₴0 </span></div>
         <div class="info-row"><span class="info-label">Доплата до Base</span><span class="info-value">+30%</span></div>
         <div class="info-row"><span class="info-label">Страхування</span><span class="info-value">Повне</span></div>
       </div>
@@ -285,7 +237,7 @@ footer {
       <h2>Тариф <em>Base</em> — з заставою</h2>
       <ul>
         <li>ОСЦПВ — обов'язкове страхування цивільної відповідальності</li>
-        <li>КАСКО — від пошкоджень та угону, <strong>франшиза від 500 USD</strong></li>
+        <li>КАСКО — від пошкоджень та угону, <strong>франшиза від ₴500 </strong></li>
         <li>Застава блокується на картці клієнта</li>
         <li>При ДТП з вини орендаря сплачується франшиза в розмірі застави</li>
       </ul>
@@ -300,7 +252,12 @@ footer {
 
       <div class="highlight-box">
         <span class="highlight-tag">Не покривається страхуванням</span>
-        <p>Пошкодження під впливом алкоголю або наркотиків · Умисне пошкодження · Порушення умов договору · Пошкодження шин та дисків (якщо не ДТП)</p>
+        <ul>
+        <li>Пошкодження під впливом алкоголю або наркотиків</li>
+        <li>Умисне пошкодження</li>
+        <li>Порушення умов договору</li>
+        <li>Пошкодження шин та дисків (якщо не ДТП)</li>
+        </ul>
       </div>
     </div>
     <div class="sidebar-sticky">
@@ -340,7 +297,7 @@ footer {
       <ul>
         <li>Повернення в офіс або будь-який зручний пункт</li>
         <li>Вивезення авто водієм компанії — від 200 грн</li>
-        <li>Повернення в іншому місті — за попередньою домовленістю</li>
+        <li>Повернення в іншому місті — за попередньою домовленістб, dsl 500 грн</li>
         <li>При затримці понад 2 години стягується добова вартість</li>
       </ul>
 
@@ -438,22 +395,18 @@ footer {
     </div>
   </div>
 </div>
-
-
-
-<script>
-function showTab(id) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  docu
 {% endblock %}
 
 {% block extra_js %}
 <script>
-
 function showTab(id) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  docu
+  document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+function toggleFaq(btn) {
+  btn.closest('.faq-item').classList.toggle('open');
+}
 </script>
 {% endblock %}

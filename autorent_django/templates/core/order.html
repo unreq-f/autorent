@@ -9,6 +9,19 @@
 </div>
 
 <section style="padding:40px 60px 80px;">
+
+  {% if docs_missing %}
+  <div style="background:rgba(207,102,121,0.1);border:1px solid rgba(207,102,121,0.4);border-left:3px solid #cf6679;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
+    <span style="font-size:22px;">⚠️</span>
+    <div>
+      <div style="color:#cf6679;font-weight:500;font-size:14px;margin-bottom:4px;">Необхідно заповнити документи</div>
+      <div style="color:var(--gray);font-size:13px;">Для оформлення замовлення потрібно вказати паспортні дані, ідентифікаційний код та номер водійського посвідчення.
+        <a href="{% url 'profile' %}#settings" style="color:var(--gold);text-decoration:underline;margin-left:4px;">Перейти до налаштувань →</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div style="display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start;">
 
     <!-- FORM -->
@@ -17,14 +30,13 @@
         {% csrf_token %}
 
         {% if not car %}
-        <!-- Car Selection -->
         <div class="order-block">
           <div class="order-block-title">1. Оберіть автомобіль</div>
           <select name="car" required class="order-select">
             <option value="">— Оберіть авто —</option>
             {% for c in cars %}
             <option value="{{ c.pk }}" data-price-base="{{ c.price_base }}" data-price-prime="{{ c.price_prime }}" data-deposit="{{ c.deposit }}">
-              {{ c.full_name }} ({{ c.year }}) — від ${{ c.price_base }}/доба
+              {{ c.full_name }} ({{ c.year }}) — від ₴{{ c.price_base }}/доба
             </option>
             {% endfor %}
           </select>
@@ -33,7 +45,7 @@
         <input type="hidden" name="car" value="{{ car.pk }}">
         {% endif %}
 
-        <!-- Dates -->
+        <!-- Dates & Times -->
         <div class="order-block">
           <div class="order-block-title">{% if car %}1{% else %}2{% endif %}. Дати та час</div>
           <div class="order-grid-2">
@@ -45,41 +57,78 @@
               <label>Дата повернення</label>
               <input type="date" name="date_to" id="dateTo" required>
             </div>
-          </div>
-          <div class="order-field" style="max-width:200px;">
-            <label>Час отримання</label>
-            <input type="time" name="time_from" value="10:00">
+            <div class="order-field">
+              <label>Час отримання</label>
+              <input type="time" name="time_from" id="timeFrom" value="10:00">
+            </div>
+            <div class="order-field">
+              <label>Час повернення</label>
+              <input type="time" name="time_to" id="timeTo" value="10:00">
+            </div>
           </div>
         </div>
 
         <!-- Pickup -->
         <div class="order-block">
           <div class="order-block-title">{% if car %}2{% else %}3{% endif %}. Місце отримання</div>
-          {% for val, label in pickups %}
+          {% for val, label, price in pickups_with_price %}
           <label class="radio-option">
-            <input type="radio" name="pickup_location" value="{{ val }}" {% if forloop.first %}checked{% endif %}>
-            <span class="radio-label">{{ label }}</span>
+            <input type="radio" name="pickup_location" value="{{ val }}"
+                   {% if forloop.first %}checked{% endif %}
+                   onchange="onPickupChange(this,'pickup')">
+            <span class="radio-label">
+              {{ label }}
+              <em style="color:{% if price == 'безкоштовно' %}#4caf7d{% else %}var(--gold){% endif %};font-style:normal;font-size:12px;margin-left:6px;">{{ price }}</em>
+            </span>
           </label>
           {% endfor %}
+          <div id="pickupDeliveryRow" style="display:none;margin-top:14px;">
+            <label style="display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:7px;">Адреса доставки</label>
+            <input type="text" name="delivery_address" id="pickupDeliveryAddr"
+                   placeholder="Вул. Назва, буд. №, кв. №..."
+                   style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--white);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box;transition:border-color .3s;">
+          </div>
+        </div>
+
+        <!-- Return location -->
+        <div class="order-block">
+          <div class="order-block-title">{% if car %}3{% else %}4{% endif %}. Місце повернення</div>
+          {% for val, label, price in pickups_with_price %}
+          <label class="radio-option">
+            <input type="radio" name="return_location" value="{{ val }}"
+                   {% if forloop.first %}checked{% endif %}
+                   onchange="onPickupChange(this,'return')">
+            <span class="radio-label">
+              {{ label }}
+              <em style="color:{% if price == 'безкоштовно' %}#4caf7d{% else %}var(--gold){% endif %};font-style:normal;font-size:12px;margin-left:6px;">{{ price }}</em>
+            </span>
+          </label>
+          {% endfor %}
+          <div id="returnDeliveryRow" style="display:none;margin-top:14px;">
+            <label style="display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:7px;">Адреса повернення</label>
+            <input type="text" name="return_address" id="returnDeliveryAddr"
+                   placeholder="Вул. Назва, буд. №, кв. №..."
+                   style="width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--white);padding:11px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;box-sizing:border-box;transition:border-color .3s;">
+          </div>
         </div>
 
         <!-- Tariff -->
         <div class="order-block">
-          <div class="order-block-title">{% if car %}3{% else %}4{% endif %}. Тариф</div>
+          <div class="order-block-title">{% if car %}4{% else %}5{% endif %}. Тариф</div>
           <div class="tariff-grid">
             <label class="tariff-option">
               <input type="radio" name="tariff" value="base" id="tariff_base" checked>
               <div class="tariff-card">
                 <div class="tariff-name">Base</div>
-                {% if car %}<div class="tariff-price">${{ car.price_base }}/доба</div>{% endif %}
-                <div class="tariff-desc">Зі заставою ${{ car.deposit|default:'1500' }}</div>
+                {% if car %}<div class="tariff-price">₴{{ car.price_base }}/доба</div>{% endif %}
+                <div class="tariff-desc">Зі заставою ₴{{ car.deposit|default:'1500' }}</div>
               </div>
             </label>
             <label class="tariff-option">
               <input type="radio" name="tariff" value="prime" id="tariff_prime">
               <div class="tariff-card">
                 <div class="tariff-name">Prime</div>
-                {% if car %}<div class="tariff-price">${{ car.price_prime }}/доба</div>{% endif %}
+                {% if car %}<div class="tariff-price">₴{{ car.price_prime }}/доба</div>{% endif %}
                 <div class="tariff-desc">Без застави (дорожче)</div>
               </div>
             </label>
@@ -88,7 +137,7 @@
 
         <!-- Payment -->
         <div class="order-block">
-          <div class="order-block-title">{% if car %}4{% else %}5{% endif %}. Спосіб оплати</div>
+          <div class="order-block-title">{% if car %}5{% else %}6{% endif %}. Спосіб оплати</div>
           {% for val, label in payments %}
           <label class="radio-option">
             <input type="radio" name="payment_method" value="{{ val }}" {% if forloop.first %}checked{% endif %}>
@@ -99,40 +148,30 @@
 
         <!-- Extras -->
         <div class="order-block">
-          <div class="order-block-title">{% if car %}5{% else %}6{% endif %}. Додаткові послуги</div>
+          <div class="order-block-title">{% if car %}6{% else %}7{% endif %}. Додаткові послуги</div>
           <div class="extras-grid">
-            <label class="extra-option"><input type="checkbox" id="extra_gps" name="extra_gps"><span>📡 GPS навігатор <em>+$5/доба</em></span></label>
-            <label class="extra-option"><input type="checkbox" id="extra_child_seat" name="extra_child_seat"><span>🪑 Дитяче крісло <em>+$5/доба</em></span></label>
-            <label class="extra-option"><input type="checkbox" id="extra_wifi" name="extra_wifi"><span>📶 Wi-Fi роутер <em>+$8/доба</em></span></label>
-            <label class="extra-option"><input type="checkbox" id="extra_driver" name="extra_driver"><span>👤 Додатковий водій <em>безкоштовно</em></span></label>
-            <label class="extra-option"><input type="checkbox" id="extra_tire" name="extra_tire"><span>🛞 Захист шин <em>+$10/доба</em></span></label>
-            <label class="extra-option"><input type="checkbox" id="extra_green_card" name="extra_green_card"><span>🌿 Зелена картка <em>+$15</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_gps" name="extra_gps"><span>📡 GPS навігатор <em>+₴80/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_child_seat" name="extra_child_seat"><span>🪑 Дитяче крісло <em>+₴120/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_wifi" name="extra_wifi"><span>📶 Wi-Fi роутер <em>+₴150/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_driver" name="extra_driver"><span>👤 Додатковий водій <em>+₴200/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_tire" name="extra_tire"><span>🛞 Захист шин <em>+₴250/доба</em></span></label>
+            <label class="extra-option"><input type="checkbox" id="extra_green_card" name="extra_green_card"><span>🌿 Зелена картка <em>+₴800</em></span></label>
           </div>
         </div>
 
         <!-- Promo -->
         <div class="order-block">
-          <div class="order-block-title">{% if car %}6{% else %}7{% endif %}. Промокод</div>
+          <div class="order-block-title">{% if car %}7{% else %}8{% endif %}. Промокод</div>
           <div style="display:flex;gap:12px;align-items:flex-start;max-width:380px;">
             <div style="flex:1;">
-              <input type="text" id="promoInput" name="promo_code"
-                     placeholder="AUTORENT2025"
-                     autocomplete="off"
-                     style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);
-                            color:var(--white);padding:14px 16px;font-family:'DM Sans',sans-serif;
-                            font-size:14px;outline:none;transition:border-color .3s;"
-                     oninput="this.style.borderColor='rgba(255,255,255,0.08)'"
-              >
+              <input type="text" id="promoInput" name="promo_code" placeholder="AUTORENT2025" autocomplete="off"
+                     style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .3s;"
+                     oninput="this.style.borderColor='rgba(255,255,255,0.08)'">
               <div id="promoMsg" style="font-size:12px;margin-top:6px;min-height:18px;"></div>
             </div>
             <button type="button" id="promoBtn" onclick="applyPromo()"
-                    style="background:var(--gold);color:var(--black);border:none;
-                           padding:14px 20px;font-size:13px;font-weight:500;
-                           letter-spacing:1px;text-transform:uppercase;cursor:pointer;
-                           font-family:'DM Sans',sans-serif;white-space:nowrap;
-                           transition:background .2s;"
-                    onmouseover="this.style.background='var(--gold-light)'"
-                    onmouseout="this.style.background='var(--gold)'"
+                    style="background:var(--gold);color:var(--black);border:none;padding:14px 20px;font-size:13px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:background .2s;"
+                    onmouseover="this.style.background='var(--gold-light)'" onmouseout="this.style.background='var(--gold)'"
             >Застосувати</button>
           </div>
         </div>
@@ -145,7 +184,11 @@
     <div class="order-summary" style="position:sticky;top:88px;">
       {% if car %}
       <div class="sum-car">
-        <div class="sum-car-img">{{ car.emoji }}</div>
+        <div class="sum-car-img">
+          {% if car.photos.first %}<img src="{{ car.photos.first.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;">
+          {% elif car.image %}<img src="{{ car.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;">
+          {% else %}<img src="/static/img/car_placeholder.svg" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;">{% endif %}
+        </div>
         <div>
           <div class="sum-car-name">{{ car.full_name }}</div>
           <div class="sum-car-class">{{ car.get_car_class_display }} · {{ car.year }}</div>
@@ -154,15 +197,24 @@
       {% endif %}
       <div class="sum-block">
         <div class="sum-row"><span>Тривалість</span><span id="sumDays">— днів</span></div>
-        <div class="sum-row"><span>Тарифна вартість</span><span id="sumBase">$—</span></div>
-        <div class="sum-row"><span>Додаткові послуги</span><span id="sumExtras">$0</span></div>
+        <div class="sum-row"><span>Тарифна вартість</span><span id="sumBase">₴—</span></div>
+        <div class="sum-row"><span>Додаткові послуги</span><span id="sumExtras">₴0</span></div>
+        <div class="sum-row" id="sumDeliveryRow" style="display:none;"><span>Доставка</span><span id="sumDelivery" style="color:var(--gold);">₴0</span></div>
+        <div id="sumLoyaltyRow" class="sum-row" style="display:none;color:#c9a84c;">
+          <span>Знижка клієнта</span>
+          <span id="sumLoyaltyDiscount" style="color:#c9a84c;">-₴0</span>
+        </div>
         <div id="sumPromoRow" class="sum-row" style="display:none;color:#4caf7d;">
           <span id="sumPromoLabel">Промокод</span>
-          <span id="sumPromoDiscount" style="color:#4caf7d;">-$0</span>
+          <span id="sumPromoDiscount" style="color:#4caf7d;">-₴0</span>
         </div>
         <div class="sum-divider"></div>
-        <div class="sum-row sum-total"><span>До сплати</span><span id="sumTotal">$—</span></div>
-        <div class="sum-row"><span style="color:var(--gray);">Застава</span><span id="sumDeposit" style="color:var(--gray);">{% if car %}${{ car.deposit }}{% else %}$—{% endif %}</span></div>
+        <div class="sum-row"><span>Оренда</span><span id="sumTotal">₴—</span></div>
+        <div class="sum-row"><span style="color:var(--gray);">Застава</span><span id="sumDeposit" style="color:var(--gray);">{% if car %}₴{{ car.deposit }}{% else %}₴—{% endif %}</span></div>
+        <div class="sum-row sum-total" id="sumGrandRow" style="border-top:1px solid rgba(201,168,76,.4);margin-top:6px;padding-top:10px;">
+          <span>До сплати</span>
+          <span id="sumGrand">₴—</span>
+        </div>
       </div>
       <div class="sum-note">📋 Замовлення потребує підтвердження менеджером протягом 30 хвилин.</div>
     </div>
@@ -198,10 +250,9 @@
 .btn-order-submit:hover{background:var(--gold-light);}
 .order-summary{background:var(--dark2);border:1px solid var(--border);padding:24px;}
 .sum-car{display:flex;gap:14px;align-items:center;padding-bottom:16px;border-bottom:1px solid var(--border);margin-bottom:16px;}
-.sum-car-img{font-size:40px;}
+.sum-car-img{width:80px;height:60px;overflow:hidden;background:var(--dark3);border:1px solid var(--border);flex-shrink:0;}
 .sum-car-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);}
 .sum-car-class{font-size:12px;color:var(--gray);margin-top:2px;}
-.sum-block{}
 .sum-row{display:flex;justify-content:space-between;padding:10px 0;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,0.03);}
 .sum-row span:last-child{color:var(--white);}
 .sum-total{font-size:16px!important;font-weight:500;}
@@ -213,7 +264,17 @@
 
 {% block extra_js %}
 <script>
-// Ціни передаються з Django як числа
+function onPickupChange(radio, prefix) {
+  var isDelivery = radio.value === 'delivery' || radio.value === 'delivery_out';
+  var row  = document.getElementById(prefix + 'DeliveryRow');
+  var addr = document.getElementById(prefix + 'DeliveryAddr');
+  if (!row) return;
+  row.style.display = isDelivery ? 'block' : 'none';
+  if (addr) { addr.required = isDelivery; if (!isDelivery) addr.value = ''; }
+}
+// Keep old name for compatibility
+function onOrderPickup(r){ onPickupChange(r,'delivery'); }
+
 {% if car %}
 var PRICE_BASE  = parseFloat('{{ car.price_base }}');
 var PRICE_PRIME = parseFloat('{{ car.price_prime }}');
@@ -222,9 +283,8 @@ var DEPOSIT     = parseFloat('{{ car.deposit }}');
 var PRICE_BASE = 0, PRICE_PRIME = 0, DEPOSIT = 0;
 {% endif %}
 
-var days = 0;
-var promoDiscount = 0;   // % знижки від активного промокоду
-var promoCode     = '';  // код
+var days = 0, promoDiscount = 0, promoCode = '';
+var USER_DISCOUNT = {{ user_discount_pct|default:0 }};
 
 function pluralDays(n) {
   if (n % 10 === 1 && n % 100 !== 11) return 'день';
@@ -233,167 +293,143 @@ function pluralDays(n) {
 }
 
 function calculateTotal() {
-  // Дати
   var from = document.getElementById('dateFrom').value;
   var to   = document.getElementById('dateTo').value;
-  if (from && to) {
-    var d = Math.round((new Date(to) - new Date(from)) / 86400000);
-    days = d > 0 ? d : 0;
-  } else {
-    days = 0;
-  }
+  days = (from && to) ? Math.max(0, Math.round((new Date(to) - new Date(from)) / 86400000)) : 0;
 
-  // Тариф
   var isPrime   = document.getElementById('tariff_prime').checked;
   var dailyRate = isPrime ? PRICE_PRIME : PRICE_BASE;
   var base      = dailyRate * days;
 
-  // Додаткові послуги
   var extras = 0;
-  if (document.getElementById('extra_gps').checked)        extras += 5  * days;
-  if (document.getElementById('extra_child_seat').checked) extras += 5  * days;
-  if (document.getElementById('extra_wifi').checked)       extras += 8  * days;
-  if (document.getElementById('extra_tire').checked)       extras += 10 * days;
-  if (document.getElementById('extra_green_card').checked) extras += 15;
+  if (document.getElementById('extra_gps').checked)        extras += 80  * days;
+  if (document.getElementById('extra_child_seat').checked) extras += 120 * days;
+  if (document.getElementById('extra_wifi').checked)       extras += 150 * days;
+  if (document.getElementById('extra_driver').checked)     extras += 200 * days;
+  if (document.getElementById('extra_tire').checked)       extras += 250 * days;
+  if (document.getElementById('extra_green_card').checked) extras += 800;
 
-  var subtotal = base + extras;
+  var delivery = 0;
+  var pickupVal = document.querySelector('input[name=pickup_location]:checked');
+  var returnVal = document.querySelector('input[name=return_location]:checked');
+  if (pickupVal && (pickupVal.value === 'delivery'))     delivery += 200;
+  if (pickupVal && (pickupVal.value === 'delivery_out')) delivery += 500;
+  if (returnVal && (returnVal.value === 'delivery'))     delivery += 200;
+  if (returnVal && (returnVal.value === 'delivery_out')) delivery += 500;
 
-  // Промокод
-  var discountAmt = promoDiscount > 0 ? Math.round(subtotal * promoDiscount / 100) : 0;
-  var total       = subtotal - discountAmt;
+  var rentalBase    = base + extras;
+  var totalDiscount = Math.min((promoDiscount || 0) + (USER_DISCOUNT || 0), 50);
+  var discountAmt   = totalDiscount > 0 ? Math.round(rentalBase * totalDiscount / 100) : 0;
+  var rental        = rentalBase - discountAmt + delivery;
+  var depositAmt  = isPrime ? 0 : DEPOSIT;
+  var grandTotal  = rental + depositAmt;
 
-  // Оновлення DOM
-  document.getElementById('sumDays').textContent    = days > 0 ? days + ' ' + pluralDays(days) : '— днів';
-  document.getElementById('sumBase').textContent    = days > 0 ? '$' + base.toFixed(0) : '$—';
-  document.getElementById('sumExtras').textContent  = '$' + extras.toFixed(0);
-  document.getElementById('sumTotal').textContent   = days > 0 ? '$' + total.toFixed(0) : '$—';
-  document.getElementById('sumDeposit').textContent = isPrime ? '$0 (Prime)' : (DEPOSIT > 0 ? '$' + DEPOSIT : '$—');
+  document.getElementById('sumDays').textContent   = days > 0 ? days + ' ' + pluralDays(days) : '— днів';
+  document.getElementById('sumBase').textContent   = days > 0 ? '₴' + base.toFixed(0) : '₴—';
+  document.getElementById('sumExtras').textContent = '₴' + extras.toFixed(0);
 
-  // Рядок промокоду в сайдбарі
-  var promoRow = document.getElementById('sumPromoRow');
-  if (promoDiscount > 0 && days > 0) {
-    document.getElementById('sumPromoLabel').textContent   = 'Промокод ' + promoCode;
-    document.getElementById('sumPromoDiscount').textContent = '-$' + discountAmt.toFixed(0) + ' (' + promoDiscount + '%)';
-    promoRow.style.display = 'flex';
-  } else {
-    promoRow.style.display = 'none';
+  var dlRow = document.getElementById('sumDeliveryRow');
+  if (dlRow) {
+    if (delivery > 0) { dlRow.style.display = 'flex'; document.getElementById('sumDelivery').textContent = '₴' + delivery; }
+    else              { dlRow.style.display = 'none'; }
   }
+
+  document.getElementById('sumTotal').textContent   = days > 0 ? '₴' + rental.toFixed(0) : '₴—';
+  document.getElementById('sumDeposit').textContent = isPrime ? '₴0 (тариф Prime)' : (DEPOSIT > 0 ? '₴' + DEPOSIT : '₴—');
+  document.getElementById('sumGrand').textContent   = days > 0 ? '₴' + grandTotal.toFixed(0) : '₴—';
+
+  var promoRow = document.getElementById('sumPromoRow');
+  var loyaltyRow = document.getElementById('sumLoyaltyRow');
+  // Loyalty discount row
+  if (loyaltyRow) {
+    if (USER_DISCOUNT > 0 && days > 0) {
+      var loyaltyAmt = Math.round(rentalBase * USER_DISCOUNT / 100);
+      document.getElementById('sumLoyaltyDiscount').textContent = '-₴' + loyaltyAmt.toFixed(0) + ' (' + USER_DISCOUNT + '%)';
+      loyaltyRow.style.display = 'flex';
+    } else { loyaltyRow.style.display = 'none'; }
+  }
+  // Promo row
+  if (promoDiscount > 0 && days > 0) {
+    var promoAmt = Math.round(rentalBase * promoDiscount / 100);
+    document.getElementById('sumPromoLabel').textContent    = 'Промокод ' + promoCode;
+    document.getElementById('sumPromoDiscount').textContent = '-₴' + promoAmt.toFixed(0) + ' (' + promoDiscount + '%)';
+    promoRow.style.display = 'flex';
+  } else { promoRow.style.display = 'none'; }
 }
 
-// AJAX перевірка промокоду
 function applyPromo() {
   var input = document.getElementById('promoInput');
   var msg   = document.getElementById('promoMsg');
   var btn   = document.getElementById('promoBtn');
   var code  = input.value.trim().toUpperCase();
-
-  if (!code) {
-    msg.style.color = '#cf6679';
-    msg.textContent = 'Введіть промокод';
-    return;
-  }
-
-  btn.textContent = '...';
-  btn.disabled    = true;
-
-  var formData = new FormData();
-  formData.append('code', code);
-  formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-
-  fetch('{% url "check_promo" %}', {
-    method: 'POST',
-    body:   formData
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    btn.textContent = 'Застосувати';
-    btn.disabled    = false;
-
+  if (!code) { msg.style.color = '#cf6679'; msg.textContent = 'Введіть промокод'; return; }
+  btn.textContent = '...'; btn.disabled = true;
+  var fd = new FormData(); fd.append('code', code); fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+  fetch('{% url "check_promo" %}', { method: 'POST', body: fd })
+  .then(r => r.json()).then(data => {
+    btn.textContent = 'Застосувати'; btn.disabled = false;
     if (data.valid) {
-      promoDiscount          = data.discount;
-      promoCode              = data.code;
-      input.style.borderColor = '#4caf7d';
-      msg.style.color         = '#4caf7d';
-      msg.textContent         = data.message;
-      btn.textContent         = '✓ Застосовано';
-      btn.style.background    = '#4caf7d';
+      promoDiscount = data.discount; promoCode = data.code;
+      input.style.borderColor = '#4caf7d'; msg.style.color = '#4caf7d'; msg.textContent = data.message;
+      btn.textContent = '✓ Застосовано'; btn.style.background = '#4caf7d';
       calculateTotal();
     } else {
-      promoDiscount           = 0;
-      promoCode               = '';
-      input.style.borderColor = '#cf6679';
-      msg.style.color         = '#cf6679';
-      msg.textContent         = data.error;
+      promoDiscount = 0; promoCode = '';
+      input.style.borderColor = '#cf6679'; msg.style.color = '#cf6679'; msg.textContent = data.error;
       calculateTotal();
     }
-  })
-  .catch(function() {
-    btn.textContent = 'Застосувати';
-    btn.disabled    = false;
-    msg.style.color = '#cf6679';
-    msg.textContent = 'Помилка з\'єднання';
-  });
+  }).catch(() => { btn.textContent = 'Застосувати'; btn.disabled = false; msg.style.color='#cf6679'; msg.textContent="Помилка з'єднання"; });
 }
 
-// Enter в полі промокоду → застосувати
 document.addEventListener('DOMContentLoaded', function() {
-
-  document.getElementById('promoInput').addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') { e.preventDefault(); applyPromo(); }
-  });
-
-  // Якщо змінили код — скидаємо знижку
-  document.getElementById('promoInput').addEventListener('input', function() {
-    if (promoDiscount > 0) {
-      promoDiscount = 0;
-      promoCode     = '';
-      var btn = document.getElementById('promoBtn');
-      btn.textContent         = 'Застосувати';
-      btn.style.background    = 'var(--gold)';
-      document.getElementById('promoMsg').textContent = '';
-      this.style.borderColor  = 'rgba(255,255,255,0.08)';
-      calculateTotal();
-    }
-  });
-
-  // Мін. дата — сьогодні
   var today = new Date().toISOString().split('T')[0];
   document.getElementById('dateFrom').min = today;
   document.getElementById('dateTo').min   = today;
 
+  document.getElementById('promoInput').addEventListener('keydown', e => { if(e.key==='Enter'){e.preventDefault();applyPromo();} });
+  document.getElementById('promoInput').addEventListener('input', function() {
+    if (promoDiscount > 0) {
+      promoDiscount = 0; promoCode = '';
+      var btn = document.getElementById('promoBtn');
+      btn.textContent = 'Застосувати'; btn.style.background = 'var(--gold)';
+      document.getElementById('promoMsg').textContent = '';
+      this.style.borderColor = 'rgba(255,255,255,0.08)';
+      calculateTotal();
+    }
+  });
+
   {% if not car %}
   var carSel = document.querySelector('select[name=car]');
-  if (carSel) {
-    carSel.addEventListener('change', function() {
-      var opt = this.options[this.selectedIndex];
-      PRICE_BASE  = parseFloat(opt.dataset.priceBase  || 0);
-      PRICE_PRIME = parseFloat(opt.dataset.pricePrime || 0);
-      DEPOSIT     = parseFloat(opt.dataset.deposit    || 0);
-      calculateTotal();
-    });
-  }
+  if (carSel) carSel.addEventListener('change', function() {
+    var opt = this.options[this.selectedIndex];
+    PRICE_BASE  = parseFloat(opt.dataset.priceBase  || 0);
+    PRICE_PRIME = parseFloat(opt.dataset.pricePrime || 0);
+    DEPOSIT     = parseFloat(opt.dataset.deposit    || 0);
+    calculateTotal();
+  });
   {% endif %}
 
-  document.getElementById('dateFrom').addEventListener('input',  calculateTotal);
-  document.getElementById('dateFrom').addEventListener('change', calculateTotal);
-  document.getElementById('dateTo').addEventListener('input',    calculateTotal);
-  document.getElementById('dateTo').addEventListener('change',   calculateTotal);
+  ['dateFrom','dateTo'].forEach(id => {
+    document.getElementById(id).addEventListener('input',  calculateTotal);
+    document.getElementById(id).addEventListener('change', calculateTotal);
+  });
   document.getElementById('tariff_base').addEventListener('change',  calculateTotal);
   document.getElementById('tariff_prime').addEventListener('change', calculateTotal);
-
-  ['extra_gps','extra_child_seat','extra_wifi','extra_driver','extra_tire','extra_green_card'].forEach(function(id) {
+  ['extra_gps','extra_child_seat','extra_wifi','extra_driver','extra_tire','extra_green_card'].forEach(id => {
     document.getElementById(id).addEventListener('change', calculateTotal);
+  });
+  // pickup/return delivery listeners
+  document.querySelectorAll('input[name=pickup_location]').forEach(function(r) {
+    r.addEventListener('change', calculateTotal);
+  });
+  document.querySelectorAll('input[name=return_location]').forEach(function(r) {
+    r.addEventListener('change', calculateTotal);
   });
 
   document.getElementById('orderForm').addEventListener('submit', function(e) {
-    if (days === 0) {
-      e.preventDefault();
-      alert('Будь ласка, вкажіть дати оренди!');
-      return;
-    }
+    if (days === 0) { e.preventDefault(); alert('Будь ласка, вкажіть дати оренди!'); return; }
     if (document.getElementById('dateFrom').value >= document.getElementById('dateTo').value) {
-      e.preventDefault();
-      alert('Дата повернення має бути пізніше дати отримання!');
+      e.preventDefault(); alert('Дата повернення має бути пізніше дати отримання!');
     }
   });
 

@@ -1,368 +1,241 @@
 {% extends 'manager/base_manager.html' %}
 {% block title %}Штрафи — AutoRent Manager{% endblock %}
+{% block extra_css %}<style>
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat-card{background:var(--dark2);border:1px solid var(--border);padding:16px 18px;}
+.stat-val{font-family:'Playfair Display',serif;font-size:22px;}
+.stat-val.red{color:#cf6679;}.stat-val.grn{color:#4caf7d;}.stat-val.gold{color:var(--gold);}.stat-val.gray{color:var(--gray);}
+.stat-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-top:4px;}
+.status-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.stab{padding:11px 16px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;text-decoration:none;display:flex;gap:7px;align-items:center;}
+.stab:hover{color:var(--white);}.stab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.stab .cnt{font-size:10px;padding:1px 6px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-bar input,.filter-bar select{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--gold);}
+.filter-bar input[type=text]{flex:1;min-width:200px;}
+.ft{width:100%;border-collapse:collapse;}
+.ft th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:11px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--dark3);white-space:nowrap;}
+.ft td{padding:12px 14px;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+.ft tr:hover td{background:rgba(255,255,255,.015);}
+.hl{color:var(--white);}
+.gld{color:var(--gold);font-family:'Playfair Display',serif;}
+.sp{display:inline-flex;align-items:center;font-size:11px;padding:3px 9px;border:1px solid;white-space:nowrap;}
+.sp-unpaid{color:#cf6679;border-color:rgba(207,102,121,.3);background:rgba(207,102,121,.08);}
+.sp-paid{color:#4caf7d;border-color:rgba(76,175,125,.3);background:rgba(76,175,125,.08);}
+.sp-partial{color:#e0924c;border-color:rgba(224,146,76,.3);background:rgba(224,146,76,.08);}
+.sp-disputed{color:#5b9bd5;border-color:rgba(91,155,213,.3);background:rgba(91,155,213,.08);}
+.sp-waived{color:#888;border-color:rgba(136,136,136,.3);background:rgba(136,136,136,.06);}
+.sev-low{color:#4caf7d;font-size:11px;}.sev-medium{color:#e0924c;font-size:11px;}.sev-high{color:#cf6679;font-size:11px;font-weight:500;}
+.act{display:flex;gap:4px;}
+.abt{width:30px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--dark3);border:1px solid var(--border);cursor:pointer;font-size:13px;transition:.15s;color:var(--gray);}
+.abt:hover{border-color:var(--gold);color:var(--white);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;justify-content:flex-end;}
+.modal-overlay.open{display:flex;}
+.drawer{width:480px;height:100vh;background:var(--dark2);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;animation:slideIn .22s ease;}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.dh{display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.dt{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);}
+.dt em{color:var(--gold);font-style:italic;}
+.cbtn{background:none;border:1px solid var(--border);color:var(--gray);width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.cbtn:hover{border-color:var(--gold);color:var(--white);}
+.dbody{padding:24px 28px;flex:1;}
+.dact{display:flex;gap:10px;padding:18px 28px;border-top:1px solid var(--border);}
+.btn-save{flex:1;background:var(--gold);color:var(--black);border:none;padding:13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;}
+.btn-sec{background:transparent;color:var(--gray);border:1px solid var(--border);padding:13px 18px;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.btn-sec:hover{border-color:var(--gold);color:var(--white);}
+.df{margin-bottom:14px;}
+.df label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:7px;}
+.df input,.df select,.df textarea{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .3s;box-sizing:border-box;}
+.df input:focus,.df select:focus,.df textarea:focus{border-color:var(--gold);}
+.dg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.dr{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;}
+.dl{color:var(--gray);}.dv{color:var(--white);text-align:right;}
+.ds{margin-bottom:20px;}
+.ds-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.modal-center{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;}
+.modal-center.open{display:flex;}
+.mbox{background:var(--dark2);border:1px solid var(--border);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;}
+</style>{% endblock %}
 
 {% block main_content %}
+<div class="topbar">
+  <div class="topbar-title">Штрафи</div>
+  <button class="tb-btn primary" onclick="openAdd()">+ Виставити штраф</button>
+</div>
+<div class="content">
 
-  <div class="topbar">
-    <div class="topbar-title">Штрафи · <strong>Управління порушеннями</strong></div>
-    <div style="display:flex;gap:10px;">
-      <button class="tb-btn primary" onclick="openDrawer()">+ Виставити штраф</button>
-      <button class="tb-btn">⬇ Експорт</button>
-    </div>
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card"><div class="stat-val red">{{ stats.unpaid_count }}</div><div class="stat-lbl">Непогашених</div></div>
+    <div class="stat-card"><div class="stat-val red">₴{{ stats.unpaid_amount|floatformat:0 }}</div><div class="stat-lbl">Сума до стягнення</div></div>
+    <div class="stat-card"><div class="stat-val grn">₴{{ stats.paid_amount|floatformat:0 }}</div><div class="stat-lbl">Зібрано</div></div>
+    <div class="stat-card"><div class="stat-val gray">{{ stats.total }}</div><div class="stat-lbl">Всього штрафів</div></div>
   </div>
 
-  <div class="content">
-    <!-- KPI -->
-    <div class="kpi-row">
-      <div class="kpi-card red">
-        <div class="kpi-icon">⚠️</div>
-        <div class="kpi-val">3</div>
-        <div class="kpi-label">Непогашених штрафів</div>
-        <div class="kpi-delta down">Потребують стягнення</div>
-      </div>
-      <div class="kpi-card orange">
-        <div class="kpi-icon">💸</div>
-        <div class="kpi-val">2 850</div>
-        <div class="kpi-label">USD до отримання</div>
-        <div class="kpi-delta down">3 активних справи</div>
-      </div>
-      <div class="kpi-card green">
-        <div class="kpi-icon">✅</div>
-        <div class="kpi-val">4 120</div>
-        <div class="kpi-label">USD стягнуто (лютий)</div>
-        <div class="kpi-delta up">↑ +18% до минулого</div>
-      </div>
-      <div class="kpi-card gold">
-        <div class="kpi-icon">📋</div>
-        <div class="kpi-val">47</div>
-        <div class="kpi-label">Всього штрафів (рік)</div>
-        <div class="kpi-delta up">Середній: 185 USD</div>
-      </div>
+  <!-- Status tabs -->
+  <div class="status-tabs">
+    <a class="stab {% if not sf %}active{% endif %}" href="{% url 'manager_fines' %}{% if request.GET.q %}?q={{ request.GET.q }}{% endif %}">Всі</a>
+    {% for val, label in fine_statuses %}
+    <a class="stab {% if sf == val %}active{% endif %}" href="?status={{ val }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ label }}</a>
+    {% endfor %}
+  </div>
+
+  <!-- Filter -->
+  <form method="get">
+    {% if sf %}<input type="hidden" name="status" value="{{ sf }}">{% endif %}
+    <div class="filter-bar">
+      <input type="text" name="q" value="{{ request.GET.q }}" placeholder="🔍  Номер, клієнт, авто, замовлення...">
+      <button type="submit" class="tb-btn primary">Пошук</button>
+      {% if request.GET.q or sf %}<a href="{% url 'manager_fines' %}" class="tb-btn">✕</a>{% endif %}
     </div>
+  </form>
 
-    <!-- PAGE GRID -->
-    <div class="page-grid">
-      <!-- TABLE SIDE -->
-      <div>
-        <div class="status-tabs">
-          <div class="stab active">Всі <span class="cnt">47</span></div>
-          <div class="stab">Непогашені <span class="cnt">3</span></div>
-          <div class="stab">Сплачені <span class="cnt">38</span></div>
-          <div class="stab">Часткові <span class="cnt">2</span></div>
-          <div class="stab">Оскаржені <span class="cnt">2</span></div>
-          <div class="stab">Скасовані <span class="cnt">2</span></div>
-        </div>
-
-        <div class="filter-bar">
-          <div class="search-box">
-            <span style="color:var(--gray);font-size:14px">🔍</span>
-            <input type="text" placeholder="Клієнт, авто, причина...">
+  <!-- Table -->
+  <div style="overflow-x:auto;">
+  {% if fines %}
+  <table class="ft">
+    <thead>
+      <tr><th>Номер</th><th>Дата</th><th>Клієнт</th><th>Замовлення / Авто</th><th>Тип</th><th>Серйозність</th><th>Сума ₴</th><th>Сплачено ₴</th><th>Статус</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for f in fines %}
+      <tr>
+        <td style="font-family:monospace;font-size:11px;color:var(--gold);">{{ f.number }}</td>
+        <td style="font-size:12px;white-space:nowrap;">{{ f.created_at|date:"d.m.Y" }}</td>
+        <td>
+          <div class="hl">{{ f.booking.user.get_full_name|default:f.booking.user.username }}</div>
+          <div style="font-size:11px;">{{ f.booking.user.email }}</div>
+        </td>
+        <td>
+          <a href="{% url 'manager_bookings' %}?q={{ f.booking.number }}" style="color:var(--gold);text-decoration:none;font-size:12px;font-family:monospace;">{{ f.booking.number }}</a>
+          <div style="font-size:11px;margin-top:2px;">{{ f.booking.car.brand }} {{ f.booking.car.model }}</div>
+        </td>
+        <td style="font-size:12px;">{{ f.get_fine_type_display }}</td>
+        <td><span class="sev-{{ f.severity }}">{% if f.severity == 'low' %}▼ Мінімальна{% elif f.severity == 'medium' %}● Середня{% else %}▲ Критична{% endif %}</span></td>
+        <td><span class="gld">{{ f.amount|floatformat:0 }}</span></td>
+        <td style="font-size:12px;">{% if f.paid_amount > 0 %}<span style="color:#4caf7d;">{{ f.paid_amount|floatformat:0 }}</span>{% else %}<span style="opacity:.3;">—</span>{% endif %}</td>
+        <td><span class="sp sp-{{ f.status }}">{{ f.get_status_display }}</span></td>
+        <td>
+          <div class="act">
+            <button class="abt" title="Деталі / Редагувати" onclick="openFine({{ f.pk }})">✏️</button>
           </div>
-          <select class="filter-select">
-            <option>Всі типи</option>
-            <option>Запізнення повернення</option>
-            <option>Пошкодження кузову</option>
-            <option>Пошкодження салону</option>
-            <option>Неповний бак</option>
-            <option>ДТП</option>
-            <option>Штраф ДАІ</option>
-            <option>Інше</option>
-          </select>
-          <select class="filter-select">
-            <option>Будь-яка серйозність</option>
-            <option>Критична</option>
-            <option>Середня</option>
-            <option>Мінімальна</option>
-          </select>
-          <input type="date" class="filter-select" style="width:140px">
-        </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div style="padding:12px 14px;font-size:12px;color:var(--gray);border-top:1px solid var(--border);">{{ fines|length }} записів</div>
+  {% else %}
+  <div style="padding:60px;text-align:center;color:var(--gray);"><div style="font-size:40px;margin-bottom:12px;">⚠️</div><div>Штрафів не знайдено</div></div>
+  {% endif %}
+  </div>
 
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Клієнт</th>
-                <th>Авто</th>
-                <th>Причина</th>
-                <th>Серйозність</th>
-                <th>Дата</th>
-                <th>Сума ↕</th>
-                <th>Статус</th>
-                <th>Дії</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="hl">F-047</td>
-                <td class="hl">Василь Степаненко</td>
-                <td>BMW X5</td>
-                <td>🔨 Пошкодження кузову</td>
-                <td><span class="sev sev-high">Критична</span></td>
-                <td>25.02.2025</td>
-                <td class="red-cell">1 800 USD</td>
-                <td><span class="fine-pill fp-unpaid">Непогашений</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openFineDrawer('F-047','Василь Степаненко','BMW X5','Пошкодження кузову','1800','unpaid','high')" title="Деталі">📋</button>
-                  <button class="action-ico" title="Стягнути" style="color:var(--green)">💳</button>
-                  <button class="action-ico" title="Скасувати" style="color:var(--red)">✕</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">F-046</td>
-                <td class="hl">Дмитро Петренко</td>
-                <td>VW Tiguan</td>
-                <td>⏰ Запізнення 3 год</td>
-                <td><span class="sev sev-med">Середня</span></td>
-                <td>24.02.2025</td>
-                <td class="red-cell">450 USD</td>
-                <td><span class="fine-pill fp-unpaid">Непогашений</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openFineDrawer('F-046','Дмитро Петренко','VW Tiguan','Запізнення повернення','450','unpaid','med')" title="Деталі">📋</button>
-                  <button class="action-ico" title="Стягнути" style="color:var(--green)">💳</button>
-                  <button class="action-ico" title="Скасувати" style="color:var(--red)">✕</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">F-045</td>
-                <td class="hl">Аліна Мороз</td>
-                <td>Mazda 3</td>
-                <td>⛽ Неповний бак</td>
-                <td><span class="sev sev-low">Мінімальна</span></td>
-                <td>23.02.2025</td>
-                <td class="red-cell">80 USD</td>
-                <td><span class="fine-pill fp-disputed">Оскаржується</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openFineDrawer('F-045','Аліна Мороз','Mazda 3','Неповний бак','80','disputed','low')" title="Деталі">📋</button>
-                  <button class="action-ico" title="Скасувати">✕</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">F-044</td>
-                <td class="hl">Сергій Василенко</td>
-                <td>Tesla Model 3</td>
-                <td>🚗 Штраф ДАІ (парк.)</td>
-                <td><span class="sev sev-low">Мінімальна</span></td>
-                <td>20.02.2025</td>
-                <td style="color:var(--gray)">120 USD</td>
-                <td><span class="fine-pill fp-paid">Сплачений</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openFineDrawer('F-044','Сергій Василенко','Tesla Model 3','Штраф ДАІ','120','paid','low')" title="Деталі">📋</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">F-043</td>
-                <td class="hl">Роман Кравченко</td>
-                <td>Audi A6</td>
-                <td>🪑 Пошкодження салону</td>
-                <td><span class="sev sev-med">Середня</span></td>
-                <td>18.02.2025</td>
-                <td style="color:var(--gray)">600 USD</td>
-                <td><span class="fine-pill fp-partial">Часткова</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openFineDrawer('F-043','Роман Кравченко','Audi A6','Пошкодження салону','600','partial','med')" title="Деталі">📋</button>
-                  <button class="action-ico" title="Донарахувати" style="color:var(--gold)">💳</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">F-042</td>
-                <td class="hl">Наталія Бондар</td>
-                <td>BMW 318D</td>
-                <td>💥 ДТП (незначне)</td>
-                <td><span class="sev sev-high">Критична</span></td>
-                <td>15.02.2025</td>
-                <td style="color:var(--gray)">3 200 USD</td>
-                <td><span class="fine-pill fp-paid">Сплачений</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openFineDrawer('F-042','Наталія Бондар','BMW 318D','ДТП','3200','paid','high')" title="Деталі">📋</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">F-041</td>
-                <td class="hl">Максим Шевченко</td>
-                <td>VW Transporter</td>
-                <td>⛽ Неповний бак</td>
-                <td><span class="sev sev-low">Мінімальна</span></td>
-                <td>12.02.2025</td>
-                <td style="color:var(--gray)">60 USD</td>
-                <td><span class="fine-pill fp-waived">Скасований</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openFineDrawer('F-041','Максим Шевченко','VW Transporter','Неповний бак','60','waived','low')" title="Деталі">📋</button>
-                </div></td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pagination">
-            <div class="page-info">Показано 1–7 з 47 штрафів</div>
-            <div class="page-btns">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
-              <button class="page-btn">›</button>
-            </div>
+</div>
+
+<!-- Edit drawer -->
+<div class="modal-overlay" id="editOverlay" onclick="if(event.target===this)closeEdit()">
+  <div class="drawer">
+    <div class="dh"><h2 class="dt">Штраф <em id="drNum">—</em></h2><button class="cbtn" onclick="closeEdit()">✕</button></div>
+    <div class="dbody">
+      <div class="ds" id="drInfo"></div>
+      <form method="post" id="editForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_status">
+        <input type="hidden" name="fine_pk" id="drPk">
+        <div class="dg2">
+          <div class="df"><label>Статус</label>
+            <select name="status" id="drStatus">
+              {% for val, label in fine_statuses %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="df"><label>Сплачено ₴</label>
+            <input type="number" name="paid_amount" id="drPaid" step="0.01" min="0" placeholder="0.00">
           </div>
         </div>
-      </div>
-
-      <!-- RIGHT SIDEBAR -->
-      <div style="display:grid;gap:16px;align-content:start;">
-
-        <!-- CATEGORIES -->
-        <div class="widget">
-          <div class="widget-header"><div class="widget-title">Типи штрафів (рік)</div></div>
-          <div style="display:grid;gap:2px;">
-            <div class="fine-category">
-              <div class="fc-left"><div class="fc-icon">🔨</div><div><div class="fc-name">Пошкодження кузову</div><div class="fc-count">12 випадків</div></div></div>
-              <div class="fc-right"><div class="fc-amt">8 640 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:38%"></div></div></div>
-            </div>
-            <div class="fine-category">
-              <div class="fc-left"><div class="fc-icon">⏰</div><div><div class="fc-name">Запізнення</div><div class="fc-count">18 випадків</div></div></div>
-              <div class="fc-right"><div class="fc-amt">4 050 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:28%"></div></div></div>
-            </div>
-            <div class="fine-category">
-              <div class="fc-left"><div class="fc-icon">🪑</div><div><div class="fc-name">Пошкодження салону</div><div class="fc-count">7 випадків</div></div></div>
-              <div class="fc-right"><div class="fc-amt">3 150 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:22%"></div></div></div>
-            </div>
-            <div class="fine-category">
-              <div class="fc-left"><div class="fc-icon">⛽</div><div><div class="fc-name">Неповний бак</div><div class="fc-count">8 випадків</div></div></div>
-              <div class="fc-right"><div class="fc-amt">680 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:6%"></div></div></div>
-            </div>
-            <div class="fine-category">
-              <div class="fc-left"><div class="fc-icon">💥</div><div><div class="fc-name">ДТП</div><div class="fc-count">2 випадки</div></div></div>
-              <div class="fc-right"><div class="fc-amt">5 400 USD</div><div class="fc-pct-bar"><div class="fc-pct-fill" style="width:35%;background:var(--red)"></div></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- RECENT ACTIVITY -->
-        <div class="widget">
-          <div class="widget-header"><div class="widget-title">Остання активність</div></div>
-          <div style="display:grid;gap:12px;">
-            <div style="display:flex;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.04)">
-              <span style="font-size:16px">🔴</span>
-              <div><div style="font-size:13px;color:var(--white)">F-047 виставлено Василю С.</div><div style="font-size:11px;color:var(--gray);margin-top:2px">1 800 USD · Пошкодження · 25.02</div></div>
-            </div>
-            <div style="display:flex;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.04)">
-              <span style="font-size:16px">🟢</span>
-              <div><div style="font-size:13px;color:var(--white)">F-044 сплачений Сергієм В.</div><div style="font-size:11px;color:var(--gray);margin-top:2px">120 USD · 20.02</div></div>
-            </div>
-            <div style="display:flex;gap:10px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.04)">
-              <span style="font-size:16px">🔵</span>
-              <div><div style="font-size:13px;color:var(--white)">F-045 оскаржено Аліною М.</div><div style="font-size:11px;color:var(--gray);margin-top:2px">Запит на перегляд · 23.02</div></div>
-            </div>
-            <div style="display:flex;gap:10px">
-              <span style="font-size:16px">⚪</span>
-              <div><div style="font-size:13px;color:var(--white)">F-041 скасовано (клієнт VIP)</div><div style="font-size:11px;color:var(--gray);margin-top:2px">60 USD · 12.02</div></div>
-            </div>
-          </div>
-        </div>
-
-      </div>
+      </form>
+    </div>
+    <div class="dact">
+      <button type="submit" form="editForm" class="btn-save">Зберегти</button>
+      <button class="btn-sec" onclick="closeEdit()">Скасувати</button>
     </div>
   </div>
 </div>
 
-<!-- DRAWER: Деталі штрафу / Новий штраф -->
-<div class="modal-overlay" id="fineDrawer">
-  <div class="drawer">
-    <div class="drawer-header">
-      <h2 class="drawer-title" id="drTitle">Штраф <em id="drFineId">F-047</em></h2>
-      <button class="close-btn" onclick="closeDrawer()">✕</button>
-    </div>
-
-    <div class="fine-amount-card" id="fineAmtCard">
-      <div class="fine-amount-big" id="drFineAmt">1 800 USD</div>
-      <div class="fine-amount-sub" id="drFineStatus">Непогашений · Критична</div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Деталі порушення</div>
-      <div class="info-row"><span class="info-label">Клієнт</span><span class="info-val" id="drFineClient">—</span></div>
-      <div class="info-row"><span class="info-label">Автомобіль</span><span class="info-val" id="drFineCar">—</span></div>
-      <div class="info-row"><span class="info-label">Причина</span><span class="info-val" id="drFineReason">—</span></div>
-      <div class="info-row"><span class="info-label">Дата виявлення</span><span class="info-val">25.02.2025</span></div>
-      <div class="info-row"><span class="info-label">Менеджер</span><span class="info-val">Марина Коваль</span></div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Фото матеріали</div>
-      <div class="photo-zone">
-        <div class="photo-zone-icon">📸</div>
-        <div class="photo-zone-text">Завантажте фото пошкоджень</div>
-        <div style="font-size:10px;color:var(--gray);margin-top:4px">JPG, PNG до 10MB кожне</div>
+<!-- Add fine modal -->
+<div class="modal-center" id="addModal" onclick="if(event.target===this)closeAdd()">
+  <div class="mbox">
+    <div class="dh"><h2 class="dt">Новий <em>штраф</em></h2><button class="cbtn" onclick="closeAdd()">✕</button></div>
+    <form method="post" action="{% url 'manager_fines' %}">
+      {% csrf_token %}<input type="hidden" name="action" value="add">
+      <div class="dbody">
+        <div class="df"><label>Замовлення</label>
+          <select name="booking_pk" required style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-size:13px;outline:none;box-sizing:border-box;">
+            <option value="">— Оберіть замовлення —</option>
+            {% for b in bookings_for_form %}
+            <option value="{{ b.pk }}">{{ b.number }} — {{ b.user.get_full_name|default:b.user.username }} / {{ b.car.brand }} {{ b.car.model }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="dg2">
+          <div class="df"><label>Тип штрафу</label>
+            <select name="fine_type">{% for val,label in fine_types %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select>
+          </div>
+          <div class="df"><label>Серйозність</label>
+            <select name="severity">{% for val,label in severities %}<option value="{{ val }}" {% if val == 'medium' %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+          </div>
+        </div>
+        <div class="df"><label>Сума ₴</label><input type="number" name="amount" step="0.01" min="0" required placeholder="0.00"></div>
+        <div class="df"><label>Опис</label><textarea name="description" rows="3" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical;" placeholder="Деталі штрафу..."></textarea></div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:4px;">
-        <div style="width:60px;height:50px;background:var(--dark3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px">📷</div>
-        <div style="width:60px;height:50px;background:var(--dark3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px">📷</div>
-      </div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Управління</div>
-      <div class="field">
-        <label>Статус штрафу</label>
-        <select id="fineStatusSel">
-          <option value="unpaid">Непогашений</option>
-          <option value="paid">Сплачений</option>
-          <option value="partial">Часткова оплата</option>
-          <option value="disputed">Оскаржується</option>
-          <option value="waived">Скасований</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Сума штрафу (USD)</label>
-        <input type="number" id="fineAmtInput" value="1800">
-      </div>
-      <div class="field">
-        <label>Примітка</label>
-        <textarea placeholder="Деталі порушення, умови врегулювання..."></textarea>
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn-save" onclick="closeDrawer()">Зберегти</button>
-      <button class="btn-danger" onclick="closeDrawer()">Скасувати штраф</button>
-    </div>
-    <div style="margin-top:8px;">
-      <button class="btn-secondary" style="width:100%" onclick="location.href='manager-clients.html'">Перейти до профілю клієнта →</button>
-    </div>
+      <div class="dact"><button type="submit" class="btn-save">Виставити штраф</button><button type="button" class="btn-sec" onclick="closeAdd()">Скасувати</button></div>
+    </form>
   </div>
-
+</div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
+{% block extra_js %}<script>
+var FD = {
+{% for f in fines %}
+  {{ f.pk }}: {
+    pk: {{ f.pk }}, num: "{{ f.number }}",
+    client: "{{ f.booking.user.get_full_name|default:f.booking.user.username|escapejs }}",
+    email: "{{ f.booking.user.email|escapejs }}",
+    bk_num: "{{ f.booking.number }}",
+    car: "{{ f.booking.car.brand|escapejs }} {{ f.booking.car.model|escapejs }}",
+    type: "{{ f.get_fine_type_display|escapejs }}",
+    sev: "{{ f.get_severity_display|escapejs }}",
+    amount: "{{ f.amount|floatformat:0 }}",
+    paid: "{{ f.paid_amount|floatformat:0 }}",
+    status: "{{ f.status }}",
+    statusL: "{{ f.get_status_display|escapejs }}",
+    desc: "{{ f.description|escapejs }}",
+    date: "{{ f.created_at|date:'d.m.Y' }}",
+  },
+{% endfor %}
+};
 
-const statusLabels={unpaid:'Непогашений',paid:'Сплачений',partial:'Часткова оплата',disputed:'Оскаржується',waived:'Скасований'};
-const sevLabels={high:'Критична',med:'Середня',low:'Мінімальна'};
-function openDrawer(){
-  document.getElementById('drTitle').innerHTML='Новий <em>штраф</em>';
-  document.getElementById('drFineId').textContent='';
-  document.getElementById('fineAmtCard').style.display='none';
-  document.getElementById('drFineClient').textContent='—';
-  document.getElementById('drFineCar').textContent='—';
-  document.getElementById('drFineReason').textContent='—';
-  document.getElementById('fineAmtInput').value='';
-  document.getElementById('fineDrawer').classList.add('open');
+function openFine(pk) {
+  var f = FD[pk]; if(!f) return;
+  document.getElementById('drNum').textContent = f.num;
+  document.getElementById('drPk').value = pk;
+  document.getElementById('drStatus').value = f.status;
+  document.getElementById('drPaid').value = parseFloat(f.paid) > 0 ? f.paid : '';
+  document.getElementById('drInfo').innerHTML =
+    '<div class="ds-title">Деталі штрафу</div>' +
+    '<div class="dr"><span class="dl">Клієнт</span><span class="dv hl">'+f.client+'</span></div>' +
+    '<div class="dr"><span class="dl">Замовлення</span><span class="dv" style="color:var(--gold);font-family:monospace;">'+f.bk_num+'</span></div>' +
+    '<div class="dr"><span class="dl">Авто</span><span class="dv">'+f.car+'</span></div>' +
+    '<div class="dr"><span class="dl">Тип</span><span class="dv">'+f.type+'</span></div>' +
+    '<div class="dr"><span class="dl">Серйозність</span><span class="dv">'+f.sev+'</span></div>' +
+    '<div class="dr"><span class="dl">Сума</span><span class="dv" style="color:var(--gold);font-family:\'Playfair Display\',serif;font-size:16px;">₴'+f.amount+'</span></div>' +
+    '<div class="dr"><span class="dl">Сплачено</span><span class="dv">₴'+f.paid+'</span></div>' +
+    (f.desc?'<div style="margin-top:12px;padding:10px;background:var(--dark3);font-size:12px;color:var(--gray);line-height:1.6;">'+f.desc+'</div>':'') +
+    '<div style="margin:16px 0 8px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.8;padding-bottom:8px;border-bottom:1px solid var(--border);">Оновити статус</div>';
+  document.getElementById('editOverlay').classList.add('open');
 }
-function openFineDrawer(id,client,car,reason,amt,status,sev){
-  document.getElementById('drTitle').innerHTML='Штраф <em>'+id+'</em>';
-  document.getElementById('fineAmtCard').style.display='block';
-  document.getElementById('drFineAmt').textContent=amt+' USD';
-  document.getElementById('drFineStatus').textContent=statusLabels[status]+' · '+sevLabels[sev];
-  document.getElementById('drFineClient').textContent=client;
-  document.getElementById('drFineCar').textContent=car;
-  document.getElementById('drFineReason').textContent=reason;
-  document.getElementById('fineStatusSel').value=status;
-  document.getElementById('fineAmtInput').value=amt;
-  document.getElementById('fineDrawer').classList.add('open');
-}
-function closeDrawer(){document.getElementById('fineDrawer').classList.remove('open');}
-document.getElementById('fineDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
-document.querySelectorAll('.stab').forEach(t=>{
-  t.onclick=function(){document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));this.classList.add('active');}
-});
-
-</script>
-{% endblock %}
+function closeEdit(){ document.getElementById('editOverlay').classList.remove('open'); }
+function openAdd(){ document.getElementById('addModal').classList.add('open'); }
+function closeAdd(){ document.getElementById('addModal').classList.remove('open'); }
+document.addEventListener('keydown', e => { if(e.key==='Escape'){closeEdit();closeAdd();} });
+</script>{% endblock %}

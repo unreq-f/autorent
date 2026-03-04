@@ -1,295 +1,424 @@
 {% extends 'manager/base_manager.html' %}
 {% block title %}Автопарк — AutoRent Manager{% endblock %}
 
+{% block extra_css %}
+<style>
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+.kpi-card{background:var(--dark2);border:1px solid var(--border);padding:18px 20px;}
+.kpi-card.green{border-top:2px solid var(--green);}
+.kpi-card.gold{border-top:2px solid var(--gold);}
+.kpi-card.orange{border-top:2px solid var(--orange);}
+.kpi-card.red{border-top:2px solid var(--red);}
+.kpi-card.blue{border-top:2px solid var(--blue);}
+.kpi-val{font-family:'Playfair Display',serif;font-size:32px;color:var(--white);line-height:1;}
+.kpi-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);margin:6px 0 10px;}
+.progress-bar{height:3px;background:var(--dark3);}
+.progress-fill{height:100%;background:var(--blue);}
+.progress-fill.low{background:var(--green);}
+.progress-fill.high{background:var(--orange);}
+.progress-fill.full{background:var(--red);}
+
+.view-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;flex-wrap:wrap;}
+.vc-filters{display:flex;gap:10px;flex-wrap:wrap;flex:1;}
+.vc-filters input[type=text],.vc-filters select{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border-color .2s;}
+.vc-filters input[type=text]:focus,.vc-filters select:focus{border-color:var(--gold);}
+.vc-filters input[type=text]{min-width:180px;flex:1;}
+.vc-filters select{min-width:120px;}
+.vc-filters option{background:var(--dark3);}
+.view-btns{display:flex;gap:2px;flex-shrink:0;}
+.view-btn{width:36px;height:36px;background:var(--dark2);border:1px solid var(--border);color:var(--gray);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.view-btn.active,.view-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+/* Grid */
+.cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+.car-card{background:var(--dark2);border:1px solid var(--border);overflow:hidden;transition:border-color .2s;}
+.car-card:hover{border-color:rgba(201,168,76,0.4);}
+.car-card-img{height:130px;background:linear-gradient(135deg,var(--dark3),var(--dark2));display:flex;align-items:center;justify-content:center;font-size:52px;position:relative;cursor:pointer;overflow:hidden;}
+.car-avail-badge{position:absolute;top:10px;right:10px;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;}
+.ba-free{background:rgba(76,175,125,.15);color:var(--green);}
+.ba-rented{background:rgba(201,168,76,.12);color:var(--gold);}
+.ba-service{background:rgba(224,146,76,.12);color:var(--orange);}
+.ba-broken{background:rgba(207,102,121,.12);color:var(--red);}
+.car-card-body{padding:16px;}
+.car-card-class{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
+.car-card-name{font-family:'Playfair Display',serif;font-size:17px;color:var(--white);margin:4px 0 10px;cursor:pointer;}
+.car-card-name:hover{color:var(--gold);}
+.car-card-specs{display:flex;gap:8px;font-size:11px;color:var(--gray);margin-bottom:12px;flex-wrap:wrap;}
+.car-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid rgba(255,255,255,0.04);}
+.car-plate{font-size:11px;color:var(--gray);background:var(--dark3);padding:3px 8px;letter-spacing:1px;}
+.car-actions{display:flex;gap:4px;}
+.car-ico-btn{background:var(--dark3);border:1px solid var(--border);color:var(--gray);cursor:pointer;font-size:12px;padding:5px 8px;transition:.2s;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;}
+.car-ico-btn:hover{border-color:var(--gold);color:var(--white);}
+
+/* Table */
+.cars-table-wrap{display:none;background:var(--dark2);border:1px solid var(--border);overflow-x:auto;}
+.ct{width:100%;border-collapse:collapse;min-width:820px;}
+.ct th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--dark3);white-space:nowrap;}
+.ct td{padding:12px 14px;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+.ct tr:hover td{background:rgba(255,255,255,.015);}
+.ct .hl{color:var(--white);}
+.avail-pill{display:inline-block;font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 9px;}
+
+/* Drawer */
+.service-log{margin-top:14px;}
+.log-item{display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.log-item:last-child{border:none;}
+.log-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.log-dot.done{background:var(--green);}
+.log-dot.todo{background:var(--gold);opacity:.5;}
+.log-text{font-size:13px;color:var(--white);}
+.log-date{font-size:11px;color:var(--gray);margin-top:2px;}
+</style>
+{% endblock %}
+
 {% block main_content %}
-
-  <div class="topbar">
-    <div class="topbar-title">Автопарк · <strong>150 автомобілів</strong></div>
-    <div style="display:flex;gap:10px;">
-      <button class="tb-btn" onclick="openDrawer()">+ Додати авто</button>
-      <button class="tb-btn">⬇ Експорт</button>
-    </div>
-  </div>
-
-  <div class="content">
-    <!-- KPI -->
-    <div class="kpi-row">
-      <div class="kpi-card green">
-        <div class="kpi-val">63</div>
-        <div class="kpi-label">🟢 Вільних</div>
-        <div class="progress-bar"><div class="progress-fill low" style="width:42%"></div></div>
-      </div>
-      <div class="kpi-card gold">
-        <div class="kpi-val">87</div>
-        <div class="kpi-label">🟡 У прокаті</div>
-        <div class="progress-bar"><div class="progress-fill high" style="width:58%"></div></div>
-      </div>
-      <div class="kpi-card orange">
-        <div class="kpi-val">6</div>
-        <div class="kpi-label">🔧 На ТО</div>
-        <div class="progress-bar"><div class="progress-fill high" style="width:4%"></div></div>
-      </div>
-      <div class="kpi-card red">
-        <div class="kpi-val">2</div>
-        <div class="kpi-label">🔴 Несправні</div>
-        <div class="progress-bar"><div class="progress-fill full" style="width:1.3%"></div></div>
-      </div>
-      <div class="kpi-card blue">
-        <div class="kpi-val">58%</div>
-        <div class="kpi-label">📊 Завантаженість</div>
-        <div class="progress-bar"><div class="progress-fill" style="width:58%"></div></div>
-      </div>
-    </div>
-
-    <!-- VIEW CONTROLS -->
-    <div class="view-controls">
-      <div class="filter-bar">
-        <div class="search-box">
-          <span style="color:var(--gray);font-size:14px;">🔍</span>
-          <input type="text" placeholder="Марка, модель, держномер...">
-        </div>
-        <select class="filter-select">
-          <option>Всі класи</option>
-          <option>Економ</option>
-          <option>Комфорт</option>
-          <option>Бізнес</option>
-          <option>VIP</option>
-          <option>Кросовер</option>
-          <option>Мінівен</option>
-        </select>
-        <select class="filter-select">
-          <option>Всі статуси</option>
-          <option>Вільний</option>
-          <option>У прокаті</option>
-          <option>На ТО</option>
-          <option>Несправний</option>
-        </select>
-        <select class="filter-select">
-          <option>Все паливо</option>
-          <option>Бензин</option>
-          <option>Дизель</option>
-          <option>Електро</option>
-          <option>Гібрид</option>
-        </select>
-      </div>
-      <div class="view-btns">
-        <button class="view-btn active" id="gridBtn" onclick="setView('grid')">⊞</button>
-        <button class="view-btn" id="listBtn" onclick="setView('list')">☰</button>
-      </div>
-    </div>
-
-    <!-- GRID VIEW -->
-    <div class="cars-grid" id="gridView">
-      <div class="car-card">
-        <div class="car-card-img">🏎️
-          <span class="car-avail-badge ba-rented">У прокаті</span>
-        </div>
-        <div class="car-card-body">
-          <div class="car-card-class">VIP · SUV</div>
-          <div class="car-card-name">BMW X5</div>
-          <div class="car-card-specs"><span>⚙️ Автомат</span><span>⛽ Бензин</span><span>📅 2023</span><span>💰 200 USD/доба</span></div>
-          <div class="car-card-footer">
-            <span class="car-plate">АА 1234 АА</span>
-            <div class="car-actions">
-              <button class="car-ico-btn" onclick="openDrawer()" title="Деталі">📋</button>
-              <button class="car-ico-btn" title="Редагувати">✏️</button>
-              <button class="car-ico-btn" title="Замовити ТО">🔧</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="car-card">
-        <div class="car-card-img">🚗
-          <span class="car-avail-badge ba-free">Вільний</span>
-        </div>
-        <div class="car-card-body">
-          <div class="car-card-class">Комфорт · Sedan</div>
-          <div class="car-card-name">Mazda 3</div>
-          <div class="car-card-specs"><span>⚙️ Автомат</span><span>⛽ Бензин</span><span>📅 2022</span><span>💰 55 USD/доба</span></div>
-          <div class="car-card-footer">
-            <span class="car-plate">ВА 5678 ВА</span>
-            <div class="car-actions">
-              <button class="car-ico-btn" onclick="openDrawer()" title="Деталі">📋</button>
-              <button class="car-ico-btn" title="Редагувати">✏️</button>
-              <button class="car-ico-btn" title="Замовити ТО">🔧</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="car-card">
-        <div class="car-card-img">🚙
-          <span class="car-avail-badge ba-rented">У прокаті</span>
-        </div>
-        <div class="car-card-body">
-          <div class="car-card-class">Кросовер · SUV</div>
-          <div class="car-card-name">Volkswagen Tiguan</div>
-          <div class="car-card-specs"><span>⚙️ Автомат</span><span>⛽ Дизель</span><span>📅 2023</span><span>💰 130 USD/доба</span></div>
-          <div class="car-card-footer">
-            <span class="car-plate">КА 9012 КА</span>
-            <div class="car-actions">
-              <button class="car-ico-btn" onclick="openDrawer()" title="Деталі">📋</button>
-              <button class="car-ico-btn" title="Редагувати">✏️</button>
-              <button class="car-ico-btn" title="Замовити ТО">🔧</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="car-card">
-        <div class="car-card-img">⚡
-          <span class="car-avail-badge ba-free">Вільний</span>
-        </div>
-        <div class="car-card-body">
-          <div class="car-card-class">Електро · Sedan</div>
-          <div class="car-card-name">Tesla Model 3</div>
-          <div class="car-card-specs"><span>⚙️ Автомат</span><span>⚡ Електро</span><span>📅 2023</span><span>💰 120 USD/доба</span></div>
-          <div class="car-card-footer">
-            <span class="car-plate">НА 3456 НА</span>
-            <div class="car-actions">
-              <button class="car-ico-btn" onclick="openDrawer()" title="Деталі">📋</button>
-              <button class="car-ico-btn" title="Редагувати">✏️</button>
-              <button class="car-ico-btn" title="Замовити ТО">🔧</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="car-card">
-        <div class="car-card-img">🔧
-          <span class="car-avail-badge ba-service">На ТО</span>
-        </div>
-        <div class="car-card-body">
-          <div class="car-card-class">Бізнес · Sedan</div>
-          <div class="car-card-name">BMW 318D</div>
-          <div class="car-card-specs"><span>⚙️ Автомат</span><span>⛽ Дизель</span><span>📅 2022</span><span>💰 180 USD/доба</span></div>
-          <div class="car-card-footer">
-            <span class="car-plate">МА 7890 МА</span>
-            <div class="car-actions">
-              <button class="car-ico-btn" onclick="openDrawer()" title="Деталі">📋</button>
-              <button class="car-ico-btn" title="Редагувати">✏️</button>
-              <button class="car-ico-btn" title="Повернути в парк">✅</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="car-card">
-        <div class="car-card-img">👑
-          <span class="car-avail-badge ba-rented">У прокаті</span>
-        </div>
-        <div class="car-card-body">
-          <div class="car-card-class">VIP · Sedan</div>
-          <div class="car-card-name">Audi A6 Quattro</div>
-          <div class="car-card-specs"><span>⚙️ Автомат</span><span>⛽ Бензин</span><span>📅 2023</span><span>💰 180 USD/доба</span></div>
-          <div class="car-card-footer">
-            <span class="car-plate">ОА 2345 ОА</span>
-            <div class="car-actions">
-              <button class="car-ico-btn" onclick="openDrawer()" title="Деталі">📋</button>
-              <button class="car-ico-btn" title="Редагувати">✏️</button>
-              <button class="car-ico-btn" title="Замовити ТО">🔧</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TABLE VIEW -->
-    <div class="table-wrap" id="listView">
-      <table class="table">
-        <thead>
-          <tr><th>Авто</th><th>Держ.номер</th><th>Клас</th><th>КПП / Паливо</th><th>Рік</th><th>Пробіг</th><th>Наступне ТО</th><th>Статус</th><th>Ціна/доба</th><th>Дії</th></tr>
-        </thead>
-        <tbody>
-          <tr><td class="highlight">BMW X5</td><td>АА 1234 АА</td><td>VIP</td><td>Авт. / Бензин</td><td>2023</td><td>24 000 км</td><td>15.04.2025</td><td><span class="avail-pill ba-rented">У прокаті</span></td><td style="color:var(--gold)">200 USD</td><td><button class="action-ico" onclick="openDrawer()">📋</button><button class="action-ico">✏️</button></td></tr>
-          <tr><td class="highlight">Mazda 3</td><td>ВА 5678 ВА</td><td>Комфорт</td><td>Авт. / Бензин</td><td>2022</td><td>31 200 км</td><td>01.03.2025</td><td><span class="avail-pill ba-free">Вільний</span></td><td style="color:var(--gold)">55 USD</td><td><button class="action-ico" onclick="openDrawer()">📋</button><button class="action-ico">✏️</button></td></tr>
-          <tr><td class="highlight">VW Tiguan</td><td>КА 9012 КА</td><td>Кросовер</td><td>Авт. / Дизель</td><td>2023</td><td>18 500 км</td><td>20.05.2025</td><td><span class="avail-pill ba-rented">У прокаті</span></td><td style="color:var(--gold)">130 USD</td><td><button class="action-ico" onclick="openDrawer()">📋</button><button class="action-ico">✏️</button></td></tr>
-          <tr><td class="highlight">Tesla Model 3</td><td>НА 3456 НА</td><td>Електро</td><td>Авт. / Електро</td><td>2023</td><td>12 000 км</td><td>01.06.2025</td><td><span class="avail-pill ba-free">Вільний</span></td><td style="color:var(--gold)">120 USD</td><td><button class="action-ico" onclick="openDrawer()">📋</button><button class="action-ico">✏️</button></td></tr>
-          <tr><td class="highlight">BMW 318D</td><td>МА 7890 МА</td><td>Бізнес</td><td>Авт. / Дизель</td><td>2022</td><td>45 000 км</td><td>28.02.2025</td><td><span class="avail-pill ba-service">На ТО</span></td><td style="color:var(--gold)">180 USD</td><td><button class="action-ico" onclick="openDrawer()">📋</button><button class="action-ico">✅</button></td></tr>
-        </tbody>
-      </table>
-    </div>
+<div class="topbar">
+  <div class="topbar-title">Автопарк · <strong>{{ stats.total }} автомобілів</strong></div>
+  <div style="display:flex;gap:10px;">
+    <a href="?{{ request.GET.urlencode }}&export=csv" class="tb-btn">&#8659; Експорт CSV</a>
+    <a href="{% url 'manager_car_add' %}" class="tb-btn primary">+ Додати авто</a>
   </div>
 </div>
 
-<!-- DRAWER: Деталі авто -->
-<div class="modal-overlay" id="carDrawer">
+<div class="content">
+
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi-card green">
+      <div class="kpi-val">{{ stats.free }}</div>
+      <div class="kpi-label">Вільних</div>
+      <div class="progress-bar"><div class="progress-fill low" style="width:{% if stats.total %}{% widthratio stats.free stats.total 100 %}{% else %}0{% endif %}%"></div></div>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-val">{{ stats.rented }}</div>
+      <div class="kpi-label">У прокаті</div>
+      <div class="progress-bar"><div class="progress-fill high" style="width:{% if stats.total %}{% widthratio stats.rented stats.total 100 %}{% else %}0{% endif %}%"></div></div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-val">{{ stats.service }}</div>
+      <div class="kpi-label">На ТО</div>
+      <div class="progress-bar"><div class="progress-fill high" style="width:{% if stats.total %}{% widthratio stats.service stats.total 100 %}{% else %}0{% endif %}%"></div></div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-val">{{ stats.broken }}</div>
+      <div class="kpi-label">Несправні</div>
+      <div class="progress-bar"><div class="progress-fill full" style="width:{% if stats.total %}{% widthratio stats.broken stats.total 100 %}{% else %}0{% endif %}%"></div></div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-val">{{ stats.occupancy }}%</div>
+      <div class="kpi-label">Завантаженість</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:{{ stats.occupancy }}%"></div></div>
+    </div>
+  </div>
+
+  <!-- Filters + view toggle -->
+  <form method="get" id="filterForm">
+    <input type="hidden" name="view" id="viewInput" value="{{ request.GET.view|default:'grid' }}">
+    <div class="view-controls">
+      <div class="vc-filters">
+        <input type="text" name="q" value="{{ filters.q }}" placeholder="Марка, модель, номер...">
+        <select name="class" onchange="this.form.submit()">
+          <option value="">Всі класи</option>
+          {% for val, label in car_classes %}
+          <option value="{{ val }}" {% if filters.class == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="status" onchange="this.form.submit()">
+          <option value="">Всі статуси</option>
+          {% for val, label in car_statuses %}
+          <option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="fuel" onchange="this.form.submit()">
+          <option value="">Все паливо</option>
+          {% for val, label in car_fuels %}
+          <option value="{{ val }}" {% if filters.fuel == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="tb-btn">Знайти</button>
+        {% if filters.q or filters.status or filters.class or filters.fuel %}
+        <a href="{% url 'manager_cars' %}" class="tb-btn" style="color:#cf6679;">&#10005; Скинути</a>
+        {% endif %}
+      </div>
+      <div class="view-btns">
+        <button type="button" class="view-btn {% if request.GET.view != 'list' %}active{% endif %}" id="gridBtn" onclick="setView('grid')">&#8862;</button>
+        <button type="button" class="view-btn {% if request.GET.view == 'list' %}active{% endif %}" id="listBtn" onclick="setView('list')">&#9776;</button>
+      </div>
+    </div>
+  </form>
+
+  <!-- GRID VIEW -->
+  <div class="cars-grid" id="gridView" {% if request.GET.view == 'list' %}style="display:none"{% endif %}>
+    {% for c in cars %}
+    <div class="car-card">
+      <div class="car-card-img" onclick="openDrawer({{ c.pk }})" style="overflow:hidden;">
+        {% if c.photos.first %}<img src="{{ c.photos.first.image.url }}" alt="{{ c.brand }} {{ c.model }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">{% elif c.image %}<img src="{{ c.image.url }}" alt="{{ c.brand }} {{ c.model }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">{% else %}<img src="/static/img/car_placeholder.svg" alt="{{ c.brand }} {{ c.model }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">{% endif %}
+        <span class="car-avail-badge ba-{{ c.status }}">{{ c.get_status_display }}</span>
+      </div>
+      <div class="car-card-body">
+        <div class="car-card-class">{{ c.get_car_class_display }} · {{ c.transmission }}</div>
+        <div class="car-card-name" onclick="openDrawer({{ c.pk }})">{{ c.brand }} {{ c.model }}</div>
+        <div class="car-card-specs">
+          <span>{{ c.year }}</span>
+          <span>{{ c.get_fuel_display }}</span>
+          <span>{{ c.mileage|floatformat:0 }} км</span>
+          <span style="color:var(--gold);">&#8372;{{ c.price_base }}/д</span>
+        </div>
+        <div class="car-card-footer">
+          <span class="car-plate">{{ c.plate }}</span>
+          <div class="car-actions">
+            <button class="car-ico-btn" title="Деталі" onclick="openDrawer({{ c.pk }})">&#128203;</button>
+            <a class="car-ico-btn" href="{% url 'manager_car_edit' c.pk %}" title="Редагувати">&#9998;</a>
+            <a class="car-ico-btn" href="{% url 'manager_car_service' c.pk %}" title="Замовити ТО">&#128295;</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% empty %}
+    <div style="grid-column:1/-1;padding:60px;text-align:center;color:var(--gray);">
+      <div style="font-size:40px;margin-bottom:12px;">&#128663;</div>
+      <div>Автомобілів не знайдено</div>
+      {% if filters.q or filters.status or filters.class or filters.fuel %}
+      <a href="{% url 'manager_cars' %}" style="color:var(--gold);font-size:12px;margin-top:8px;display:inline-block;">&#8592; Скинути фільтри</a>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- TABLE VIEW -->
+  <div class="cars-table-wrap" id="listView" {% if request.GET.view == 'list' %}style="display:block"{% endif %}>
+    {% if cars %}
+    <table class="ct">
+      <thead>
+        <tr>
+          <th>Авто</th><th>Номер</th><th>Клас</th><th>КПП / Паливо</th>
+          <th>Рік</th><th>Пробіг</th><th>Наст. ТО</th><th>Статус</th>
+          <th>&#8372;/доба</th><th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in cars %}
+        <tr>
+          <td style="cursor:pointer;" onclick="openDrawer({{ c.pk }})">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:44px;height:34px;flex-shrink:0;overflow:hidden;background:var(--dark3);border:1px solid var(--border);">{% if c.photos.first %}<img src="{{ c.photos.first.image.url }}" style="width:100%;height:100%;object-fit:cover;">{% elif c.image %}<img src="{{ c.image.url }}" style="width:100%;height:100%;object-fit:cover;">{% else %}<img src="/static/img/car_placeholder.svg" style="width:100%;height:100%;object-fit:cover;">{% endif %}</div>
+              <span class="hl">{{ c.brand }} {{ c.model }}</span>
+            </div>
+          </td>
+          <td style="letter-spacing:1px;font-size:12px;">{{ c.plate }}</td>
+          <td>{{ c.get_car_class_display }}</td>
+          <td>{{ c.transmission }} / {{ c.get_fuel_display }}</td>
+          <td>{{ c.year }}</td>
+          <td>{{ c.mileage|floatformat:0 }} км</td>
+          <td style="font-size:12px;">{% if c.next_service %}{{ c.next_service|date:"d.m.Y" }}{% else %}<span style="opacity:.4">—</span>{% endif %}</td>
+          <td><span class="avail-pill ba-{{ c.status }}">{{ c.get_status_display }}</span></td>
+          <td style="color:var(--gold);font-family:'Playfair Display',serif;">{{ c.price_base }}</td>
+          <td>
+            <div style="display:flex;gap:4px;">
+              <button class="car-ico-btn" title="Деталі" onclick="openDrawer({{ c.pk }})">&#128203;</button>
+              <a class="car-ico-btn" href="{% url 'manager_car_edit' c.pk %}" title="Редагувати">&#9998;</a>
+              <a class="car-ico-btn" href="{% url 'manager_car_service' c.pk %}" title="Замовити ТО">&#128295;</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div style="padding:12px 16px;font-size:12px;color:var(--gray);border-top:1px solid var(--border);">
+      Показано {{ cars|length }} з {{ stats.total }} автомобілів
+    </div>
+    {% endif %}
+  </div>
+
+</div><!-- /content -->
+
+
+<!-- ===== DRAWER: Деталі авто ===== -->
+<div class="modal-overlay" id="carDrawer" onclick="if(event.target===this)closeDrawer()">
   <div class="drawer">
     <div class="drawer-header">
-      <h2 class="drawer-title"><em>BMW X5</em> · АА 1234 АА</h2>
-      <button class="close-btn" onclick="closeDrawer()">✕</button>
+      <h2 class="drawer-title" id="drawerTitle"><em>—</em></h2>
+      <button class="close-btn" onclick="closeDrawer()">&#10005;</button>
     </div>
+
+    <div id="dCarImg" style="height:160px;overflow:hidden;background:var(--dark3);border:1px solid var(--border);margin-bottom:20px;"><img id="dCarImgTag" src="" alt="" style="width:100%;height:100%;object-fit:cover;"></div>
 
     <div class="info-section">
       <div class="info-section-title">Основна інформація</div>
-      <div class="info-row"><span class="info-label">Марка / Модель</span><span class="info-val">BMW X5 xDrive40i</span></div>
-      <div class="info-row"><span class="info-label">Рік випуску</span><span class="info-val">2023</span></div>
-      <div class="info-row"><span class="info-label">Держ. номер</span><span class="info-val">АА 1234 АА</span></div>
-      <div class="info-row"><span class="info-label">VIN</span><span class="info-val" style="font-size:11px;letter-spacing:1px">WBA12345678901234</span></div>
-      <div class="info-row"><span class="info-label">Пробіг</span><span class="info-val">24 000 км</span></div>
-      <div class="info-row"><span class="info-label">Поточний статус</span><span class="info-val gold">У прокаті → Іван І. до 04.03</span></div>
+      <div class="info-row"><span class="info-label">Марка / Модель</span><span class="info-val" id="dFullName">—</span></div>
+      <div class="info-row"><span class="info-label">Клас</span><span class="info-val" id="dClass">—</span></div>
+      <div class="info-row"><span class="info-label">Рік випуску</span><span class="info-val" id="dYear">—</span></div>
+      <div class="info-row"><span class="info-label">Держ. номер</span><span class="info-val" id="dPlate">—</span></div>
+      <div class="info-row"><span class="info-label">КПП / Паливо</span><span class="info-val" id="dTechSpecs">—</span></div>
+      <div class="info-row"><span class="info-label">Пробіг</span><span class="info-val" id="dMileage">—</span></div>
+      <div class="info-row"><span class="info-label">Поточний статус</span><span class="info-val" id="dStatus">—</span></div>
+      <div class="info-row" id="dRenterRow" style="display:none;"><span class="info-label">Орендар</span><span class="info-val gold" id="dRenter">—</span></div>
     </div>
 
     <div class="info-section">
       <div class="info-section-title">Зміна статусу</div>
-      <div class="field">
-        <label>Статус авто</label>
-        <select>
-          <option>Вільний</option>
-          <option selected>У прокаті</option>
-          <option>На технічному обслуговуванні</option>
-          <option>Несправний</option>
-          <option>Знятий з парку</option>
-        </select>
-      </div>
-      <div class="field"><label>Поточний орендар (якщо є)</label>
-        <select><option>— Без орендаря —</option><option selected>Іван Іваненко (#0854)</option><option>Олена Кравець (#0853)</option></select>
-      </div>
+      <form method="post" id="drawerStatusForm" action="">
+        {% csrf_token %}
+        <input type="hidden" name="status_only" value="1">
+        <div class="field">
+          <label>Статус авто</label>
+          <select name="status" id="dStatusSel">
+            {% for val, label in car_statuses %}
+            <option value="{{ val }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="btn-row">
+          <button type="submit" class="btn-save">Зберегти статус</button>
+        </div>
+      </form>
     </div>
 
     <div class="info-section">
       <div class="info-section-title">Технічне обслуговування</div>
-      <div class="field"><label>Дата наступного ТО</label><input type="date" value="2025-04-15"></div>
-      <div class="field"><label>Тип ТО</label>
-        <select><option>Планове (кожні 10 000 км)</option><option>Заміна масла</option><option>Заміна шин</option><option>Позаплановий ремонт</option></select>
-      </div>
-      <div class="field"><label>Примітка по ТО</label><textarea placeholder="Стан авто, виявлені несправності..."></textarea></div>
-      <div class="service-log">
-        <div class="log-item"><div class="log-dot done"></div><div><div class="log-text">Планове ТО — заміна масла</div><div class="log-date">10.01.2025 · 20 000 км</div></div></div>
-        <div class="log-item"><div class="log-dot done"></div><div><div class="log-text">Заміна зимових шин</div><div class="log-date">15.11.2024</div></div></div>
-        <div class="log-item"><div class="log-dot todo"></div><div><div class="log-text">Наступне планове ТО</div><div class="log-date">15.04.2025 · ~30 000 км</div></div></div>
-      </div>
+      <div class="info-row"><span class="info-label">Наступне ТО</span><span class="info-val" id="dNextService">—</span></div>
+      <div class="service-log" id="dServiceLog"></div>
     </div>
 
     <div class="info-section">
       <div class="info-section-title">Ціни</div>
-      <div class="field"><label>Ціна Base (USD/доба)</label><input type="number" value="200"></div>
-      <div class="field"><label>Застава Base (USD)</label><input type="number" value="2500"></div>
+      <div class="info-row"><span class="info-label">Тариф Base</span><span class="info-val gold" id="dPriceBase">—</span></div>
+      <div class="info-row"><span class="info-label">Тариф Prime</span><span class="info-val gold" id="dPricePrime">—</span></div>
+      <div class="info-row"><span class="info-label">Застава</span><span class="info-val" id="dDeposit">—</span></div>
     </div>
 
     <div class="btn-row">
-      <button class="btn-save" onclick="closeDrawer()">Зберегти зміни</button>
-      <button class="btn-secondary" onclick="closeDrawer()">Скасувати</button>
+      <a class="btn-save" id="dServiceLink" href="#" style="text-align:center;text-decoration:none;">&#128295; Замовити ТО</a>
+      <a class="btn-secondary" id="dEditLink" href="#" style="flex:1;text-align:center;text-decoration:none;padding:13px;font-size:12px;letter-spacing:1px;text-transform:uppercase;">&#9998; Редагувати</a>
     </div>
   </div>
+</div>
+
+
+<!-- ===== MODAL: Нове замовлення для авто ===== -->
+<div class="modal-center" id="nbCarModal" onclick="if(event.target===this)closeNbCar()">
+  <div class="modal-box" style="max-width:480px;">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Замовлення — <em id="nbCarName">—</em></h2>
+      <button class="close-btn" onclick="closeNbCar()">&#10005;</button>
+    </div>
+    <form method="post" action="{% url 'manager_bookings' %}">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="new">
+      <input type="hidden" name="car_pk" id="nbCarPk">
+      <div class="form-grid-2">
+        <div class="field"><label>Дата отримання</label><input type="date" name="date_from" required style="color-scheme:dark;"></div>
+        <div class="field"><label>Дата повернення</label><input type="date" name="date_to" required style="color-scheme:dark;"></div>
+        <div class="field"><label>Тариф</label>
+          <select name="tariff">
+            <option value="base">Base (зі заставою)</option>
+            <option value="prime">Prime (без застави)</option>
+          </select>
+        </div>
+        <div class="field"><label>Оплата</label>
+          <select name="payment_method">
+            <option value="card">Картка</option>
+            <option value="cash">Готівка</option>
+            <option value="bank">Безготівковий</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Клієнт (ім'я або email)</label><input type="text" name="client_name" placeholder="Пошук клієнта..."></div>
+      <div class="btn-row" style="margin-top:20px;">
+        <button type="submit" class="btn-save">Створити замовлення</button>
+        <button type="button" class="btn-secondary" onclick="closeNbCar()">Скасувати</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 {% endblock %}
 
 {% block extra_js %}
 <script>
+/* ── Car data for drawer ── */
+var CARS = {
+{% for c in all_cars %}
+  {{ c.pk }}: {
+    name: '{{ c.brand }} {{ c.model }}',
+    cls:  '{{ c.get_car_class_display }}',
+    year: '{{ c.year }}',
+    plate:'{{ c.plate }}',
+    tech: '{{ c.transmission }} / {{ c.get_fuel_display }}',
+    mileage: '{{ c.mileage|floatformat:0 }} км',
+    status: '{{ c.status }}',
+    statusLabel: '{{ c.get_status_display }}',
+    nextService: '{% if c.next_service %}{{ c.next_service|date:"d.m.Y" }}{% else %}—{% endif %}',
+    priceBase:  '&#8372;{{ c.price_base }}/доба',
+    pricePrime: '&#8372;{{ c.price_prime }}/доба',
+    deposit:    '&#8372;{{ c.deposit }}',
+    editUrl:    '{% url "manager_car_edit" c.pk %}',
+    serviceUrl: '{% url "manager_car_service" c.pk %}',
+    imgUrl:     '{% if c.photos.first %}{{ c.photos.first.image.url }}{% elif c.image %}{{ c.image.url }}{% else %}/static/img/car_placeholder.svg{% endif %}'
+  }{% if not forloop.last %},{% endif %}
+{% endfor %}
+};
 
-function setView(v){
-  if(v==='grid'){
-    document.getElementById('gridView').style.display='grid';
-    document.getElementById('listView').style.display='none';
+/* ── Grid / Table toggle ── */
+function setView(v) {
+  var grid = document.getElementById('gridView');
+  var list = document.getElementById('listView');
+  document.getElementById('viewInput').value = v;
+  if (v === 'grid') {
+    grid.style.display = 'grid'; list.style.display = 'none';
     document.getElementById('gridBtn').classList.add('active');
     document.getElementById('listBtn').classList.remove('active');
   } else {
-    document.getElementById('gridView').style.display='none';
-    document.getElementById('listView').style.display='block';
+    grid.style.display = 'none'; list.style.display = 'block';
     document.getElementById('gridBtn').classList.remove('active');
     document.getElementById('listBtn').classList.add('active');
   }
 }
-function openDrawer(){document.getElementById('carDrawer').classList.add('open');}
-function closeDrawer(){document.getElementById('carDrawer').classList.remove('open');}
-document.getElementById('carDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
 
+/* ── Drawer ── */
+function openDrawer(pk) {
+  var c = CARS[pk];
+  if (!c) return;
+  document.getElementById('drawerTitle').innerHTML = '<em>' + c.name + '</em> · ' + c.plate;
+  document.getElementById('dFullName').textContent  = c.name;
+  document.getElementById('dClass').textContent     = c.cls;
+  document.getElementById('dYear').textContent      = c.year;
+  document.getElementById('dPlate').textContent     = c.plate;
+  document.getElementById('dTechSpecs').textContent = c.tech;
+  document.getElementById('dMileage').textContent   = c.mileage;
+  document.getElementById('dStatus').textContent    = c.statusLabel;
+  document.getElementById('dNextService').textContent = c.nextService;
+  document.getElementById('dPriceBase').innerHTML   = c.priceBase;
+  document.getElementById('dPricePrime').innerHTML  = c.pricePrime;
+  document.getElementById('dDeposit').innerHTML     = c.deposit;
+  document.getElementById('dEditLink').href    = c.editUrl;
+  document.getElementById('dServiceLink').href = c.serviceUrl;
+  document.getElementById('drawerStatusForm').action = c.editUrl;
+  document.getElementById('dCarImgTag').src = c.imgUrl;
+  document.getElementById('dCarImgTag').alt = c.name;
+  document.getElementById('dStatusSel').value       = c.status;
+
+  var log = document.getElementById('dServiceLog');
+  if (c.nextService !== '—') {
+    log.innerHTML = '<div class="log-item"><div class="log-dot todo"></div><div><div class="log-text">Планове ТО</div><div class="log-date">' + c.nextService + '</div></div></div>';
+  } else {
+    log.innerHTML = '<div style="font-size:12px;color:var(--gray);padding:8px 0;">Дату ТО не вказано</div>';
+  }
+
+  document.getElementById('carDrawer').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('carDrawer').classList.remove('open');
+}
+
+/* ── New booking modal ── */
+function openNewBooking(pk, name) {
+  document.getElementById('nbCarPk').value = pk;
+  document.getElementById('nbCarName').textContent = name;
+  document.getElementById('nbCarModal').classList.add('open');
+}
+function closeNbCar() {
+  document.getElementById('nbCarModal').classList.remove('open');
+}
 </script>
 {% endblock %}

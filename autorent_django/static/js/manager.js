@@ -1,28 +1,31 @@
-
 /* ===== manager-dashboard.html ===== */
 
-// Calendar strip
+// Calendar strip (dashboard only)
 const cal = document.getElementById('calStrip');
-const days = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
-const busy = [3,7,8,14,15,20,21,22];
-const partial = [5,6,10,11,16,17,23,24];
-for(let i=1;i<=28;i++){
-  const d=document.createElement('div');
-  d.className='cal-day'+(i===26?' today':'')+(busy.includes(i)?' busy':partial.includes(i)?' partial':'');
-  const dt=new Date(2025,1,i);
-  d.innerHTML=`<div class="cal-wd">${days[dt.getDay()]}</div><div class="cal-d">${i}</div><div class="cal-cnt">${busy.includes(i)?'12':partial.includes(i)?Math.floor(Math.random()*6+4):'0'}</div>`;
-  cal.appendChild(d);
+if (cal) {
+  const days = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+  const busy = [3,7,8,14,15,20,21,22];
+  const partial = [5,6,10,11,16,17,23,24];
+  for(let i=1;i<=28;i++){
+    const d=document.createElement('div');
+    d.className='cal-day'+(i===26?' today':'')+(busy.includes(i)?' busy':partial.includes(i)?' partial':'');
+    const dt=new Date(2025,1,i);
+    d.innerHTML=`<div class="cal-wd">${days[dt.getDay()]}</div><div class="cal-d">${i}</div><div class="cal-cnt">${busy.includes(i)?'12':partial.includes(i)?Math.floor(Math.random()*6+4):'0'}</div>`;
+    cal.appendChild(d);
+  }
 }
-// Chart
+// Chart (dashboard only)
 const chart=document.getElementById('chartBars');
-const weeks=[['1–7 лют',2800],['8–14 лют',3400],['15–21 лют',3100],['22–28 лют',4980]];
-const max=5000;
-weeks.forEach(([l,v])=>{
-  const w=document.createElement('div');w.className='bar-wrap';
-  const h=Math.round(v/max*90);
-  w.innerHTML=`<div class="bar" style="height:${h}px"></div><div class="bar-label">${l}</div>`;
-  chart.appendChild(w);
-});
+if (chart) {
+  const weeks=[['1–7 лют',2800],['8–14 лют',3400],['15–21 лют',3100],['22–28 лют',4980]];
+  const max=5000;
+  weeks.forEach(([l,v])=>{
+    const w=document.createElement('div');w.className='bar-wrap';
+    const h=Math.round(v/max*90);
+    w.innerHTML=`<div class="bar" style="height:${h}px"></div><div class="bar-label">${l}</div>`;
+    chart.appendChild(w);
+  });
+}
 
 
 /* ===== manager-cars.html ===== */
@@ -40,9 +43,9 @@ function setView(v){
     document.getElementById('listBtn').classList.add('active');
   }
 }
-function openDrawer(){document.getElementById('carDrawer').classList.add('open');}
-function closeDrawer(){document.getElementById('carDrawer').classList.remove('open');}
-document.getElementById('carDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
+function openCarDrawer(){var el=document.getElementById('carDrawer');if(el)el.classList.add('open');}
+function closeCarDrawer(){var el=document.getElementById('carDrawer');if(el)el.classList.remove('open');}
+(function(){var el=document.getElementById('carDrawer');if(el)el.addEventListener('click',function(e){if(e.target===this)closeCarDrawer();});})();
 
 
 /* ===== manager-payments.html ===== */
@@ -64,10 +67,11 @@ function openDrawer(id,client,order,amt,status,type){
   document.getElementById('txDrawer').classList.add('open');
 }
 function closeDrawer(){document.getElementById('txDrawer').classList.remove('open');}
-document.getElementById('txDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
+(function(){var el=document.getElementById('txDrawer');if(el)el.addEventListener('click',function(e){if(e.target===this)closeDrawer();});})();
 
 // Mini chart
 const mc=document.getElementById('miniChart');
+if(mc){
 const wData=[2800,3400,3100,4980];
 const mMax=Math.max(...wData);
 wData.forEach((v,i)=>{
@@ -75,12 +79,7 @@ wData.forEach((v,i)=>{
   w.style.height=(v/mMax*56)+'px';
   w.innerHTML=`<span class="mini-bar-label">Т${i+1}</span>`;
   mc.appendChild(w);
-});
-
-document.querySelectorAll('.stab').forEach(t=>{
-  t.onclick=function(){document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));this.classList.add('active');}
-});
-
+});}
 
 /* ===== manager-fines.html ===== */
 
@@ -109,10 +108,7 @@ function openFineDrawer(id,client,car,reason,amt,status,sev){
   document.getElementById('fineDrawer').classList.add('open');
 }
 function closeDrawer(){document.getElementById('fineDrawer').classList.remove('open');}
-document.getElementById('fineDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
-document.querySelectorAll('.stab').forEach(t=>{
-  t.onclick=function(){document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));this.classList.add('active');}
-});
+(function(){var el=document.getElementById('fineDrawer');if(el)el.addEventListener('click',function(e){if(e.target===this)closeDrawer();});})();
 
 
 /* ===== manager-reports.html ===== */
@@ -173,4 +169,3 @@ function setPeriod(btn){
   document.querySelectorAll('.period-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
 }
-

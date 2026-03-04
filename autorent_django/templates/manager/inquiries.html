@@ -1,0 +1,261 @@
+{% extends 'manager/base_manager.html' %}
+{% block title %}Питання — AutoRent Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── Таблиця звернень ── */
+.inq-wrap { overflow-x:auto; }
+.inq-table { width:100%; border-collapse:collapse; min-width:860px; }
+.inq-table th {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--gray); padding:12px 16px; text-align:left;
+  border-bottom:1px solid var(--border); background:var(--dark3);
+  white-space:nowrap;
+}
+.inq-table td {
+  padding:14px 16px; font-size:13px; color:var(--gray);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  vertical-align:top;
+}
+.inq-table tr:hover td { background:rgba(255,255,255,0.015); }
+.inq-table tr.is-new td { border-left:3px solid #cf6679; }
+.inq-table tr.is-replied { opacity:.65; }
+
+.inq-msg {
+  font-size:13px; line-height:1.55; max-height:72px;
+  overflow:hidden; color:var(--white);
+}
+.inq-reply-preview {
+  margin-top:6px; padding:6px 10px;
+  background:rgba(76,175,122,0.08);
+  border-left:2px solid #4caf7d;
+  font-size:12px; color:#4caf7d;
+}
+.inq-subject {
+  font-size:11px; letter-spacing:1px; text-transform:uppercase;
+  padding:3px 8px;
+  background:rgba(201,168,76,0.1); color:var(--gold);
+  border:1px solid rgba(201,168,76,0.2);
+  white-space:nowrap;
+}
+.st-new     { color:#cf6679; font-size:12px; font-weight:600; white-space:nowrap; }
+.st-read    { color:var(--gold); font-size:12px; white-space:nowrap; }
+.st-replied { color:#4caf7d; font-size:12px; white-space:nowrap; }
+
+.act-col { display:flex; flex-direction:column; gap:5px; }
+
+/* ── Reply panel (знизу) ── */
+.reply-backdrop {
+  display:none; position:fixed; inset:0; z-index:9998;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(3px);
+}
+.reply-backdrop.open { display:block; }
+
+.reply-panel {
+  display:none; position:fixed;
+  top:50%; left:50%;
+  margin-left:0; /* не залежить від сайдбару */
+  transform:translate(-50%, -50%);
+  z-index:9999;
+  background:var(--dark); border:1px solid var(--border);
+  border-top:2px solid var(--gold);
+  padding:32px 36px;
+  width:560px; max-width:calc(100vw - 48px);
+  box-shadow:0 24px 80px rgba(0,0,0,.8);
+  animation:replyFadeUp .22s ease;
+}
+.reply-panel.open { display:block; }
+
+@keyframes replyFadeUp {
+  from { transform:translate(-50%, calc(-50% + 20px)); opacity:0; }
+  to   { transform:translate(-50%, -50%); opacity:1; }
+}
+
+.reply-panel-header {
+  display:flex; align-items:center;
+  justify-content:space-between; margin-bottom:20px;
+}
+.reply-panel-title {
+  font-family:'Playfair Display',serif; font-size:20px;
+}
+.reply-panel-title em { font-style:italic; color:var(--gold); }
+.reply-to-label {
+  font-size:12px; color:var(--gray); margin-bottom:16px;
+}
+.reply-to-label strong { color:var(--white); }
+.reply-body-row {
+  display:flex; flex-direction:column; gap:14px;
+}
+.reply-body-row textarea {
+  width:100%; background:var(--dark3); border:1px solid var(--border);
+  color:var(--white); padding:12px 14px;
+  font-family:'DM Sans',sans-serif; font-size:13px;
+  resize:vertical; min-height:100px; outline:none;
+  transition:border-color .2s; box-sizing:border-box;
+}
+.reply-body-row textarea:focus { border-color:var(--gold); }
+.reply-actions { display:flex; gap:10px; justify-content:flex-end; }
+</style>
+{% endblock %}
+
+{% block main_content %}
+
+<div class="topbar">
+  <div class="topbar-title">Питання · <strong>Звернення з форми контактів</strong></div>
+  <div style="display:flex;gap:10px;">
+    <button class="tb-btn" onclick="window.location='?'">Всі</button>
+    <button class="tb-btn{% if status_filter == 'new' %} primary{% endif %}" onclick="window.location='?status=new'">🔴 Нові ({{ counts.new }})</button>
+    <button class="tb-btn{% if status_filter == 'read' %} primary{% endif %}" onclick="window.location='?status=read'">🟡 Прочитані ({{ counts.read }})</button>
+    <button class="tb-btn{% if status_filter == 'replied' %} primary{% endif %}" onclick="window.location='?status=replied'">🟢 Відповідено ({{ counts.replied }})</button>
+  </div>
+</div>
+
+<div class="content">
+  <!-- KPI -->
+  <div class="kpi-row">
+    <div class="kpi-card red">
+      <div class="kpi-icon">🔴</div>
+      <div class="kpi-val">{{ counts.new }}</div>
+      <div class="kpi-label">Нових звернень</div>
+      <div class="kpi-delta down">Потребують відповіді</div>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-icon">🟡</div>
+      <div class="kpi-val">{{ counts.read }}</div>
+      <div class="kpi-label">Прочитано</div>
+      <div class="kpi-delta">В обробці</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-val">{{ counts.replied }}</div>
+      <div class="kpi-label">Відповідено</div>
+      <div class="kpi-delta up">Закрито</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon">📩</div>
+      <div class="kpi-val">{{ counts.total }}</div>
+      <div class="kpi-label">Всього звернень</div>
+      <div class="kpi-delta">За весь час</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="widget">
+    <div class="widget-header">
+      <div class="widget-title">Звернення</div>
+    </div>
+    {% if messages_list %}
+    <div class="inq-wrap">
+    <table class="inq-table">
+      <thead>
+        <tr>
+          <th>Дата</th>
+          <th>Ім'я</th>
+          <th>Контакти</th>
+          <th>Тема</th>
+          <th style="min-width:260px;">Повідомлення</th>
+          <th>Статус</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for msg in messages_list %}
+        <tr class="{% if msg.status == 'new' %}is-new{% elif msg.status == 'replied' %}is-replied{% endif %}">
+          <td style="white-space:nowrap;font-size:12px;">{{ msg.created_at|date:"d.m.Y" }}<br><span style="color:var(--gray);">{{ msg.created_at|date:"H:i" }}</span></td>
+          <td><strong style="color:var(--white);">{{ msg.name }}</strong></td>
+          <td style="font-size:12px;">
+            <div>{{ msg.email }}</div>
+            {% if msg.phone %}<div style="color:var(--gray);margin-top:2px;">{{ msg.phone }}</div>{% endif %}
+          </td>
+          <td><span class="inq-subject">{{ msg.get_subject_display }}</span></td>
+          <td>
+            <div class="inq-msg">{{ msg.message }}</div>
+            {% if msg.reply %}
+            <div class="inq-reply-preview">↩ {{ msg.reply }}</div>
+            {% endif %}
+          </td>
+          <td>
+            {% if msg.status == 'new' %}<span class="st-new">● Нове</span>
+            {% elif msg.status == 'read' %}<span class="st-read">● Прочитано</span>
+            {% else %}<span class="st-replied">● Відповідено</span>{% endif %}
+          </td>
+          <td>
+            <div class="act-col">
+              {% if msg.status == 'new' %}
+              <form method="post" style="margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="msg_id" value="{{ msg.pk }}">
+                <input type="hidden" name="action" value="read">
+                <button type="submit" class="tb-btn" style="font-size:11px;padding:4px 10px;width:100%;">Прочитано</button>
+              </form>
+              {% endif %}
+              <button class="tb-btn primary" style="font-size:11px;padding:4px 10px;"
+                onclick="openReply({{ msg.pk }}, '{{ msg.name|escapejs }}', '{{ msg.email|escapejs }}')">
+                ↩ Відповісти
+              </button>
+              <form method="post" style="margin:0;" onsubmit="return confirm('Видалити?')">
+                {% csrf_token %}
+                <input type="hidden" name="msg_id" value="{{ msg.pk }}">
+                <input type="hidden" name="action" value="delete">
+                <button type="submit" class="tb-btn" style="font-size:11px;padding:4px 10px;color:#cf6679;width:100%;">Видалити</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% else %}
+    <div style="padding:48px;text-align:center;color:var(--gray);">
+      <div style="font-size:40px;margin-bottom:12px;">📭</div>
+      <div>Звернень не знайдено</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Backdrop — click outside closes panel -->
+<div class="reply-backdrop" id="replyBackdrop" onclick="closeReply()"></div>
+
+<!-- Reply panel (bottom slide-up) -->
+<div class="reply-panel" id="replyPanel">
+  <div class="reply-panel-header">
+    <div class="reply-panel-title">↩ Відповідь на <em>звернення</em></div>
+    <button class="tb-btn" onclick="closeReply()" style="padding:4px 14px;">✕</button>
+  </div>
+  <div class="reply-to-label">Кому: <strong id="replyTo"></strong></div>
+  <form method="post" id="replyForm">
+    {% csrf_token %}
+    <input type="hidden" name="msg_id" id="replyMsgId">
+    <input type="hidden" name="action" value="replied">
+
+    <div class="reply-body-row">
+      <textarea name="reply" id="replyText" placeholder="Введіть відповідь клієнту..." required></textarea>
+      <div class="reply-actions">
+        <button type="button" class="tb-btn" onclick="closeReply()">Скасувати</button>
+        <button type="submit" class="tb-btn primary">Надіслати відповідь</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openReply(id, name, email) {
+  document.getElementById('replyMsgId').value = id;
+  document.getElementById('replyTo').textContent = name + ' <' + email + '>';
+  document.getElementById('replyText').value = '';
+  document.getElementById('replyPanel').classList.add('open');
+  document.getElementById('replyBackdrop').classList.add('open');
+  setTimeout(function(){ document.getElementById('replyText').focus(); }, 100);
+}
+function closeReply() {
+  document.getElementById('replyPanel').classList.remove('open');
+  document.getElementById('replyBackdrop').classList.remove('open');
+}
+
+</script>
+{% endblock %}

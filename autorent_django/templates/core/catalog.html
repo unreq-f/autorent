@@ -1,164 +1,546 @@
 {% extends 'base.html' %}
 {% block title %}Каталог авто — AutoRent Харків{% endblock %}
 
+{% block extra_css %}
+<style>
+/* body overflow:hidden breaks position:sticky — override it for catalog */
+body { overflow: visible !important; }
+html { overflow-x: hidden; }
+/* ========== LAYOUT ========== */
+.catalog-page {
+  display:flex;
+  align-items:flex-start;
+  min-height:calc(100vh - 72px);
+}
+
+/* ========== SIDEBAR — sticky inside flex ========== */
+.filter-sidebar {
+  width:272px; flex-shrink:0;
+  background:#161616;
+  border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  position:sticky; top:72px;
+  height:calc(100vh - 72px);
+  align-self:flex-start;
+  z-index:50;
+  overflow:hidden;
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-scroll { flex:1; overflow-y:auto; padding:24px 20px 32px; }
+.sidebar-scroll::-webkit-scrollbar { width:3px; }
+.sidebar-scroll::-webkit-scrollbar-thumb { background:var(--border); }
+
+.sidebar-head {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:20px; padding-bottom:16px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-head-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); }
+.sidebar-reset { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--gray); text-decoration:none; transition:color .2s; }
+.sidebar-reset:hover { color:var(--gold); }
+
+.f-group { margin-bottom:20px; }
+.f-label { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--gray); display:block; margin-bottom:8px; }
+
+.f-input {
+  width:100%; box-sizing:border-box;
+  background:rgba(255,255,255,0.04); border:1px solid var(--border);
+  color:var(--white); padding:9px 12px; font-size:13px;
+  font-family:'DM Sans',sans-serif; outline:none; transition:border-color .25s;
+}
+.f-input:focus { border-color:var(--gold); }
+.f-input::placeholder { color:rgba(255,255,255,0.2); }
+
+.f-row2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+
+/* Chips */
+.chips { display:flex; flex-wrap:wrap; gap:5px; }
+.chip { position:relative; }
+.chip input { position:absolute; opacity:0; width:0; height:0; }
+.chip label {
+  display:block; padding:5px 10px;
+  font-size:10px; letter-spacing:1px; text-transform:uppercase;
+  border:1px solid var(--border); color:var(--gray);
+  cursor:pointer; transition:.2s; user-select:none;
+}
+.chip label:hover { border-color:rgba(201,168,76,.5); color:var(--white); }
+.chip input:checked + label { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,.08); }
+
+/* Radio chips */
+.rchip { position:relative; }
+.rchip input { position:absolute; opacity:0; width:0; height:0; }
+.rchip label {
+  display:block; padding:5px 10px;
+  font-size:10px; letter-spacing:1px; text-transform:uppercase;
+  border:1px solid var(--border); color:var(--gray);
+  cursor:pointer; transition:.2s;
+}
+.rchip label:hover { border-color:rgba(201,168,76,.5); color:var(--white); }
+.rchip input:checked + label { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,.08); }
+
+.f-divider { border:none; border-top:1px solid var(--border); margin:20px 0; }
+
+.btn-apply {
+  width:100%; background:var(--gold); color:var(--black);
+  border:none; padding:12px; font-family:'DM Sans',sans-serif;
+  font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
+  cursor:pointer; transition:background .2s; margin-top:8px;
+}
+.btn-apply:hover { background:var(--gold-light); }
+
+/* ========== PULL TAB ========== */
+.sidebar-pull {
+  display:none;
+  position:fixed; left:0; top:50%; transform:translateY(-50%);
+  background:var(--gold); color:var(--black);
+  border:none; padding:12px 7px; cursor:pointer; z-index:200;
+  border-radius:0 3px 3px 0;
+  box-shadow:3px 0 16px rgba(0,0,0,.5);
+  transition:left .35s cubic-bezier(.4,0,.2,1);
+}
+.sidebar-pull-text {
+  writing-mode:vertical-rl; text-orientation:mixed;
+  font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  display:block;
+}
+.sidebar-pull.is-open { left:272px; }
+
+/* ========== MAIN ========== */
+.catalog-main { flex:1; padding:32px 36px 80px; min-width:0; overflow:hidden; }
+
+.cat-topbar {
+  display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:10px; margin-bottom:20px;
+}
+.cat-count { font-size:13px; color:var(--gray); }
+.cat-count strong { color:var(--white); }
+
+.sort-wrap { display:flex; align-items:center; gap:8px; }
+.sort-label { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--gray); }
+.sort-sel {
+  background:var(--dark2); border:1px solid var(--border); color:var(--white);
+  padding:8px 30px 8px 10px; font-family:'DM Sans',sans-serif; font-size:12px;
+  outline:none; cursor:pointer; appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 5 5-5z' fill='%23666'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+}
+.sort-sel option { background:#1a1a1a; }
+
+/* Class quick tabs */
+.class-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:20px; }
+.class-tab {
+  padding:7px 14px; border:1px solid var(--border); background:var(--dark2);
+  color:var(--gray); font-size:10px; letter-spacing:1px; text-transform:uppercase;
+  text-decoration:none; transition:.2s;
+}
+.class-tab:hover, .class-tab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,168,76,.06); }
+
+/* Active tags */
+.active-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; align-items:center; }
+.atag {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 9px; font-size:10px; letter-spacing:1px; text-transform:uppercase;
+  background:rgba(201,168,76,.08); border:1px solid rgba(201,168,76,.25); color:var(--gold);
+}
+.atag-x { color:var(--gold); text-decoration:none; opacity:.6; font-size:13px; line-height:1; }
+.atag-x:hover { opacity:1; }
+.atag-reset { font-size:10px; color:var(--gray); text-decoration:none; letter-spacing:1px; text-transform:uppercase; border-bottom:1px dashed rgba(255,255,255,.2); }
+.atag-reset:hover { color:var(--white); }
+
+/* Cars grid */
+.cars-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px; }
+.car-card { background:var(--dark2); border:1px solid var(--border); overflow:hidden; transition:border-color .3s,transform .2s; }
+.car-card:hover { border-color:rgba(201,168,76,.4); transform:translateY(-2px); }
+.car-img { height:185px; background:linear-gradient(135deg,#161616,#222); position:relative; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.car-img img { width:100%; height:100%; object-fit:cover; }
+.car-badge-cls { position:absolute; top:10px; left:10px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold); border:1px solid rgba(201,168,76,.4); padding:3px 8px; background:rgba(10,10,10,.85); }
+.car-badge-st { position:absolute; top:10px; right:10px; font-size:9px; padding:3px 8px; }
+.st-free { background:rgba(76,175,125,.35); color:#6dd9a0; }
+.st-rented { background:rgba(201,168,76,.30); color:var(--gold); }
+.car-name-row {
+  display:flex; align-items:flex-start;
+  justify-content:space-between; gap:8px; margin-bottom:0;
+}
+.car-name-row .car-name { margin-bottom:0; flex:1; }
+.wl-btn-name {
+  background:none; border:none; cursor:pointer;
+  font-size:18px; padding:2px 4px; line-height:1;
+  transition:transform .2s; flex-shrink:0; margin-top:2px;
+  opacity:0.5;
+}
+.wl-btn-name:hover { transform:scale(1.2); opacity:1; }
+.wl-btn-name.active { opacity:1; }
+.car-body { padding:18px; }
+.car-name { font-family:'Playfair Display',serif; font-size:18px; color:var(--white); margin-bottom:8px; line-height:1.25; }
+.car-specs { display:flex; gap:8px; flex-wrap:wrap; font-size:11px; color:var(--gray); margin-bottom:14px; }
+.car-specs span::after { content:'·'; margin-left:8px; }
+.car-specs span:last-child::after { content:''; }
+.car-ft { display:flex; align-items:flex-end; justify-content:space-between; gap:8px; padding-top:12px; }
+.car-price-val { font-family:'Playfair Display',serif; font-size:20px; color:var(--gold); }
+.car-price-per { font-size:11px; color:var(--gray); margin-top:1px; }
+.car-btns { display:flex; flex-direction:column; gap:5px; }
+.btn-book, .btn-det {
+  font-size:10px; letter-spacing:1px; text-transform:uppercase;
+  padding:7px 12px; cursor:pointer; transition:.2s; text-decoration:none;
+  display:block; text-align:center; white-space:nowrap;
+}
+.btn-book { background:var(--gold); color:var(--black); border:1px solid var(--gold); }
+.btn-book:hover { background:var(--gold-light); }
+.btn-det { border:1px solid var(--border); color:var(--gray); }
+.btn-det:hover { border-color:var(--gold); color:var(--gold); }
+
+.cat-empty { grid-column:1/-1; text-align:center; padding:80px 20px; }
+.cat-empty-icon { font-size:48px; margin-bottom:16px; }
+.cat-empty-title { font-family:'Playfair Display',serif; font-size:24px; color:var(--white); margin-bottom:8px; }
+
+/* ========== MOBILE ========== */
+@media(max-width:960px) {
+  .catalog-page { display:block; position:relative; }
+  .filter-sidebar {
+    position:fixed; left:0; top:72px; height:calc(100vh - 72px);
+    transform:translateX(-100%);
+    box-shadow:6px 0 32px rgba(0,0,0,.6);
+  }
+  .filter-sidebar.open { transform:translateX(0); }
+  .sidebar-pull { display:flex; align-items:center; }
+  .mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:140; }
+  .mob-overlay.open { display:block; }
+  .catalog-main { padding:24px 16px 60px; }
+}
+@media(max-width:500px) {
+  .cars-grid { grid-template-columns:1fr; }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div class="breadcrumb"><a href="{% url 'index' %}">Головна</a> → Каталог</div>
   <h1>Наш <em>автопарк</em></h1>
-  <p>{{ total }} автомобілів у каталозі. Від економ до VIP — підберемо авто під будь-яке завдання.</p>
+  <p>{{ total_all }} автомобілів у каталозі. Від економ до VIP — підберемо авто під будь-яке завдання.</p>
 </div>
 
-<section class="catalog-section">
-  <!-- FILTERS -->
-  <div class="catalog-filters">
-    <form method="get" class="filter-form">
-      <div class="filter-row">
-        <div class="filter-field">
-          <label>Пошук</label>
-          <input type="text" name="q" placeholder="Марка або модель..." value="{{ filters.q }}">
+<!-- Mobile overlay -->
+<div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+
+<!-- Pull tab -->
+<button class="sidebar-pull" id="sidebarPull" onclick="toggleSidebar()" aria-label="Відкрити фільтри">
+  <span class="sidebar-pull-text" id="pullText">⚙ Фільтри</span>
+</button>
+
+<form id="_wlForm" method="post" action="{% url 'toggle_wishlist' %}" style="display:none;">
+  {% csrf_token %}
+  <input type="hidden" name="car_id" id="_wlCarId">
+</form>
+
+<div class="catalog-page">
+
+  <!-- ════════════════ SIDEBAR ════════════════ -->
+  <aside class="filter-sidebar" id="filterSidebar">
+    <div class="sidebar-scroll">
+      <div class="sidebar-head">
+        <span class="sidebar-head-title">⚙ Фільтри</span>
+        <a href="{% url 'catalog' %}" class="sidebar-reset">Скинути все</a>
+      </div>
+
+      <form method="get" id="fForm">
+
+        <!-- Пошук -->
+        <div class="f-group">
+          <span class="f-label">Пошук</span>
+          <input class="f-input" type="text" name="q" placeholder="Марка або модель..." value="{{ filters.q }}">
         </div>
-        <div class="filter-field">
-          <label>Клас авто</label>
-          <select name="class">
-            <option value="">Всі класи</option>
+
+        <hr class="f-divider">
+
+        <!-- Клас -->
+        <div class="f-group">
+          <span class="f-label">Клас авто</span>
+          <div class="chips">
             {% for val, label in car_classes %}
-            <option value="{{ val }}" {% if filters.class == val %}selected{% endif %}>{{ label }}</option>
+            <div class="chip">
+              <input type="checkbox" id="c_{{ val }}" name="class_multi" value="{{ val }}"
+                {% if val in filters.class_multi %}checked{% endif %}
+                onchange="document.getElementById('fForm').submit()">
+              <label for="c_{{ val }}">{{ label }}</label>
+            </div>
             {% endfor %}
-          </select>
-        </div>
-        <div class="filter-field">
-          <label>Паливо</label>
-          <select name="fuel">
-            <option value="">Всі типи</option>
-            {% for val, label in fuel_types %}
-            <option value="{{ val }}" {% if filters.fuel == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="filter-field">
-          <label>Макс. ціна ($/доба)</label>
-          <input type="number" name="price_max" placeholder="500" value="{{ filters.price_max }}">
-        </div>
-        <button type="submit" class="btn-filter">Застосувати</button>
-        <a href="{% url 'catalog' %}" class="btn-filter-reset">Скинути</a>
-      </div>
-    </form>
-  </div>
-
-  <!-- CLASS TABS -->
-  <div class="filter-tabs">
-    <a href="{% url 'catalog' %}" class="filter-tab {% if not filters.class %}active{% endif %}">Всі</a>
-    {% for val, label in car_classes %}
-    <a href="?class={{ val }}" class="filter-tab {% if filters.class == val %}active{% endif %}">{{ label }}</a>
-    {% endfor %}
-  </div>
-
-  <!-- CARS GRID -->
-  <div class="cars-grid">
-    {% for car in cars %}
-    <div class="car-card">
-      <div class="car-img">
-        {% if car.image %}
-        <img src="{{ car.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;">
-        {% else %}
-        <span style="font-size:72px;display:flex;align-items:center;justify-content:center;height:100%;">{{ car.emoji }}</span>
-        {% endif %}
-        <div class="car-class-badge">{{ car.get_car_class_display }}</div>
-        <div class="car-status-badge {% if car.is_available %}status-available{% else %}status-rented{% endif %}">
-          {% if car.is_available %}Вільний{% else %}{{ car.get_status_display }}{% endif %}
-        </div>
-        {% if user.is_authenticated %}
-        <button class="wishlist-btn {% if car.pk in wishlist_ids %}active{% endif %}"
-                onclick="toggleWishlist({{ car.pk }}, this)" title="До обраних">
-          {% if car.pk in wishlist_ids %}❤️{% else %}🤍{% endif %}
-        </button>
-        {% endif %}
-      </div>
-      <div class="car-info">
-        <h3 class="car-name">{{ car.full_name }}</h3>
-        <div class="car-specs-row">
-          <span>{{ car.year }}</span>
-          <span>{{ car.get_fuel_display }}</span>
-          <span>{{ car.transmission }}</span>
-          <span>{{ car.seats }} місць</span>
-        </div>
-        <div class="car-footer">
-          <div>
-            <div class="car-price">від ${{ car.price_base }}</div>
-            <div class="car-period">/ доба</div>
           </div>
-          <div style="display:flex;gap:8px;">
-            <a href="{% url 'car_detail' car.pk %}" class="btn-details">Детальніше</a>
-            {% if car.is_available %}
-            <a href="{% url 'order_car' car.pk %}" class="btn-book">Забронювати</a>
+        </div>
+
+        <!-- Паливо -->
+        <div class="f-group">
+          <span class="f-label">Тип палива</span>
+          <div class="chips">
+            {% for val, label in fuel_types %}
+            <div class="chip">
+              <input type="checkbox" id="f_{{ val }}" name="fuel_multi" value="{{ val }}"
+                {% if val in filters.fuel_multi %}checked{% endif %}
+                onchange="document.getElementById('fForm').submit()">
+              <label for="f_{{ val }}">{{ label }}</label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- КПП -->
+        <div class="f-group">
+          <span class="f-label">Коробка передач</span>
+          <div class="chips">
+            {% for tr in all_transmissions %}
+            <div class="chip">
+              <input type="checkbox" id="t_{{ forloop.counter }}" name="tr_multi" value="{{ tr }}"
+                {% if tr in filters.tr_multi %}checked{% endif %}
+                onchange="document.getElementById('fForm').submit()">
+              <label for="t_{{ forloop.counter }}">{{ tr }}</label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Кількість місць -->
+        <div class="f-group">
+          <span class="f-label">Місць у салоні</span>
+          <div class="chips">
+            {% for s in all_seats %}
+            <div class="chip">
+              <input type="checkbox" id="s_{{ s }}" name="seats_multi" value="{{ s }}"
+                {% if s|stringformat:"s" in filters.seats_multi %}checked{% endif %}
+                onchange="document.getElementById('fForm').submit()">
+              <label for="s_{{ s }}">{{ s }}</label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <hr class="f-divider">
+
+        <!-- Ціна -->
+        <div class="f-group">
+          <span class="f-label">Ціна ₴ / доба</span>
+          <div class="f-row2">
+            <input class="f-input" type="number" name="price_min" placeholder="від" value="{{ filters.price_min }}" min="0">
+            <input class="f-input" type="number" name="price_max" placeholder="до" value="{{ filters.price_max }}" min="0">
+          </div>
+        </div>
+
+        <!-- Рік -->
+        <div class="f-group">
+          <span class="f-label">Рік випуску</span>
+          <div class="f-row2">
+            <input class="f-input" type="number" name="year_min" placeholder="{{ year_range.0 }}" value="{{ filters.year_min }}">
+            <input class="f-input" type="number" name="year_max" placeholder="{{ year_range.1 }}" value="{{ filters.year_max }}">
+          </div>
+        </div>
+
+        <hr class="f-divider">
+
+        <!-- Доступність -->
+        <div class="f-group">
+          <span class="f-label">Доступність</span>
+          <div class="chips">
+            <div class="rchip">
+              <input type="radio" id="st_a" name="status" value=""
+                {% if not filters.status %}checked{% endif %} onchange="this.form.submit()">
+              <label for="st_a">Всі</label>
+            </div>
+            <div class="rchip">
+              <input type="radio" id="st_f" name="status" value="free"
+                {% if filters.status == 'free' %}checked{% endif %} onchange="this.form.submit()">
+              <label for="st_f">🟢 Вільні</label>
+            </div>
+            <div class="rchip">
+              <input type="radio" id="st_r" name="status" value="rented"
+                {% if filters.status == 'rented' %}checked{% endif %} onchange="this.form.submit()">
+              <label for="st_r">🟡 У прокаті</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Прихований sort -->
+        <input type="hidden" name="sort" value="{{ filters.sort }}">
+
+        <button type="submit" class="btn-apply">Застосувати фільтри</button>
+      </form>
+    </div>
+  </aside>
+
+  <!-- ════════════════ MAIN ════════════════ -->
+  <main class="catalog-main">
+
+    <!-- Topbar: count + sort -->
+    <div class="cat-topbar">
+      <div class="cat-count">
+        Знайдено: <strong>{{ total }}</strong> авто
+        {% if total != total_all %} з {{ total_all }}{% endif %}
+      </div>
+      <div class="sort-wrap">
+        <span class="sort-label">Сортування:</span>
+        <select class="sort-sel" onchange="applySort(this.value)">
+          <option value="" {% if not filters.sort %}selected{% endif %}>За замовч.</option>
+          <option value="price_asc"  {% if filters.sort == 'price_asc'  %}selected{% endif %}>Ціна ↑</option>
+          <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Ціна ↓</option>
+          <option value="year_desc"  {% if filters.sort == 'year_desc'  %}selected{% endif %}>Новіші</option>
+          <option value="year_asc"   {% if filters.sort == 'year_asc'   %}selected{% endif %}>Старіші</option>
+          <option value="name"       {% if filters.sort == 'name'       %}selected{% endif %}>Назва А–Я</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active filter tags -->
+    {% with has_filters=filters.q|add:filters.price_min|add:filters.price_max|add:filters.year_min|add:filters.year_max|add:filters.status %}
+    {% if has_filters or filters.class_multi or filters.fuel_multi or filters.tr_multi or filters.seats_multi %}
+    <div class="active-tags">
+      {% if filters.q %}<span class="atag">🔍 {{ filters.q }}</span>{% endif %}
+      {% for c in filters.class_multi %}<span class="atag">{{ c }}</span>{% endfor %}
+      {% for f in filters.fuel_multi %}<span class="atag">{{ f }}</span>{% endfor %}
+      {% for t in filters.tr_multi %}<span class="atag">{{ t }}</span>{% endfor %}
+      {% for s in filters.seats_multi %}<span class="atag">{{ s }} місць</span>{% endfor %}
+      {% if filters.price_min or filters.price_max %}
+        <span class="atag">💰 {{ filters.price_min|default:"0" }}–{{ filters.price_max|default:"∞" }} ₴</span>
+      {% endif %}
+      {% if filters.year_min or filters.year_max %}
+        <span class="atag">📅 {{ filters.year_min|default:"" }}–{{ filters.year_max|default:"" }}</span>
+      {% endif %}
+      {% if filters.status == 'free' %}<span class="atag">🟢 Вільні</span>{% endif %}
+      {% if filters.status == 'rented' %}<span class="atag">🟡 У прокаті</span>{% endif %}
+      <a href="{% url 'catalog' %}" class="atag-reset">✕ Скинути всі</a>
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Quick class tabs -->
+    <div class="class-tabs">
+      <a href="{% url 'catalog' %}" class="class-tab {% if not filters.class_multi %}active{% endif %}">Всі</a>
+      {% for val, label in car_classes %}
+      <a href="?class_multi={{ val }}" class="class-tab {% if val in filters.class_multi and filters.class_multi|length == 1 %}active{% endif %}">{{ label }}</a>
+      {% endfor %}
+    </div>
+
+    <!-- Cars grid -->
+    <div class="cars-grid">
+      {% for car in cars %}
+      <div class="car-card">
+        <div class="car-img">
+          {% with main_photo=car.photos.all|first %}
+          {% if main_photo %}
+            <img src="{{ main_photo.image.url }}" alt="{{ car.full_name }}">
+          {% elif car.image %}
+            <img src="{{ car.image.url }}" alt="{{ car.full_name }}">
+          {% else %}
+            <span style="font-size:68px;">{{ car.emoji }}</span>
+          {% endif %}
+          {% endwith %}
+          <div class="car-badge-cls">{{ car.get_car_class_display }}</div>
+          <div class="car-badge-st {% if car.is_available %}st-free{% else %}st-rented{% endif %}">
+            {% if car.is_available %}Вільний{% elif car.status == 'rented' %}У прокаті{% else %}{{ car.get_status_display }}{% endif %}
+          </div>
+
+        </div>
+        <div class="car-body">
+          <div class="car-name-row">
+            <h3 class="car-name">{{ car.full_name }}</h3>
+            {% if user.is_authenticated %}
+            <button class="wl-btn-name {% if car.pk in wishlist_ids %}active{% endif %}"
+                    type="button" onclick="toggleWL({{ car.pk }}, this)" title="До обраних">
+              {% if car.pk in wishlist_ids %}❤️{% else %}🤍{% endif %}
+            </button>
             {% endif %}
           </div>
+          <div class="car-specs">
+            <span>{{ car.year }}</span>
+            <span>{{ car.get_fuel_display }}</span>
+            <span>{{ car.transmission }}</span>
+            <span>{{ car.seats }} місць</span>
+          </div>
+          <div class="car-ft">
+            <div class="car-price-block">
+              <div class="car-price-val">від ₴{{ car.price_base|floatformat:0 }}</div>
+              <div class="car-price-per">/ доба</div>
+            </div>
+            <div class="car-btns">
+              {% if car.is_available %}
+              <a href="{% url 'order_car' car.pk %}" class="btn-book">Забронювати</a>
+              {% endif %}
+              <a href="{% url 'car_detail' car.pk %}" class="btn-det">Детальніше</a>
+            </div>
+          </div>
         </div>
       </div>
+      {% empty %}
+      <div class="cat-empty">
+        <div class="cat-empty-icon">🔍</div>
+        <div class="cat-empty-title">Авто не знайдено</div>
+        <p style="color:var(--gray);margin-top:8px;">Спробуйте змінити фільтри або
+          <a href="{% url 'catalog' %}" style="color:var(--gold);">переглянути весь каталог</a></p>
+      </div>
+      {% endfor %}
     </div>
-    {% empty %}
-    <div style="grid-column:1/-1;text-align:center;padding:80px 20px;">
-      <div style="font-size:48px;margin-bottom:16px;">🔍</div>
-      <div style="font-family:'Playfair Display',serif;font-size:24px;color:var(--white);margin-bottom:8px;">Авто не знайдено</div>
-      <p style="color:var(--gray);">Спробуйте змінити фільтри або <a href="{% url 'catalog' %}" style="color:var(--gold);">переглянути весь каталог</a></p>
+
+    <div style="text-align:center;color:var(--gray);font-size:12px;margin-top:28px;letter-spacing:1px;">
+      Показано <strong style="color:var(--white);">{{ cars|length }}</strong> з {{ total_all }} автомобілів
     </div>
-    {% endfor %}
-  </div>
+  </main>
 
-  <div style="text-align:center;color:var(--gray);font-size:13px;margin-top:24px;">
-    Показано {{ cars|length }} з {{ total }} автомобілів
-  </div>
-</section>
-
-<style>
-.catalog-section{padding:40px 60px 80px;}
-.filter-form{margin-bottom:28px;}
-.filter-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;}
-.filter-field{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px;}
-.filter-field label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
-.filter-field input,.filter-field select{background:var(--dark2);border:1px solid var(--border);color:var(--white);padding:10px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
-.filter-field input:focus,.filter-field select:focus{border-color:var(--gold);}
-.btn-filter{background:var(--gold);color:var(--black);padding:10px 24px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;}
-.btn-filter-reset{background:transparent;border:1px solid var(--border);color:var(--gray);padding:10px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;white-space:nowrap;cursor:pointer;}
-.filter-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:28px;}
-.filter-tab{padding:9px 20px;background:var(--dark2);border:1px solid var(--border);color:var(--gray);font-size:12px;letter-spacing:1px;text-transform:uppercase;text-decoration:none;transition:.2s;}
-.filter-tab:hover,.filter-tab.active{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.08);}
-.cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px;}
-.car-card{background:var(--dark2);border:1px solid var(--border);overflow:hidden;transition:border-color .3s;}
-.car-card:hover{border-color:rgba(201,168,76,0.4);}
-.car-img{height:190px;background:linear-gradient(135deg,#161616,#222);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
-.car-class-badge{position:absolute;top:12px;left:12px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);border:1px solid var(--border);padding:4px 10px;background:rgba(10,10,10,0.8);}
-.car-status-badge{position:absolute;top:12px;right:12px;font-size:10px;padding:4px 10px;}
-.status-available{background:rgba(76,175,125,0.15);color:#4caf7d;}
-.status-rented{background:rgba(201,168,76,0.12);color:var(--gold);}
-.wishlist-btn{position:absolute;bottom:12px;right:12px;background:rgba(10,10,10,0.7);border:none;cursor:pointer;font-size:18px;padding:6px;border-radius:50%;transition:transform .2s;}
-.wishlist-btn:hover{transform:scale(1.2);}
-.car-info{padding:20px;}
-.car-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:10px;}
-.car-specs-row{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--gray);margin-bottom:16px;}
-.car-footer{display:flex;align-items:center;justify-content:space-between;padding-top:14px;border-top:1px solid rgba(255,255,255,0.04);}
-.car-price{font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);}
-.car-period{font-size:11px;color:var(--gray);}
-.btn-details,.btn-book{font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:9px 16px;cursor:pointer;transition:.2s;text-decoration:none;display:inline-block;}
-.btn-details{border:1px solid var(--border);color:var(--gray);}
-.btn-details:hover{border-color:var(--gold);color:var(--gold);}
-.btn-book{background:var(--gold);color:var(--black);}
-.btn-book:hover{background:var(--gold-light);}
-</style>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function toggleWishlist(carId, btn) {
-  const csrfToken = '{{ csrf_token }}';
+/* ── Sidebar toggle ── */
+var sidebar = document.getElementById('filterSidebar');
+var pull    = document.getElementById('sidebarPull');
+var overlay = document.getElementById('mobOverlay');
+var pullTxt = document.getElementById('pullText');
+
+function toggleSidebar() {
+  var open = sidebar.classList.toggle('open');
+  pull.classList.toggle('is-open', open);
+  overlay.classList.toggle('open', open);
+  pullTxt.textContent = open ? '✕ Закрити' : '⚙ Фільтри';
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+function closeSidebar() {
+  sidebar.classList.remove('open');
+  pull.classList.remove('is-open');
+  overlay.classList.remove('open');
+  pullTxt.textContent = '⚙ Фільтри';
+  document.body.style.overflow = '';
+}
+
+/* ── Sort: preserve all current params ── */
+function applySort(val) {
+  var url = new URL(window.location.href);
+  if (val) url.searchParams.set('sort', val);
+  else     url.searchParams.delete('sort');
+  window.location.href = url.toString();
+}
+
+/* ── Wishlist ── */
+function toggleWL(carId, btn) {
+  btn.disabled = true;
+  var csrfInput = document.querySelector('#_wlForm [name=csrfmiddlewaretoken]');
+  var csrf = csrfInput ? csrfInput.value : '';
+  var body = 'csrfmiddlewaretoken=' + encodeURIComponent(csrf) + '&car_id=' + carId;
   fetch("{% url 'toggle_wishlist' %}", {
     method: 'POST',
-    headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': csrfToken},
-    body: `car_id=${carId}`
-  }).then(r => r.json()).then(data => {
-    btn.textContent = data.status === 'added' ? '❤️' : '🤍';
-    btn.classList.toggle('active', data.status === 'added');
-  });
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: body
+  })
+  .then(function(r) {
+    if (r.status === 401) { window.location = '{% url "auth" %}'; return null; }
+    return r.json();
+  })
+  .then(function(d) {
+    btn.disabled = false;
+    if (!d) return;
+    if (d.status === 'added') {
+      btn.textContent = '❤️'; btn.classList.add('active');
+    } else {
+      btn.textContent = '🤍'; btn.classList.remove('active');
+    }
+  })
+  .catch(function(){ btn.disabled = false; });
 }
 </script>
 {% endblock %}
