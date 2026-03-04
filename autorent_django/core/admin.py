@@ -1,12 +1,26 @@
 from django.contrib import admin
-from .models import Car, Booking, ClientProfile, Fine, Payment, Wishlist
+from .models import Car, CarPhoto, Booking, ClientProfile, Fine, Payment, Wishlist, PromoCode, ContactMessage
+
+class CarPhotoInline(admin.TabularInline):
+    model   = CarPhoto
+    extra   = 3
+    fields  = ['image', 'caption', 'order', 'is_main']
+    ordering = ['order']
+
+
+@admin.register(CarPhoto)
+class CarPhotoAdmin(admin.ModelAdmin):
+    list_display = ['car', 'caption', 'order', 'is_main']
+    list_filter  = ['car', 'is_main']
+
 
 @admin.register(Car)
 class CarAdmin(admin.ModelAdmin):
-    list_display = ['brand','model','plate','car_class','status','price_base','is_featured']
+    inlines = [CarPhotoInline]
+    list_display = ['brand','model','plate','car_class','status','price_base','is_featured', 'is_popular']
     list_filter = ['car_class','status','fuel']
     search_fields = ['brand','model','plate']
-    list_editable = ['status','is_featured']
+    list_editable = ['status','is_featured', 'is_popular']
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
@@ -33,3 +47,21 @@ class PaymentAdmin(admin.ModelAdmin):
     list_filter = ['status','payment_type','method']
 
 admin.site.register(Wishlist)
+
+
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display  = ['code', 'discount_pct', 'is_active', 'valid_until', 'used_count', 'max_uses']
+    list_editable = ['is_active']
+    list_filter   = ['is_active']
+    search_fields = ['code']
+    readonly_fields = ['used_count', 'created_at']
+
+
+@admin.register(ContactMessage)
+class ContactMessageAdmin(admin.ModelAdmin):
+    list_display  = ['name', 'email', 'subject', 'status', 'created_at']
+    list_filter   = ['status', 'subject']
+    list_editable = ['status']
+    search_fields = ['name', 'email', 'message']
+    readonly_fields = ['name','phone','email','subject','message','created_at']

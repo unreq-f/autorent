@@ -1,337 +1,801 @@
 {% extends 'manager/base_manager.html' %}
 {% block title %}Замовлення — AutoRent Manager{% endblock %}
 
-{% block main_content %}
+{% block extra_css %}
+<style>
+/* Fix: table-wrap on cars page has display:none — override for bookings */
+.content .table-wrap { display:block !important; overflow:visible !important; }
 
-  <div class="topbar">
-    <div class="topbar-title">Замовлення · <strong>Управління бронюваннями</strong></div>
-    <div style="display:flex;gap:10px;">
-      <button class="tb-btn" onclick="openNewModal()">+ Нове замовлення</button>
-      <button class="tb-btn">⬇ Експорт CSV</button>
-    </div>
+/* Force gold on modal/drawer em titles */
+.modal-box .drawer-title em,
+.modal-center .drawer-title em,
+.stm-title em { color:var(--gold) !important; font-style:italic; }
+
+/* New status pills */
+.sp-awaiting_payment { color:#5b9bd5; border-color:rgba(91,155,213,.3); background:rgba(91,155,213,.08); }
+.sp-paid { color:#4caf7d; border-color:rgba(76,175,125,.3); background:rgba(76,175,125,.08); }
+.bk-table tr.row-awaiting_payment td { border-left:2px solid #5b9bd5; }
+.bk-table tr.row-paid td { border-left:2px solid #4caf7d; }
+
+/* Tabs */
+.status-tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.stab{padding:12px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;white-space:nowrap;text-decoration:none;display:flex;gap:8px;align-items:center;}
+.stab:hover{color:var(--white);}
+.stab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.stab .cnt{font-size:11px;padding:2px 7px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+.stab.active .cnt{background:var(--gold);color:var(--black);}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-bar input[type=text],.filter-bar select,.filter-bar input[type=date]{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border-color .2s;}
+.filter-bar input[type=text]:focus,.filter-bar select:focus,.filter-bar input[type=date]:focus{border-color:var(--gold);}
+.filter-bar input[type=text]{flex:1;min-width:200px;}
+.filter-bar select{min-width:130px;}
+.filter-bar input[type=date]{width:140px;color-scheme:dark;}
+.filter-bar option{background:var(--dark3);}
+
+/* Bookings table */
+.bk-wrap{overflow-x:auto;}
+.bk-table{width:100%;border-collapse:collapse;min-width:940px;}
+.bk-table th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--dark3);white-space:nowrap;}
+.bk-table td{padding:12px 14px;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+.bk-table tr:hover td{background:rgba(255,255,255,.015);}
+.bk-table tr.row-pending td{border-left:2px solid #c9a84c;}
+.bk-table tr.row-active td{border-left:2px solid #4caf7d;}
+.bk-table tr.row-cancelled{opacity:.6;}
+.hl{color:var(--white);}
+.gld{color:var(--gold);font-family:'Playfair Display',serif;}
+
+/* Status pills */
+.sp{display:inline-flex;align-items:center;font-size:11px;letter-spacing:.5px;padding:3px 9px;border:1px solid;white-space:nowrap;}
+.sp-pending{color:#c9a84c;border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.08);}
+.sp-active{color:#4caf7d;border-color:rgba(76,175,125,.3);background:rgba(76,175,125,.08);}
+.sp-completed{color:#888;border-color:rgba(136,136,128,.3);background:rgba(136,136,128,.06);}
+.sp-cancelled{color:#cf6679;border-color:rgba(207,102,121,.3);background:rgba(207,102,121,.08);}
+
+/* Action buttons */
+.act{display:flex;gap:4px;}
+.abt{width:30px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--dark3);border:1px solid var(--border);cursor:pointer;font-size:13px;transition:.15s;color:var(--gray);text-decoration:none;}
+.abt:hover{border-color:var(--gold);color:var(--white);}
+.abt.red:hover{border-color:#cf6679;color:#cf6679;}
+
+/* Pagination */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--gray);}
+
+/* Status modal */
+.stm-back{display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.7);backdrop-filter:blur(3px);}
+.stm-back.open{display:block;}
+.stm-box{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;background:var(--dark);border:1px solid var(--border);border-top:2px solid var(--gold);padding:28px 32px;width:360px;max-width:calc(100vw - 32px);}
+.stm-box.open{display:block;}
+.stm-title{font-family:'Playfair Display',serif;font-size:18px;margin-bottom:20px;}
+.stm-title em{color:var(--gold);font-style:italic;}
+.sm-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:7px;display:block;}
+.sm-select{width:100%;background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:13px;margin-bottom:16px;outline:none;}
+.sm-actions{display:flex;gap:10px;justify-content:flex-end;}
+
+/* New booking extras */
+.nb-extras{display:flex;gap:10px;flex-wrap:wrap;}
+.nb-extra-label{display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;color:var(--gray);padding:6px 10px;border:1px solid var(--border);background:var(--dark3);transition:.2s;}
+.nb-extra-label:hover{border-color:rgba(201,168,76,.4);color:var(--white);}
+.nb-extra-label input{accent-color:var(--gold);width:14px;height:14px;}
+
+/* Price summary */
+.nb-summary{background:var(--dark3);border:1px solid var(--border);border-left:2px solid var(--gold);padding:16px 20px;margin:16px 0;}
+.nb-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;color:var(--gray);}
+.nb-row-lbl{font-size:11px;letter-spacing:1px;text-transform:uppercase;}
+.nb-row.total-row{font-size:16px;color:var(--white);padding-top:10px;margin-top:6px;border-top:1px solid var(--border);}
+.nb-row.total-row .nb-row-val{color:var(--gold);font-family:'Playfair Display',serif;font-size:22px;}
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="topbar">
+  <div class="topbar-title">Замовлення · <strong>Управління бронюваннями</strong></div>
+  <div style="display:flex;gap:10px;">
+    <a href="?{{ request.GET.urlencode }}&export=csv" class="tb-btn">&#8659; Експорт CSV</a>
+    <button class="tb-btn primary" onclick="openNewModal()">+ Нове замовлення</button>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- STATUS TABS -->
+  <div class="status-tabs">
+    <a href="?{% if filters.q %}q={{ filters.q }}{% endif %}" class="stab {% if not sf %}active{% endif %}">
+      Всі <span class="cnt" id="cnt-all">{{ counts.all }}</span>
+    </a>
+    <a href="?status=active{% if filters.q %}&q={{ filters.q }}{% endif %}" class="stab {% if sf == 'active' %}active{% endif %}">
+      Активні <span class="cnt" id="cnt-active">{{ counts.active }}</span>
+    </a>
+    <a href="?status=awaiting_payment{% if filters.q %}&q={{ filters.q }}{% endif %}" class="stab {% if sf == 'awaiting_payment' %}active{% endif %}">
+      Очікує оплати <span class="cnt" id="cnt-awaiting_payment">{{ counts.awaiting_payment }}</span>
+    </a>
+    <a href="?status=paid{% if filters.q %}&q={{ filters.q }}{% endif %}" class="stab {% if sf == 'paid' %}active{% endif %}">
+      Оплачено <span class="cnt" id="cnt-paid">{{ counts.paid }}</span>
+    </a>
+    <a href="?status=pending{% if filters.q %}&q={{ filters.q }}{% endif %}" class="stab {% if sf == 'pending' %}active{% endif %}">
+      Очікують <span class="cnt" id="cnt-pending">{{ counts.pending }}</span>
+    </a>
+    <a href="?status=completed{% if filters.q %}&q={{ filters.q }}{% endif %}" class="stab {% if sf == 'completed' %}active{% endif %}">
+      Завершені <span class="cnt" id="cnt-completed">{{ counts.completed }}</span>
+    </a>
+    <a href="?status=cancelled{% if filters.q %}&q={{ filters.q }}{% endif %}" class="stab {% if sf == 'cancelled' %}active{% endif %}">
+      Скасовані <span class="cnt" id="cnt-cancelled">{{ counts.cancelled }}</span>
+    </a>
   </div>
 
-  <div class="content">
-    <!-- STATUS TABS -->
-    <div class="status-tabs">
-      <div class="stab active" onclick="filterStatus('all',this)">Всі <span class="cnt">62</span></div>
-      <div class="stab" onclick="filterStatus('active',this)">Активні <span class="cnt">24</span></div>
-      <div class="stab" onclick="filterStatus('pending',this)">Очікують <span class="cnt">5</span></div>
-      <div class="stab" onclick="filterStatus('completed',this)">Завершені <span class="cnt">28</span></div>
-      <div class="stab" onclick="filterStatus('cancelled',this)">Скасовані <span class="cnt">5</span></div>
-    </div>
-
-    <!-- FILTER BAR -->
+  <!-- FILTER BAR -->
+  <form method="get" id="filterForm">
+    {% if sf %}<input type="hidden" name="status" value="{{ sf }}">{% endif %}
     <div class="filter-bar">
-      <div class="search-box">
-        <span class="search-icon">🔍</span>
-        <input type="text" placeholder="Пошук за №, ім'ям, авто...">
-      </div>
-      <select class="filter-select">
-        <option>Всі авто</option>
-        <option>BMW X5</option>
-        <option>Mazda 3</option>
-        <option>VW Tiguan</option>
-        <option>Tesla Model 3</option>
-        <option>Audi A6</option>
+      <input type="text" name="q" value="{{ filters.q }}" placeholder="Пошук за №, іменем, авто...">
+      <select name="car" onchange="this.form.submit()">
+        <option value="">Всі авто</option>
+        {% for c in all_cars %}
+        <option value="{{ c.pk }}" {% if filters.car == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.brand }} {{ c.model }}</option>
+        {% endfor %}
       </select>
-      <select class="filter-select">
-        <option>Всі тарифи</option>
-        <option>Base</option>
-        <option>Prime</option>
+      <select name="tariff" onchange="this.form.submit()">
+        <option value="">Всі тарифи</option>
+        {% for val, label in tariffs %}
+        <option value="{{ val }}" {% if filters.tariff == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
       </select>
-      <input type="date" class="filter-select" style="width:150px;">
-      <input type="date" class="filter-select" style="width:150px;">
+      <input type="date" name="date_from" value="{{ filters.date_from }}" title="Від" onchange="this.form.submit()" style="color-scheme:dark;">
+      <input type="date" name="date_to" value="{{ filters.date_to }}" title="До" onchange="this.form.submit()" style="color-scheme:dark;">
+      <button type="submit" class="tb-btn">Знайти</button>
+      {% if filters.q or filters.car or filters.tariff or filters.date_from or filters.date_to %}
+      <a href="?{% if sf %}status={{ sf }}{% endif %}" class="tb-btn" style="color:#cf6679;">&#10005; Скинути</a>
+      {% endif %}
     </div>
+  </form>
 
-    <!-- TABLE -->
-    <div class="table-wrap">
-      <table class="table">
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="bk-wrap">
+      {% if bookings %}
+      <table class="bk-table">
         <thead>
           <tr>
-            <th>№ ↕</th>
-            <th>Клієнт ↕</th>
-            <th>Автомобіль ↕</th>
+            <th>&#8470;</th>
+            <th>Клієнт</th>
+            <th>Автомобіль</th>
             <th>Отримання</th>
             <th>Повернення</th>
             <th>Тариф</th>
-            <th>Сума ↕</th>
-            <th>Статус ↕</th>
+            <th>Сума &#8372;</th>
+            <th>Місце</th>
+            <th>Статус</th>
             <th>Дії</th>
           </tr>
         </thead>
-        <tbody id="bookingsBody">
-          <tr>
-            <td class="highlight">#0855</td>
-            <td class="highlight">Аліна Мороз</td>
-            <td class="highlight">Tesla Model 3</td>
-            <td>26.02.2025</td>
-            <td>28.02.2025</td>
-            <td>Prime</td>
-            <td class="gold-text">312 USD</td>
-            <td><span class="status-pill sp-pending">Очікує</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Підтвердити" onclick="confirmBooking(this)">✅</button>
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Аліна Мороз','#0855','Tesla Model 3','Prime','312','26.02–28.02','pending')">📋</button>
-              <button class="action-ico red" title="Скасувати">✕</button>
-            </div></td>
+        <tbody>
+          {% for b in bookings %}
+          <tr class="row-{{ b.status }}" id="row-{{ b.pk }}">
+            <td><span class="hl" style="font-size:12px;">{{ b.number }}</span></td>
+            <td>
+              <div class="hl">{{ b.user.get_full_name|default:b.user.username }}</div>
+              <div style="font-size:11px;margin-top:2px;opacity:.55;">{{ b.user.email }}</div>
+            </td>
+            <td><span class="hl">{{ b.car.full_name }}</span></td>
+            <td style="white-space:nowrap;">{{ b.date_from|date:"d.m.Y" }}</td>
+            <td style="white-space:nowrap;">{{ b.date_to|date:"d.m.Y" }}</td>
+            <td>{{ b.get_tariff_display }}</td>
+            <td>
+              <span class="gld" style="cursor:pointer;" onclick="openPriceDetail('{{ b.pk }}','{{ b.number }}','{{ b.total_price|floatformat:0 }}','{{ b.deposit_amount|floatformat:0 }}','{{ b.total_with_deposit|floatformat:0 }}','{{ b.tariff }}','{{ b.days_count }}','{{ b.client_discount_pct }}','{{ b.discount_amount|floatformat:0 }}','{{ b.promo_code|escapejs }}','{{ b.promo_discount_pct }}')">{{ b.total_with_deposit|floatformat:0 }}</span>
+              {% if b.total_discount_pct > 0 %}
+              <div style="font-size:10px;color:#c9a84c;margin-top:2px;">Знижка {{ b.total_discount_pct }}%</div>
+              {% endif %}
+              {% if b.deposit_amount > 0 %}
+              <div style="font-size:10px;color:var(--gray);margin-top:2px;">{{ b.total_price|floatformat:0 }} + {{ b.deposit_amount|floatformat:0 }} застава</div>
+              {% endif %}
+            </td>
+            <td style="font-size:12px;max-width:130px;line-height:1.4;">{{ b.get_pickup_display_custom }}{% if b.delivery_address %}{% if b.pickup_location == 'delivery' or b.pickup_location == 'delivery_out' %}<br>({{ b.delivery_address }}){% endif %}{% endif %}</td>
+            <td><span class="sp sp-{{ b.status }}" id="pill-{{ b.pk }}">{{ b.get_status_display }}</span></td>
+            <td>
+              <div class="act">
+                <button class="abt" title="Фінансові деталі" onclick="openPriceDetail('{{ b.pk }}','{{ b.number }}','{{ b.total_price|floatformat:0 }}','{{ b.deposit_amount|floatformat:0 }}','{{ b.total_with_deposit|floatformat:0 }}','{{ b.tariff }}','{{ b.days_count }}')">💰</button>
+                <button class="abt" title="Змінити статус" onclick="openStatus({{ b.pk }},'{{ b.number }}','{{ b.status }}')">&#8635;</button>
+                <button class="abt" title="Редагувати" onclick="openEdit({{ b.pk }},'{{ b.number }}','{{ b.status }}','{{ b.manager_note|escapejs }}')">&#9998;</button>
+                <a class="abt" title="Повна сторінка" href="{% url 'manager_booking_edit' b.pk %}">&#128203;</a>
+                {% if b.status != 'cancelled' %}
+                <button class="abt red" title="Скасувати" onclick="cancelBooking({{ b.pk }},'{{ b.number }}')">&#10005;</button>
+                {% endif %}
+              </div>
+            </td>
           </tr>
-          <tr>
-            <td class="highlight">#0854</td>
-            <td class="highlight">Олег Сидоренко</td>
-            <td class="highlight">BMW X5</td>
-            <td>25.02.2025</td>
-            <td>04.03.2025</td>
-            <td>Base</td>
-            <td class="gold-text">1 400 USD</td>
-            <td><span class="status-pill sp-active">Активне</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Олег Сидоренко','#0854','BMW X5','Base','1400','25.02–04.03','active')">📋</button>
-              <button class="action-ico" title="Редагувати">✏️</button>
-              <button class="action-ico red" title="Скасувати">✕</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td class="highlight">#0853</td>
-            <td class="highlight">Наталія Бондар</td>
-            <td class="highlight">Mazda 3</td>
-            <td>24.02.2025</td>
-            <td>27.02.2025</td>
-            <td>Base</td>
-            <td class="gold-text">165 USD</td>
-            <td><span class="status-pill sp-active">Активне</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Наталія Бондар','#0853','Mazda 3','Base','165','24.02–27.02','active')">📋</button>
-              <button class="action-ico" title="Редагувати">✏️</button>
-              <button class="action-ico red" title="Скасувати">✕</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td class="highlight">#0852</td>
-            <td class="highlight">Роман Кравченко</td>
-            <td class="highlight">Audi A6 Quattro</td>
-            <td>23.02.2025</td>
-            <td>26.02.2025</td>
-            <td>Prime</td>
-            <td class="gold-text">564 USD</td>
-            <td><span class="status-pill sp-pending">Очікує</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Підтвердити" onclick="confirmBooking(this)">✅</button>
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Роман Кравченко','#0852','Audi A6','Prime','564','23.02–26.02','pending')">📋</button>
-              <button class="action-ico red" title="Скасувати">✕</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td class="highlight">#0851</td>
-            <td class="highlight">Іван Іваненко</td>
-            <td class="highlight">VW Tiguan</td>
-            <td>22.02.2025</td>
-            <td>01.03.2025</td>
-            <td>Base</td>
-            <td class="gold-text">910 USD</td>
-            <td><span class="status-pill sp-active">Активне</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Іван Іваненко','#0851','VW Tiguan','Base','910','22.02–01.03','active')">📋</button>
-              <button class="action-ico" title="Редагувати">✏️</button>
-              <button class="action-ico red" title="Скасувати">✕</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td class="highlight">#0850</td>
-            <td class="highlight">Катерина Лисенко</td>
-            <td class="highlight">BMW 318D</td>
-            <td>20.02.2025</td>
-            <td>25.02.2025</td>
-            <td>Prime</td>
-            <td class="gold-text">1 170 USD</td>
-            <td><span class="status-pill sp-completed">Завершено</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Катерина Лисенко','#0850','BMW 318D','Prime','1170','20.02–25.02','completed')">📋</button>
-              <button class="action-ico" title="Виставити штраф">⚠️</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td class="highlight">#0849</td>
-            <td class="highlight">Максим Шевченко</td>
-            <td class="highlight">VW Transporter</td>
-            <td>18.02.2025</td>
-            <td>22.02.2025</td>
-            <td>Base</td>
-            <td class="gold-text">560 USD</td>
-            <td><span class="status-pill sp-completed">Завершено</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Максим Шевченко','#0849','VW Transporter','Base','560','18.02–22.02','completed')">📋</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td class="highlight">#0848</td>
-            <td class="highlight">Дарина Пономар</td>
-            <td class="highlight">Nissan Juke</td>
-            <td>15.02.2025</td>
-            <td>17.02.2025</td>
-            <td>Base</td>
-            <td class="gold-text">160 USD</td>
-            <td><span class="status-pill sp-cancelled">Скасовано</span></td>
-            <td><div class="actions-cell">
-              <button class="action-ico" title="Деталі" onclick="openDrawer('Дарина Пономар','#0848','Nissan Juke','Base','160','15.02–17.02','cancelled')">📋</button>
-            </div></td>
-          </tr>
+          {% endfor %}
         </tbody>
       </table>
       <div class="pagination">
-        <div class="page-info">Показано 1–8 з 62 записів</div>
-        <div class="page-btns">
-          <button class="page-btn">‹</button>
-          <button class="page-btn active">1</button>
-          <button class="page-btn">2</button>
-          <button class="page-btn">3</button>
-          <button class="page-btn">…</button>
-          <button class="page-btn">8</button>
-          <button class="page-btn">›</button>
-        </div>
+        <div>Показано <strong style="color:var(--white);">{{ bookings|length }}</strong> із <strong style="color:var(--white);">{{ counts.all }}</strong> записів</div>
       </div>
+      {% else %}
+      <div style="padding:70px;text-align:center;color:var(--gray);">
+        <div style="font-size:44px;margin-bottom:14px;">&#128235;</div>
+        <div style="font-size:14px;">Замовлень не знайдено</div>
+        {% if filters.q or filters.car or filters.tariff %}
+        <a href="?{% if sf %}status={{ sf }}{% endif %}" style="color:var(--gold);font-size:12px;margin-top:10px;display:inline-block;letter-spacing:1px;text-transform:uppercase;">&#8592; Скинути фільтри</a>
+        {% endif %}
+      </div>
+      {% endif %}
     </div>
+  </div>
+
+</div><!-- /content -->
+
+
+<!-- MODAL: Зміна статусу -->
+<div class="stm-back" id="stmBack" onclick="closeStatus()"></div>
+<div class="stm-box" id="stmBox">
+  <div class="stm-title">Статус <em id="stmNum">#—</em></div>
+  <label class="sm-label">Новий статус</label>
+  <select class="sm-select" id="stmSel">
+    {% for val, label in statuses %}
+    <option value="{{ val }}">{{ label }}</option>
+    {% endfor %}
+  </select>
+  <div class="sm-actions">
+    <button class="tb-btn" onclick="closeStatus()">Скасувати</button>
+    <button class="tb-btn primary" onclick="saveStatus()">Зберегти</button>
   </div>
 </div>
 
-<!-- DRAWER: Деталі замовлення -->
-<div class="modal-overlay" id="drawer">
+
+<!-- MODAL: Редагування (drawer) -->
+<div class="modal-overlay" id="editModal" onclick="if(event.target===this)closeEdit()">
   <div class="drawer">
     <div class="drawer-header">
-      <h2 class="drawer-title">Замовлення <em id="drNum">#0854</em></h2>
-      <button class="close-btn" onclick="closeDrawer()">✕</button>
+      <h2 class="drawer-title">Редагування <em id="editNum">#—</em></h2>
+      <button class="close-btn" onclick="closeEdit()">&#10005;</button>
     </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Клієнт</div>
-      <div class="info-row"><span class="info-label">Ім'я</span><span class="info-val" id="drClient">—</span></div>
-      <div class="info-row"><span class="info-label">Телефон</span><span class="info-val">+38 067 000 00 00</span></div>
-      <div class="info-row"><span class="info-label">Email</span><span class="info-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f596999c909b81b59098949c99db969a98">[email&#160;protected]</a></span></div>
-      <div class="info-row"><span class="info-label">ВП</span><span class="info-val">ААА 123456 · стаж 7 років</span></div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Деталі оренди</div>
-      <div class="info-row"><span class="info-label">Автомобіль</span><span class="info-val" id="drCar">—</span></div>
-      <div class="info-row"><span class="info-label">Тариф</span><span class="info-val" id="drTariff">—</span></div>
-      <div class="info-row"><span class="info-label">Термін</span><span class="info-val" id="drDates">—</span></div>
-      <div class="info-row"><span class="info-label">Місце видачі</span><span class="info-val">Офіс, вул. Клочківська</span></div>
-      <div class="info-row"><span class="info-label">Додаткові послуги</span><span class="info-val">GPS, Дитяче крісло</span></div>
-      <div class="info-row"><span class="info-label">Сума</span><span class="info-val gold" id="drTotal">—</span></div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Зміна статусу</div>
-      <div class="field">
-        <label>Статус замовлення</label>
-        <select id="drStatus">
-          <option value="pending">Очікує підтвердження</option>
-          <option value="active">Активне</option>
-          <option value="completed">Завершено</option>
-          <option value="cancelled">Скасовано</option>
-        </select>
+    <form method="post" id="editForm" action="">
+      {% csrf_token %}
+      <div class="info-section">
+        <div class="info-section-title">Статус</div>
+        <div class="field">
+          <select name="status" id="editStatus">
+            {% for val, label in statuses %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
       </div>
-      <div class="field">
-        <label>Примітка менеджера</label>
-        <textarea placeholder="Внутрішня нотатка..."></textarea>
+      <div class="info-section">
+        <div class="info-section-title">Нотатка менеджера</div>
+        <div class="field">
+          <textarea name="manager_note" id="editNote" rows="5" placeholder="Внутрішня нотатка..."></textarea>
+        </div>
       </div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Штраф / Додатковий збір</div>
-      <div class="field">
-        <label>Причина</label>
-        <select>
-          <option>Без штрафу</option>
-          <option>Запізнення повернення</option>
-          <option>Пошкодження кузову</option>
-          <option>Пошкодження салону</option>
-          <option>Неповний бак</option>
-          <option>Інше</option>
-        </select>
+      <div class="btn-row">
+        <button type="submit" class="btn-save">Зберегти зміни</button>
+        <button type="button" class="btn-secondary" onclick="closeEdit()">Скасувати</button>
       </div>
-      <div class="field">
-        <label>Сума штрафу (USD)</label>
-        <input type="number" placeholder="0">
-      </div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn-save" onclick="closeDrawer()">Зберегти зміни</button>
-      <button class="btn-danger" onclick="closeDrawer()">Скасувати замовлення</button>
-    </div>
+    </form>
   </div>
 </div>
+
 
 <!-- MODAL: Нове замовлення -->
-<div class="modal-center" id="newModal">
-  <div class="modal-box">
+<div class="modal-center" id="newModal" onclick="if(event.target===this)closeNewModal()">
+  <div class="modal-box" style="max-width:660px;width:100%;">
     <div class="drawer-header">
       <h2 class="drawer-title">Нове <em>замовлення</em></h2>
-      <button class="close-btn" onclick="closeNewModal()">✕</button>
+      <button class="close-btn" onclick="closeNewModal()">&#10005;</button>
     </div>
-    <div class="form-grid-2">
-      <div class="field"><label>Клієнт</label>
-        <select><option>Іван Іваненко</option><option>Наталія Бондар</option><option>Новий клієнт...</option></select>
+
+    <form method="post" action="{% url 'manager_bookings' %}" id="nbForm">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="new">
+
+      <div class="info-section">
+        <div class="info-section-title">Автомобіль та тариф</div>
+        <div class="form-grid-2">
+          <div class="field" style="position:relative;">
+            <label>Автомобіль</label>
+            <input type="text" id="nbCarSearch" autocomplete="off"
+              placeholder="Введіть марку, модель або номер..."
+              oninput="carSearchInput(this.value)"
+              onfocus="if(this.value.length>=1)carSearchInput(this.value)">
+            <input type="hidden" name="car_pk" id="nbCarPkHidden">
+            <div id="carDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;background:var(--dark);border:1px solid var(--gold);max-height:240px;overflow-y:auto;"></div>
+          </div>
+          <div class="field">
+            <label>Тариф</label>
+            <select name="tariff" id="nbTariff" onchange="nbCalc()">
+              {% for val, label in tariffs %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
       </div>
-      <div class="field"><label>Автомобіль</label>
-        <select><option>BMW X5</option><option>Mazda 3</option><option>VW Tiguan</option><option>Tesla Model 3</option><option>Audi A6</option></select>
+
+      <div class="info-section">
+        <div class="info-section-title">Терміни оренди</div>
+        <div class="form-grid-2">
+          <div class="field">
+            <label>Дата отримання</label>
+            <input type="date" name="date_from" id="nbDateFrom" required style="color-scheme:dark;" onchange="nbCalc()">
+          </div>
+          <div class="field">
+            <label>Дата повернення</label>
+            <input type="date" name="date_to" id="nbDateTo" required style="color-scheme:dark;" onchange="nbCalc()">
+          </div>
+          <div class="field">
+            <label>Час отримання</label>
+            <input type="time" name="time_from" value="10:00" style="color-scheme:dark;">
+          </div>
+          <div class="field">
+            <label>Час повернення</label>
+            <input type="time" name="time_to" value="10:00" style="color-scheme:dark;">
+          </div>
+        </div>
       </div>
-      <div class="field"><label>Дата отримання</label><input type="date"></div>
-      <div class="field"><label>Дата повернення</label><input type="date"></div>
-      <div class="field"><label>Час отримання</label><input type="time" value="10:00"></div>
-      <div class="field"><label>Місце отримання</label>
-        <select><option>Офіс, Клочківська</option><option>Аеропорт</option><option>Вокзал</option></select>
+
+      <div class="info-section">
+        <div class="info-section-title">Клієнт та оплата</div>
+        <div class="field" style="position:relative;margin-bottom:14px;">
+          <label>Пошук клієнта</label>
+          <input type="text" id="nbClientSearch" autocomplete="off" placeholder="Ім'я, email або телефон..." oninput="clientSearch(this.value)">
+          <div id="clientDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;background:var(--dark);border:1px solid var(--gold);max-height:220px;overflow-y:auto;"></div>
+        </div>
+        <div id="nbClientSelected" style="display:none;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.3);padding:10px 12px;margin-bottom:14px;font-size:12px;">
+          <span style="color:var(--gold);">&#10003; Знайдено:</span> <span id="nbClientLabel" style="color:var(--white);"></span>
+          <button type="button" onclick="clearClient()" style="float:right;background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px;line-height:1;">&#10005;</button>
+        </div>
+        <input type="hidden" name="client_user_pk" id="nbClientPk">
+        <div class="form-grid-2">
+          <div class="field">
+            <label>Ім'я клієнта</label>
+            <input type="text" name="client_name" id="nbClientName" placeholder="Прізвище та ім'я...">
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" name="client_email" id="nbClientEmail" placeholder="email@example.com">
+          </div>
+          <div class="field">
+            <label>Телефон</label>
+            <input type="tel" name="client_phone" id="nbClientPhone" placeholder="+38 0XX XXX XX XX">
+          </div>
+          <div class="field">
+            <label>Спосіб оплати</label>
+            <select name="payment_method">
+              {% for val, label in payment_methods %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
       </div>
-      <div class="field"><label>Тариф</label>
-        <select><option>Base (зі заставою)</option><option>Prime (без застави)</option></select>
+
+      <div class="info-section">
+        <div class="info-section-title">Місце отримання та повернення</div>
+        <div class="form-grid-2">
+          <div class="field">
+            <label>Місце отримання</label>
+            <select name="pickup_location" id="nbPickup" onchange="onNbPickup(this);nbCalc()">
+              {% for val, label in pickups %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Місце повернення</label>
+            <select name="return_location" id="nbReturn" onchange="onNbReturn(this);nbCalc()">
+              {% for val, label in pickups %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="field" id="nbDeliveryRow" style="display:none;">
+          <label>Адреса доставки (отримання)</label>
+          <input type="text" name="delivery_address" id="nbDeliveryAddr" placeholder="Вул. Назва, буд. №">
+        </div>
+        <div class="field" id="nbReturnAddrRow" style="display:none;">
+          <label>Адреса повернення</label>
+          <input type="text" name="return_address" id="nbReturnAddr" placeholder="Вул. Назва, буд. №">
+        </div>
       </div>
-      <div class="field"><label>Спосіб оплати</label>
-        <select><option>Картка</option><option>Готівка</option><option>Безготівковий</option></select>
+
+      <div class="info-section">
+        <div class="info-section-title">Додаткові послуги</div>
+        <div class="nb-extras">
+          <label class="nb-extra-label"><input type="checkbox" name="extra_gps" value="1" onchange="nbCalc()"> GPS <span style="color:var(--gold);">+&#8372;80/д</span></label>
+          <label class="nb-extra-label"><input type="checkbox" name="extra_child_seat" value="1" onchange="nbCalc()"> Дит. крісло <span style="color:var(--gold);">+&#8372;120/д</span></label>
+          <label class="nb-extra-label"><input type="checkbox" name="extra_wifi" value="1" onchange="nbCalc()"> Wi-Fi <span style="color:var(--gold);">+&#8372;150/д</span></label>
+          <label class="nb-extra-label"><input type="checkbox" name="extra_driver" value="1" onchange="nbCalc()"> Доп. водій <span style="color:var(--gold);">+&#8372;200/д</span></label>
+          <label class="nb-extra-label"><input type="checkbox" name="extra_tire" value="1" onchange="nbCalc()"> Захист шин <span style="color:var(--gold);">+&#8372;250/д</span></label>
+          <label class="nb-extra-label"><input type="checkbox" name="extra_green_card" value="1" onchange="nbCalc()"> Зелена картка <span style="color:var(--gold);">+&#8372;800</span></label>
+        </div>
       </div>
-    </div>
-    <div class="field"><label>Додаткові послуги</label>
-      <select multiple style="height:80px">
-        <option>GPS-навігатор (+5 USD/доба)</option>
-        <option>Дитяче крісло (+5 USD/доба)</option>
-        <option>Wi-Fi роутер (+8 USD/доба)</option>
-        <option>Додатковий водій</option>
-      </select>
-    </div>
-    <div class="field"><label>Примітка</label><textarea placeholder="Особливі умови, побажання..."></textarea></div>
-    <div class="btn-row">
-      <button class="btn-save" onclick="closeNewModal()">Створити замовлення</button>
-      <button class="tb-btn" onclick="closeNewModal()" style="flex:1;padding:13px;">Скасувати</button>
-    </div>
+
+      <!-- Калькулятор вартості -->
+      <div class="nb-summary">
+        <div class="nb-row">
+          <span class="nb-row-lbl">Ставка тарифу</span>
+          <span id="nbRateLabel" style="color:var(--white);">— оберіть авто та тариф</span>
+        </div>
+        <div class="nb-row">
+          <span class="nb-row-lbl">Термін оренди</span>
+          <span id="nbDaysLabel" style="color:var(--white);">— оберіть дати</span>
+        </div>
+        <div class="nb-row" id="nbExtrasRow" style="display:none;">
+          <span class="nb-row-lbl">Додаткові послуги</span>
+          <span id="nbExtrasVal" style="color:var(--gold);">—</span>
+        </div>
+        <div class="nb-row" id="nbDeliveryPriceRow" style="display:none;">
+          <span class="nb-row-lbl">Доставка</span>
+          <span id="nbDeliveryPriceVal" style="color:var(--gold);">—</span>
+        </div>
+        <div class="nb-row" id="nbLoyaltyRow" style="display:none;">
+          <span class="nb-row-lbl" style="color:#c9a84c;">Знижка клієнта</span>
+          <span id="nbLoyaltyVal" style="color:#c9a84c;">—</span>
+        </div>
+        <div class="nb-row" id="nbPromoRow" style="display:none;">
+          <span class="nb-row-lbl" style="color:#4caf7d;">Промокод</span>
+          <span id="nbPromoVal" style="color:#4caf7d;">—</span>
+        </div>
+        <div class="nb-row total-row">
+          <span class="nb-row-lbl">&#128179; Загальна сума</span>
+          <span class="nb-row-val" id="nbTotal">—</span>
+        </div>
+        <div class="nb-row" id="nbDepositRow" style="display:none;">
+          <span class="nb-row-lbl" style="color:var(--gray);font-size:11px;">Застава (повертається після оренди)</span>
+          <span id="nbDeposit" style="font-size:12px;color:var(--gray);">—</span>
+        </div>
+      </div>
+
+      <div class="info-section">
+        <div class="info-section-title">Знижки</div>
+        <div class="form-grid-2">
+          <div class="field">
+            <label>Промокод</label>
+            <input type="text" name="promo_code" id="nbPromoCode" placeholder="AUTORENT2025"
+                   style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase();nbCalc()">
+          </div>
+          <div class="field">
+            <label>Знижка клієнта <span style="color:var(--gray);font-weight:400;">%</span></label>
+            <input type="number" id="nbClientDiscount" min="0" max="50" value="0"
+                   placeholder="0" oninput="nbCalc()" style="pointer-events:auto;">
+            <div style="font-size:11px;color:var(--gray);margin-top:4px;" id="nbClientDiscountNote"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Нотатка менеджера</label>
+        <textarea name="manager_note" rows="3" placeholder="Особливі умови, побажання..."></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn-save">Створити замовлення</button>
+        <button type="button" class="btn-secondary" onclick="closeNewModal()">Скасувати</button>
+      </div>
+    </form>
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-function openDrawer(client,num,car,tariff,total,dates,status){
-  document.getElementById('drClient').textContent=client;
-  document.getElementById('drNum').textContent=num;
-  document.getElementById('drCar').textContent=car;
-  document.getElementById('drTariff').textContent=tariff;
-  document.getElementById('drTotal').textContent=total+' USD';
-  document.getElementById('drDates').textContent=dates;
-  document.getElementById('drStatus').value=status;
-  document.getElementById('drawer').classList.add('open');
-}
-function closeDrawer(){document.getElementById('drawer').classList.remove('open');}
-function openNewModal(){document.getElementById('newModal').classList.add('open');}
-function closeNewModal(){document.getElementById('newModal').classList.remove('open');}
-document.getElementById('drawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
-document.getElementById('newModal').addEventListener('click',function(e){if(e.target===this)closeNewModal();});
-function filterStatus(status,btn){
-  document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));
-  btn.classList.add('active');
-}
-function confirmBooking(btn){
-  const row=btn.closest('tr');
-  const pill=row.querySelector('.status-pill');
-  pill.className='status-pill sp-active';
-  pill.textContent='Активне';
-  btn.r
+<!-- ══ DRAWER: Фінансові деталі замовлення ══ -->
+<div class="modal-overlay" id="priceOverlay" onclick="if(event.target===this)closePriceDetail()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:2000;justify-content:flex-end;">
+  <div style="width:400px;height:100vh;background:var(--dark2);border-left:1px solid var(--border);display:flex;flex-direction:column;animation:slideIn .22s ease;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid var(--border);">
+      <div style="font-family:'Playfair Display',serif;font-size:20px;color:var(--white);">Замовлення <em id="pdNum" style="color:var(--gold);font-style:italic;">—</em></div>
+      <button onclick="closePriceDetail()" style="background:none;border:1px solid var(--border);color:var(--gray);width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div id="pdBody" style="padding:24px 28px;flex:1;overflow-y:auto;"></div>
+  </div>
+</div>
+
 {% endblock %}
 
+{% block extra_js %}
+<script>
+/* ── Status quick modal ── */
+var _stPk = null;
+function openStatus(pk, num, cur) {
+  _stPk = pk;
+  document.getElementById('stmNum').textContent = num;
+  document.getElementById('stmSel').value = cur;
+  document.getElementById('stmBox').classList.add('open');
+  document.getElementById('stmBack').classList.add('open');
+}
+function closeStatus() {
+  document.getElementById('stmBox').classList.remove('open');
+  document.getElementById('stmBack').classList.remove('open');
+}
+function saveStatus() {
+  var ns = document.getElementById('stmSel').value;
+  fetch("{% url 'manager_booking_status' 0 %}".replace('/0/', '/'+_stPk+'/'), {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':'{{ csrf_token }}'},
+    body: 'status='+ns
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (!d.ok) return;
+    var labels = {pending:'Очікує', awaiting_payment:'Очікує оплати', paid:'Оплачено', active:'Активне', completed:'Завершено', cancelled:'Скасовано'};
+    var pill = document.getElementById('pill-'+_stPk);
+    if (pill) { pill.textContent = labels[ns]||ns; pill.className = 'sp sp-'+ns; }
+    var row = document.getElementById('row-'+_stPk);
+    if (row) row.className = 'row-'+ns;
+    closeStatus();
+    refreshCounts();
+  });
+}
 
+/* ── Edit drawer ── */
+function openEdit(pk, num, status, note) {
+  document.getElementById('editNum').textContent = num;
+  document.getElementById('editStatus').value = status;
+  document.getElementById('editNote').value = note;
+  document.getElementById('editForm').action = '/manager/bookings/'+pk+'/edit/';
+  document.getElementById('editModal').classList.add('open');
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('open'); }
+
+/* ── Cancel booking ── */
+function cancelBooking(pk, num) {
+  if (!confirm('Скасувати замовлення '+num+'?')) return;
+  fetch("{% url 'manager_booking_status' 0 %}".replace('/0/', '/'+pk+'/'), {
+    method: 'POST',
+    headers: {'Content-Type':'application/x-www-form-urlencoded','X-CSRFToken':'{{ csrf_token }}'},
+    body: 'status=cancelled'
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (!d.ok) return;
+    var pill = document.getElementById('pill-'+pk);
+    if (pill) { pill.textContent = 'Скасовано'; pill.className = 'sp sp-cancelled'; }
+    var row = document.getElementById('row-'+pk);
+    if (row) row.className = 'row-cancelled';
+    refreshCounts();
+  });
+}
+
+/* ── New modal ── */
+function openNewModal()  { document.getElementById('newModal').classList.add('open'); nbCalc(); }
+function closeNewModal() { document.getElementById('newModal').classList.remove('open'); }
+
+/* Delivery address toggle */
+function onNbPickup(sel) {
+  var isD = sel.value === 'delivery' || sel.value === 'delivery_out';
+  document.getElementById('nbDeliveryRow').style.display = isD ? 'block' : 'none';
+  document.getElementById('nbDeliveryAddr').required = isD;
+}
+function onNbReturn(sel) {
+  var isD = sel.value === 'delivery' || sel.value === 'delivery_out';
+  document.getElementById('nbReturnAddrRow').style.display = isD ? 'block' : 'none';
+  document.getElementById('nbReturnAddr').required = isD;
+}
+/* ── Client search ── */
+var clientTimer = null;
+var _clientResults = {};
+
+function clientSearch(q) {
+  clearTimeout(clientTimer);
+  var dd = document.getElementById('clientDropdown');
+  if (q.length < 2) { dd.style.display = 'none'; return; }
+  clientTimer = setTimeout(function() {
+    fetch('/manager/clients/search/?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.results || !data.results.length) {
+          dd.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:#888;">Клієнтів не знайдено — буде створений новий</div>';
+          dd.style.display = 'block'; return;
+        }
+        _clientResults = {};
+        dd.innerHTML = data.results.map(function(c) {
+          _clientResults[c.pk] = c;
+          var sub = c.email + (c.phone ? ' · ' + c.phone : '');
+          return '<div class="client-dd-item" data-cpk="' + c.pk + '" style="padding:10px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);">'
+            + '<div style="font-size:13px;color:#fff;">' + c.name + '</div>'
+            + '<div style="font-size:11px;color:#888;margin-top:2px;">' + sub + '</div></div>';
+        }).join('');
+        dd.style.display = 'block';
+        dd.querySelectorAll('.client-dd-item').forEach(function(el) {
+          el.addEventListener('mouseover', function() { el.style.background = 'rgba(201,168,76,.1)'; });
+          el.addEventListener('mouseout',  function() { el.style.background = ''; });
+          el.addEventListener('click', function() {
+            var c = _clientResults[el.dataset.cpk];
+            if (c) selectClient(c.pk, c.name, c.email, c.phone || '', c.discount || 0);
+          });
+        });
+      });
+  }, 250);
+}
+
+function selectClient(pk, name, email, phone, discount) {
+  document.getElementById('nbClientPk').value = pk;
+  document.getElementById('nbClientLabel').textContent = name + (email ? ' (' + email + ')' : '');
+  document.getElementById('nbClientName').value  = name;
+  document.getElementById('nbClientEmail').value = email;
+  document.getElementById('nbClientPhone').value = phone;
+  document.getElementById('nbClientSelected').style.display = 'block';
+  document.getElementById('clientDropdown').style.display   = 'none';
+  document.getElementById('nbClientSearch').value = '';
+  // Auto-fill client discount
+  var discEl = document.getElementById('nbClientDiscount');
+  var noteEl = document.getElementById('nbClientDiscountNote');
+  discount = parseInt(discount) || 0;
+  discEl.value = discount;
+  if (discount > 0) {
+    noteEl.textContent = 'Постійна знижка клієнта: ' + discount + '%';
+    noteEl.style.color = '#c9a84c';
+  } else {
+    noteEl.textContent = '';
+  }
+  nbCalc();
+}
+
+function clearClient() {
+  document.getElementById('nbClientPk').value    = '';
+  document.getElementById('nbClientName').value  = '';
+  document.getElementById('nbClientEmail').value = '';
+  document.getElementById('nbClientPhone').value = '';
+  document.getElementById('nbClientSelected').style.display = 'none';
+  document.getElementById('nbClientDiscount').value = '0';
+  document.getElementById('nbClientDiscountNote').textContent = '';
+  nbCalc();
+}
+
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('clientDropdown');
+  if (dd && e.target.id !== 'nbClientSearch' && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+
+/* ── Price calculator ── */
+var CAR_DATA = {};
+{% for c in all_cars %}CAR_DATA[{{ c.pk }}] = {base:{{ c.price_base|stringformat:".2f" }}, prime:{{ c.price_prime|stringformat:".2f" }}, deposit:{{ c.deposit|stringformat:".2f" }}};
+{% endfor %}
+var EXTRAS_P = {extra_gps:80, extra_child_seat:120, extra_wifi:150, extra_driver:200, extra_tire:250, extra_green_card:800};
+var EXTRAS_PER_DAY = {extra_gps:true, extra_child_seat:true, extra_wifi:true, extra_driver:true, extra_tire:true, extra_green_card:false};
+var DELIVERY_P = {delivery:200, delivery_out:500};
+
+function nbCalc() {
+  var carSel = document.getElementById('nbCarPkHidden');
+  var tariff = document.getElementById('nbTariff').value;
+  var df     = document.getElementById('nbDateFrom').value;
+  var dt     = document.getElementById('nbDateTo').value;
+  var pickup = document.getElementById('nbPickup').value;
+
+  if (!carSel.value || !df || !dt) return;
+  var car = CAR_DATA[parseInt(carSel.value)];
+  if (!car) return;
+
+  var days = Math.ceil((new Date(dt) - new Date(df)) / 86400000);
+  if (days <= 0) { document.getElementById('nbDaysLabel').textContent = 'Невірні дати'; return; }
+
+  var rate  = tariff === 'prime' ? car.prime : car.base;
+  var rent  = rate * days;
+
+  var extras = 0;
+  document.querySelectorAll('#nbForm input[type=checkbox]').forEach(function(cb){
+    if (cb.checked && EXTRAS_P[cb.name]) {
+      extras += EXTRAS_PER_DAY[cb.name] ? EXTRAS_P[cb.name] * days : EXTRAS_P[cb.name];
+    }
+  });
+
+  var returnLoc = document.getElementById('nbReturn') ? document.getElementById('nbReturn').value : 'office';
+  var delivery = (DELIVERY_P[pickup] || 0) + (DELIVERY_P[returnLoc] || 0);
+
+  // Discounts (apply to rent+extras, NOT delivery, NOT deposit)
+  var rentalBase    = rent + extras;
+  var clientDisc    = parseInt(document.getElementById('nbClientDiscount').value) || 0;
+  var totalDisc     = Math.min(clientDisc, 50);
+  var discountAmt   = totalDisc > 0 ? Math.round(rentalBase * totalDisc / 100) : 0;
+  var total         = rentalBase - discountAmt + delivery;
+  var dw            = days===1 ? 'доба' : days<5 ? 'доби' : 'діб';
+
+  document.getElementById('nbRateLabel').textContent  = (tariff==='prime'?'Prime':'Base') + ' — ₴' + rate + '/доба';
+  document.getElementById('nbDaysLabel').textContent  = days + ' ' + dw + '  ×  ₴' + rate + ' = ₴' + rent;
+  document.getElementById('nbTotal').textContent      = '₴' + Math.round(total).toLocaleString('uk-UA');
+
+  var er = document.getElementById('nbExtrasRow');
+  er.style.display = extras > 0 ? 'flex' : 'none';
+  document.getElementById('nbExtrasVal').textContent = '+₴' + extras;
+
+  var dr = document.getElementById('nbDeliveryPriceRow');
+  dr.style.display = delivery > 0 ? 'flex' : 'none';
+  document.getElementById('nbDeliveryPriceVal').textContent = '+₴' + delivery;
+
+  // Loyalty discount row
+  var lr = document.getElementById('nbLoyaltyRow');
+  if (clientDisc > 0) {
+    document.getElementById('nbLoyaltyVal').textContent = '-₴' + discountAmt + ' (' + clientDisc + '%)';
+    lr.style.display = 'flex';
+  } else { lr.style.display = 'none'; }
+
+  // (Promo row — for future: not implemented in manager form yet)
+  var pr = document.getElementById('nbPromoRow');
+  if (pr) pr.style.display = 'none';
+
+  var depr = document.getElementById('nbDepositRow');
+  depr.style.display = (tariff === 'base' && car.deposit > 0) ? 'flex' : 'none';
+  document.getElementById('nbDeposit').textContent = '₴' + car.deposit.toLocaleString('uk-UA');
+}
+
+/* ── Car autocomplete ── */
+var carSearchTimer = null;
+var _carResults = {};
+
+function carSearchInput(q) {
+  clearTimeout(carSearchTimer);
+  var dd = document.getElementById('carDropdown');
+  if (q.length < 1) { dd.style.display = 'none'; return; }
+  carSearchTimer = setTimeout(function() {
+    fetch('{% url "manager_car_search" %}?q=' + encodeURIComponent(q))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.length) {
+          dd.innerHTML = '<div style="padding:10px 14px;font-size:12px;color:#888;">Нічого не знайдено</div>';
+          dd.style.display = 'block'; return;
+        }
+        var sc = {free:'var(--green)',rented:'var(--gold)',service:'var(--orange)',broken:'var(--red)'};
+        _carResults = {};
+        dd.innerHTML = data.map(function(c) {
+          _carResults[c.pk] = c;
+          var dot = '<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:' + (sc[c.status]||'#888') + ';margin-right:6px;"></span>';
+          return '<div class="car-dd-item" data-cpk="' + c.pk + '" style="padding:10px 14px;cursor:pointer;font-size:13px;color:#fff;border-bottom:1px solid rgba(255,255,255,.06);">'
+            + dot + c.label
+            + '<span style="float:right;color:var(--gold);font-size:11px;">₴' + c.price_base + '/д</span></div>';
+        }).join('');
+        dd.style.display = 'block';
+        dd.querySelectorAll('.car-dd-item').forEach(function(el) {
+          el.addEventListener('mouseover', function() { el.style.background = 'rgba(201,168,76,.08)'; });
+          el.addEventListener('mouseout',  function() { el.style.background = ''; });
+          el.addEventListener('click', function() {
+            var c = _carResults[el.dataset.cpk];
+            if (c) selectCar(c.pk, c.label, c.price_base, c.price_prime, c.deposit);
+          });
+        });
+      });
+  }, 200);
+}
+
+function selectCar(pk, label, priceBase, pricePrime, deposit) {
+  document.getElementById('nbCarSearch').value = label;
+  document.getElementById('nbCarPkHidden').value = pk;
+  document.getElementById('carDropdown').style.display = 'none';
+  CAR_DATA[pk] = {base: priceBase, prime: pricePrime, deposit: deposit};
+  nbCalc();
+}
+
+document.addEventListener('click', function(e) {
+  var dd = document.getElementById('carDropdown');
+  if (dd && e.target.id !== 'nbCarSearch' && !dd.contains(e.target)) {
+    dd.style.display = 'none';
+  }
+});
+/* ── Price detail drawer ── */
+function openPriceDetail(pk, num, rental, deposit, total, tariff, days, discPct, discAmt, promoCode, promoPct) {
+  document.getElementById('pdNum').textContent = num;
+  var dep  = parseFloat(deposit) || 0;
+  var ren  = parseFloat(rental)  || 0;
+  var tot  = parseFloat(total)   || 0;
+  var disc = parseInt(discPct)   || 0;
+  var damt = parseFloat(discAmt) || 0;
+  var ppct = parseInt(promoPct)  || 0;
+  var hasDeposit = dep > 0 && tariff === 'base';
+  var row = function(label, val, color) {
+    return '<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;">'
+      + '<span style="color:' + (color||'var(--gray)') + ';">' + label + '</span>'
+      + '<span style="color:' + (color||'var(--gold)') + ';font-family:Playfair Display,serif;">' + val + '</span></div>';
+  };
+  var html = '<div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);">Розбивка вартості</div>';
+  html += row('Оренда (' + days + ' ' + daysWord(parseInt(days)) + ')', '₴' + ren.toFixed(0));
+  if (disc > 0) {
+    html += row('Знижка клієнта', disc + '%  −₴' + damt.toFixed(0), '#c9a84c');
+  }
+  if (ppct > 0 && promoCode) {
+    html += row('Промокод ' + promoCode, ppct + '%', '#4caf7d');
+  }
+  html += hasDeposit
+    ? row('Застава', '₴' + dep.toFixed(0), '#e0924c')
+    : row('Застава', 'Немає (Prime)', 'var(--gray)');
+  html += '<div style="display:flex;justify-content:space-between;padding:14px 0;margin-top:6px;font-size:14px;border-top:2px solid rgba(201,168,76,.3);">'
+    + '<span style="color:var(--white);font-weight:500;">Разом до оплати</span>'
+    + '<span style="color:var(--gold);font-family:Playfair Display,serif;font-size:20px;">₴' + tot.toFixed(0) + '</span></div>';
+  if (hasDeposit) {
+    html += '<div style="font-size:11px;color:var(--gray);margin-top:4px;line-height:1.6;padding:10px 12px;background:var(--dark3);">📌 Застава ₴' + dep.toFixed(0) + ' утримується на час оренди та повертається після здачі авто.</div>';
+  }
+  document.getElementById('pdBody').innerHTML = html;
+  document.getElementById('priceOverlay').style.display = 'flex';
+}
+function closePriceDetail() { document.getElementById('priceOverlay').style.display = 'none'; }
+function daysWord(n) {
+  if(n%10===1&&n%100!==11) return 'день';
+  if(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)) return 'дні';
+  return 'днів';
+}
+</script>
+{% endblock %}

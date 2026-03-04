@@ -1,0 +1,263 @@
+{% extends 'manager/base_manager.html' %}
+{% block title %}Редагування замовлення {{ b.number }} — AutoRent Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+.edit-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media(max-width:900px){ .edit-grid{grid-template-columns:1fr;} }
+
+.edit-card {
+  background:var(--dark2); border:1px solid var(--border); padding:28px;
+}
+.edit-card-title {
+  font-size:10px; letter-spacing:2px; text-transform:uppercase;
+  color:var(--gold); padding-bottom:12px; margin-bottom:20px;
+  border-bottom:1px solid var(--border);
+}
+.info-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.04); font-size:13px; }
+.info-row:last-child { border:none; }
+.info-lbl { color:var(--gray); }
+.info-val { color:var(--white); text-align:right; }
+.info-val.gold { color:var(--gold); font-family:'Playfair Display',serif; font-size:16px; }
+
+.sp { display:inline-flex; align-items:center; font-size:11px; letter-spacing:.5px; padding:3px 9px; border:1px solid; }
+.sp-pending  { color:#c9a84c; border-color:rgba(201,168,76,.3);  background:rgba(201,168,76,.08); }
+.sp-active   { color:#4caf7d; border-color:rgba(76,175,125,.3);  background:rgba(76,175,125,.08); }
+.sp-completed{ color:#888;    border-color:rgba(136,136,128,.3); background:rgba(136,136,128,.06); }
+.sp-cancelled{ color:#cf6679; border-color:rgba(207,102,121,.3); background:rgba(207,102,121,.08); }
+
+.btn-danger { flex:1; background:transparent; color:#cf6679; padding:13px; font-family:'DM Sans',sans-serif; font-size:12px; letter-spacing:1px; text-transform:uppercase; border:1px solid rgba(207,102,121,.4); cursor:pointer; transition:.2s; }
+.btn-danger:hover { background:rgba(207,102,121,.08); border-color:#cf6679; }
+
+.fine-confirm { display:none; background:rgba(207,102,121,.06); border:1px solid rgba(207,102,121,.2); padding:14px; margin-top:10px; font-size:13px; color:var(--gray); }
+.fine-confirm.show { display:block; }
+</style>
+{% endblock %}
+
+{% block main_content %}
+<div class="topbar">
+  <div class="topbar-title">
+    <a href="{% url 'manager_bookings' %}" style="color:var(--gray);text-decoration:none;">Замовлення</a>
+    &nbsp;·&nbsp; <strong>{{ b.number }}</strong>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <a href="{% url 'manager_bookings' %}" class="tb-btn">&#8592; Назад</a>
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Info header -->
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;">
+    <div>
+      <div style="font-family:'Playfair Display',serif;font-size:24px;color:var(--white);">{{ b.number }}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px;">
+        {{ b.date_from|date:"d.m.Y" }} — {{ b.date_to|date:"d.m.Y" }} &nbsp;·&nbsp; {{ b.car.full_name }}
+      </div>
+    </div>
+    <span class="sp sp-{{ b.status }}" style="margin-left:auto;">{{ b.get_status_display }}</span>
+  </div>
+
+  <div class="edit-grid">
+
+    <!-- LEFT: info + edit form -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Client info -->
+      <div class="edit-card">
+        <div class="edit-card-title">Клієнт</div>
+        <div class="info-row"><span class="info-lbl">Ім'я</span><span class="info-val">{{ b.user.get_full_name|default:b.user.username }}</span></div>
+        <div class="info-row"><span class="info-lbl">Email</span><span class="info-val">{{ b.user.email }}</span></div>
+        <div class="info-row"><span class="info-lbl">Телефон</span>
+          <span class="info-val">
+            {% if b.user.profile.phone %}{{ b.user.profile.phone }}{% else %}<span style="opacity:.4;">—</span>{% endif %}
+          </span>
+        </div>
+        <div class="info-row"><span class="info-lbl">Сегмент</span>
+          <span class="info-val">
+            {% if b.user.profile.segment %}{{ b.user.profile.get_segment_display }}{% else %}<span style="opacity:.4;">—</span>{% endif %}
+          </span>
+        </div>
+      </div>
+
+      <!-- Rental details -->
+      <div class="edit-card">
+        <div class="edit-card-title">Деталі оренди</div>
+        <div class="info-row"><span class="info-lbl">Автомобіль</span><span class="info-val">{{ b.car.full_name }}</span></div>
+        <div class="info-row"><span class="info-lbl">Тариф</span><span class="info-val">{{ b.get_tariff_display }}</span></div>
+        <div class="info-row"><span class="info-lbl">Отримання</span><span class="info-val">{{ b.date_from|date:"d.m.Y" }}</span></div>
+        <div class="info-row"><span class="info-lbl">Повернення</span><span class="info-val">{{ b.date_to|date:"d.m.Y" }}</span></div>
+        <div class="info-row"><span class="info-lbl">Місце</span><span class="info-val">{{ b.get_pickup_display_custom }}</span></div>
+        {% if b.delivery_address %}
+        <div class="info-row"><span class="info-lbl">Адреса доставки</span><span class="info-val">{{ b.delivery_address }}</span></div>
+        {% endif %}
+        <div class="info-row"><span class="info-lbl">Оплата</span><span class="info-val">{{ b.get_payment_method_display }}</span></div>
+        <div class="info-row"><span class="info-lbl">Оренда ({{ b.days_count }} дн.)</span><span class="info-val gold">{{ b.rent_price|floatformat:0 }} грн</span></div>
+        {% if b.extras_price > 0 %}
+        <div class="info-row"><span class="info-lbl">Доп. послуги</span><span class="info-val gold">{{ b.extras_price|floatformat:0 }} грн</span></div>
+        {% endif %}
+        {% if b.delivery_price > 0 %}
+        <div class="info-row"><span class="info-lbl">Доставка</span><span class="info-val gold">{{ b.delivery_price|floatformat:0 }} грн</span></div>
+        {% endif %}
+        {% if b.client_discount_pct > 0 %}
+        <div class="info-row"><span class="info-lbl" style="color:#c9a84c;">Знижка клієнта</span><span class="info-val" style="color:#c9a84c;">{{ b.client_discount_pct }}%  −{{ b.discount_amount|floatformat:0 }} грн</span></div>
+        {% endif %}
+        {% if b.promo_discount_pct > 0 %}
+        <div class="info-row"><span class="info-lbl" style="color:#4caf7d;">Промокод {{ b.promo_code }}</span><span class="info-val" style="color:#4caf7d;">{{ b.promo_discount_pct }}%</span></div>
+        {% endif %}
+        {% if b.total_discount_pct > 0 %}
+        <div class="info-row" style="border-top:1px solid rgba(255,255,255,.06);padding-top:8px;margin-top:4px;">
+          <span class="info-lbl" style="color:#c9a84c;">Разом знижка</span>
+          <span class="info-val" style="color:#c9a84c;">{{ b.total_discount_pct }}%  −{{ b.discount_amount|floatformat:0 }} грн</span>
+        </div>
+        {% endif %}
+        {% if b.deposit_amount > 0 %}
+        <div class="info-row"><span class="info-lbl">Застава</span><span class="info-val" style="color:#e0924c;">{{ b.deposit_amount|floatformat:0 }} грн</span></div>
+        {% endif %}
+        <div class="info-row" style="border-top:1px solid rgba(201,168,76,.3);margin-top:6px;padding-top:10px;">
+          <span class="info-lbl" style="color:var(--white);font-weight:500;">До оплати</span>
+          <span class="info-val gold" style="font-size:18px;">
+            {{ b.total_price|floatformat:0 }}{% if b.deposit_amount > 0 %} + {{ b.deposit_amount|floatformat:0 }} застава{% endif %} грн
+          </span>
+        </div>
+      </div>
+
+      <!-- Extras -->
+      {% with extras_list=b.get_extras_list %}
+      {% if extras_list %}
+      <div class="edit-card">
+        <div class="edit-card-title">Додаткові послуги</div>
+        {% for name, price in extras_list %}
+        <div class="info-row">
+          <span class="info-lbl">{{ name }}</span>
+          <span class="info-val" style="color:var(--gold);">+{{ price }} грн</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+    </div>
+
+    <!-- RIGHT: edit form -->
+    <div style="display:flex;flex-direction:column;gap:20px;">
+
+      <!-- Status + note form -->
+      <div class="edit-card">
+        <div class="edit-card-title">Редагування</div>
+        <form method="post">
+          {% csrf_token %}
+          <div class="field">
+            <label>Статус замовлення</label>
+            <select name="status">
+              {% for val, label in statuses %}
+              <option value="{{ val }}" {% if b.status == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Нотатка менеджера</label>
+            <textarea name="manager_note" rows="5" placeholder="Внутрішня нотатка...">{{ b.manager_note }}</textarea>
+          </div>
+          <div class="btn-row">
+            <button type="submit" class="btn-save">Зберегти зміни</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Fine block -->
+      <div class="edit-card">
+        <div class="edit-card-title">Штраф / Додатковий збір</div>
+        <form method="post" action="{% url 'manager_fine_add' %}">
+          {% csrf_token %}
+          <input type="hidden" name="booking_pk" value="{{ b.pk }}">
+          <div class="field">
+            <label>Тип штрафу</label>
+            <select name="fine_type" id="fineType" onchange="onFineType(this)">
+              <option value="">— Без штрафу —</option>
+              <option value="late_return">Запізнення повернення</option>
+              <option value="body_damage">Пошкодження кузову</option>
+              <option value="interior_damage">Пошкодження салону</option>
+              <option value="empty_tank">Неповний бак</option>
+              <option value="accident">ДТП</option>
+              <option value="traffic_fine">Штраф ДАІ</option>
+              <option value="other">Інше</option>
+            </select>
+          </div>
+          <div id="fineDetails" style="display:none;">
+            <div class="form-grid-2">
+              <div class="field">
+                <label>Сума (грн)</label>
+                <input type="number" name="amount" min="0" step="0.01" placeholder="0.00">
+              </div>
+              <div class="field">
+                <label>Ступінь</label>
+                <select name="severity">
+                  <option value="low">Мінімальна</option>
+                  <option value="medium" selected>Середня</option>
+                  <option value="high">Критична</option>
+                </select>
+              </div>
+            </div>
+            <div class="field">
+              <label>Опис</label>
+              <textarea name="description" rows="3" placeholder="Деталі пошкодження або порушення..."></textarea>
+            </div>
+            <div class="btn-row">
+              <button type="submit" class="btn-danger" style="flex:none;padding:10px 20px;">Додати штраф</button>
+            </div>
+          </div>
+        </form>
+
+        <!-- Existing fines -->
+        {% with fines=b.fines.all %}
+        {% if fines %}
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);margin-bottom:10px;">Нараховані штрафи</div>
+          {% for f in fines %}
+          <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;">
+            <span style="color:var(--white);">{{ f.get_fine_type_display_custom }}</span>
+            <span style="color:#cf6679;font-family:'Playfair Display',serif;">{{ f.amount }} грн</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+      <!-- Danger zone -->
+      {% if b.status != 'cancelled' %}
+      <div class="edit-card" style="border-color:rgba(207,102,121,.2);">
+        <div class="edit-card-title" style="color:#cf6679;">Небезпечна зона</div>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:16px;">Скасування замовлення незворотне. Клієнт отримає повідомлення.</p>
+        <button class="btn-danger" onclick="confirmCancel()" style="width:100%;">Скасувати замовлення</button>
+        <div class="fine-confirm" id="cancelConfirm">
+          <div style="margin-bottom:12px;">Ви впевнені що хочете скасувати <strong style="color:var(--white);">{{ b.number }}</strong>?</div>
+          <form method="post" action="{% url 'manager_booking_status' b.pk %}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="cancelled">
+            <div style="display:flex;gap:10px;">
+              <button type="submit" style="background:#cf6679;color:#fff;border:none;padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;">Так, скасувати</button>
+              <button type="button" onclick="document.getElementById('cancelConfirm').classList.remove('show')" style="background:transparent;color:var(--gray);border:1px solid var(--border);padding:9px 18px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;">Ні</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function onFineType(sel) {
+  document.getElementById('fineDetails').style.display = sel.value ? 'block' : 'none';
+}
+function confirmCancel() {
+  document.getElementById('cancelConfirm').classList.toggle('show');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Умови використання — AutoRent{% endblock %}
+{% block content %}
+<div style="max-width:820px;margin:60px auto;padding:0 24px 80px;">
+  <div style="margin-bottom:40px;">
+    <div style="font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">Правові документи</div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:42px;color:var(--white);margin:0 0 16px;">Умови <em style="color:var(--gold);font-style:italic;">використання</em></h1>
+    <div style="font-size:13px;color:var(--gray);">Останнє оновлення: 01 січня 2025 року</div>
+  </div>
+
+  <div style="font-size:14px;color:var(--gray);line-height:1.9;">
+
+    <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);padding:16px 20px;margin-bottom:32px;font-size:13px;">
+      Будь ласка, уважно прочитайте ці умови перед використанням послуг AutoRent. Реєструючись або використовуючи наш сервіс, ви погоджуєтесь з усіма викладеними нижче положеннями.
+    </div>
+
+    {% for section in sections %}
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">{{ forloop.counter }}. {{ section.title }}</h2>
+    <p>{{ section.text }}</p>
+    {% empty %}
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">1. Загальні положення</h2>
+    <p>AutoRent (далі — «Компанія», «ми») надає послуги короткострокової оренди автомобілів фізичним та юридичним особам на території України. Використання сервісу означає прийняття цих умов у повному обсязі.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">2. Умови оренди</h2>
+    <p>Для оренди автомобіля клієнт повинен бути не молодшим 21 року, мати дійсне водійське посвідчення категорії «B» (стаж від 2 років), чинний паспорт або ID-картку, а також кредитну або дебетову картку для внесення застави.</p>
+    <p style="margin-top:12px;">Орендар несе повну матеріальну відповідальність за автомобіль з моменту його отримання до моменту повернення. Пошкодження, отримані під час оренди, відшкодовуються орендарем відповідно до тарифів.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">3. Застава</h2>
+    <p>При тарифі «Base» утримується застава на банківській картці клієнта на строк оренди. Застава повертається протягом 5–7 робочих днів після повернення автомобіля без пошкоджень. Тариф «Prime» не передбачає застави, але має вищу добову ставку.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">4. Скасування та зміна замовлення</h2>
+    <p>Скасування замовлення можливе не пізніше ніж за 2 години до початку оренди без штрафних санкцій. При пізнішому скасуванні може утримуватись плата в розмірі вартості 1 доби оренди. Зміна дат можлива за наявності вільного авто.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">5. Штрафи та відповідальність</h2>
+    <p>Запізнення повернення понад 30 хвилин тарифікується як нова доба оренди. Повернення автомобіля з порожнім баком тягне за собою штраф + вартість заправки. Будь-яке пошкодження кузову, салону або механічних частин підлягає компенсації за ринковими цінами.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">6. Промокоди та знижки</h2>
+    <p>Промокоди надають знижку на вартість оренди (без застави та доставки). Кожен промокод має термін дії та обмеження на кількість використань. Промокод може бути застосований лише один раз на одне замовлення.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">7. Конфіденційність</h2>
+    <p>Обробка персональних даних здійснюється відповідно до нашої <a href="/privacy/" style="color:var(--gold);">Політики конфіденційності</a>. Ваші дані не передаються третім особам без вашої згоди, за винятком випадків, передбачених законодавством України.</p>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:36px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--border);">8. Контакти</h2>
+    <p>З питань щодо умов використання звертайтеся: <span style="color:var(--gold);">info@autorent.ua</span> або за телефоном <span style="color:var(--gold);">+38 (057) 000-00-00</span>.</p>
+
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:48px;padding-top:24px;border-top:1px solid var(--border);display:flex;gap:16px;">
+    <a href="/privacy/" style="color:var(--gold);text-decoration:none;font-size:13px;">Політика конфіденційності →</a>
+    <a href="/" style="color:var(--gray);text-decoration:none;font-size:13px;">← Повернутись на головну</a>
+  </div>
+</div>
+{% endblock %}

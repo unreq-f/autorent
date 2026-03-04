@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 urlpatterns = [
+    path('api/booking-search/', views.booking_search, name='manager_booking_search'),
     path('', views.dashboard, name='manager_dashboard'),
     path('bookings/', views.bookings, name='manager_bookings'),
     path('bookings/<int:pk>/edit/', views.booking_edit, name='manager_booking_edit'),
@@ -15,4 +16,12 @@ urlpatterns = [
     path('fines/add/', views.fine_edit, name='manager_fine_add'),
     path('fines/<int:pk>/edit/', views.fine_edit, name='manager_fine_edit'),
     path('reports/', views.reports, name='manager_reports'),
+    path('promos/', views.promos, name='manager_promos'),
+    path('cars/<int:pk>/service/', views.car_service, name='manager_car_service'),
+    path('cars/<int:pk>/photos/upload/', views.car_photo_upload, name='manager_car_photo_upload'),
+    path('cars/photos/<int:photo_pk>/delete/', views.car_photo_delete, name='manager_car_photo_delete'),
+    path('cars/photos/<int:photo_pk>/main/', views.car_photo_set_main, name='manager_car_photo_main'),
+    path('cars/search/', views.car_search_json, name='manager_car_search'),
+    path('inquiries/', views.inquiries, name='manager_inquiries'),
+    path('clients/search/', views.client_search_api, name='manager_client_search_api'),
 ]

@@ -1,357 +1,252 @@
 {% extends 'manager/base_manager.html' %}
 {% block title %}Платежі — AutoRent Manager{% endblock %}
+{% block extra_css %}<style>
+.status-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.stab{padding:11px 16px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;text-decoration:none;display:flex;gap:7px;align-items:center;white-space:nowrap;}
+.stab:hover{color:var(--white);}.stab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.stab .cnt{font-size:10px;padding:1px 6px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+.stab.active .cnt{background:var(--gold);color:var(--black);}
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-bar input,.filter-bar select{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
+.filter-bar input:focus,.filter-bar select:focus{border-color:var(--gold);}
+.filter-bar input[type=text]{flex:1;min-width:200px;}.filter-bar select{min-width:130px;}
+.filter-bar input[type=date]{width:140px;color-scheme:dark;}
+.sec-hdr{display:flex;align-items:center;gap:12px;padding:14px 0 10px;}
+.sec-hdr-title{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.85;}
+.sec-hdr-count{font-size:11px;padding:2px 8px;background:rgba(201,168,76,.1);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+.py-wrap{overflow-x:auto;margin-bottom:28px;}
+.py-table{width:100%;border-collapse:collapse;min-width:860px;}
+.py-table th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:11px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--dark3);white-space:nowrap;}
+.py-table td{padding:11px 14px;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+.py-table tr:hover td{background:rgba(255,255,255,.015);}
+.py-table tr.auto-bk td:first-child{border-left:2px solid #5b9bd5;}
+.py-table tr.auto-fine td:first-child{border-left:2px solid #cf6679;}
+.hl{color:var(--white);}.gld{color:var(--gold);font-family:'Playfair Display',serif;}
+.txn{font-size:11px;font-family:monospace;color:var(--gold);}
+.sp{display:inline-flex;align-items:center;font-size:11px;padding:3px 9px;border:1px solid;white-space:nowrap;}
+.sp-success,.sp-paid,.sp-active,.sp-completed{color:#4caf7d;border-color:rgba(76,175,125,.3);background:rgba(76,175,125,.08);}
+.sp-pending,.sp-awaiting_payment{color:#c9a84c;border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.08);}
+.sp-failed,.sp-unpaid{color:#cf6679;border-color:rgba(207,102,121,.3);background:rgba(207,102,121,.08);}
+.sp-refund{color:#5b9bd5;border-color:rgba(91,155,213,.3);background:rgba(91,155,213,.08);}
+.ty{display:inline-block;font-size:10px;letter-spacing:.8px;text-transform:uppercase;padding:2px 7px;border:1px solid rgba(255,255,255,.07);color:var(--gray);}
+.ty-rental{color:#5b9bd5;border-color:rgba(91,155,213,.25);}.ty-fine{color:#cf6679;border-color:rgba(207,102,121,.25);}.ty-refund{color:#4caf7d;border-color:rgba(76,175,125,.25);}
+.act{display:flex;gap:4px;}
+.abt{width:30px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--dark3);border:1px solid var(--border);cursor:pointer;font-size:13px;transition:.15s;color:var(--gray);text-decoration:none;}
+.abt:hover{border-color:var(--gold);color:var(--white);}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--gray);}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;justify-content:flex-end;}
+.modal-overlay.open{display:flex;}
+.drawer{width:460px;height:100vh;background:var(--dark2);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;animation:slideIn .22s ease;}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.drawer-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);}
+.drawer-title em{color:var(--gold);font-style:italic;}
+.close-btn{background:none;border:1px solid var(--border);color:var(--gray);width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.close-btn:hover{border-color:var(--gold);color:var(--white);}
+.drawer-body{padding:24px 28px;flex:1;}
+.d-actions{display:flex;gap:10px;padding:18px 28px;border-top:1px solid var(--border);flex-shrink:0;}
+.btn-save{flex:1;background:var(--gold);color:var(--black);border:none;padding:13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;}
+.btn-secondary{background:transparent;color:var(--gray);border:1px solid var(--border);padding:13px 18px;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
+.btn-secondary:hover{border-color:var(--gold);color:var(--white);}
+.d-section{margin-bottom:20px;}
+.d-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.d-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;}
+.d-lbl{color:var(--gray);}.d-val{color:var(--white);text-align:right;}.d-val.gold{color:var(--gold);font-family:'Playfair Display',serif;font-size:16px;}
+.d-field{margin-bottom:14px;}
+.d-field label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:7px;}
+.d-field input,.d-field select,.d-field textarea{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .3s;box-sizing:border-box;}
+.d-field input:focus,.d-field select:focus,.d-field textarea:focus{border-color:var(--gold);}
+.d-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-center{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;}
+.modal-center.open{display:flex;}
+.modal-box{background:var(--dark2);border:1px solid var(--border);width:100%;max-width:520px;max-height:92vh;overflow-y:auto;}
+.bk-search-wrap{position:relative;}
+.bk-dropdown{display:none;position:absolute;top:100%;left:0;right:0;background:var(--dark2);border:1px solid var(--border);border-top:none;z-index:10;max-height:220px;overflow-y:auto;}
+.bk-dropdown.show{display:block;}
+.bk-opt{padding:10px 13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.04);}
+.bk-opt:hover{background:rgba(201,168,76,.06);}
+.bk-selected{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.3);padding:10px 12px;margin-top:6px;font-size:12px;display:none;}
+.bk-selected.show{display:block;}
+</style>{% endblock %}
 
 {% block main_content %}
+<div class="topbar">
+  <div class="topbar-title">Платежі</div>
+  <div style="display:flex;gap:10px;">
+    <button class="tb-btn primary" onclick="openNewPayment()">+ Додати платіж</button>
+    <a href="?{% if sf %}status={{ sf }}&{% endif %}{% if filters.q %}q={{ filters.q }}&{% endif %}export=csv" class="tb-btn">⬇ CSV</a>
+  </div>
+</div>
+<div class="content">
 
-  <div class="topbar">
-    <div class="topbar-title">Платежі · <strong>Управління транзакціями</strong></div>
-    <div style="display:flex;gap:10px;">
-      <button class="tb-btn">⬇ Експорт CSV</button>
-      <button class="tb-btn">🖨 Виписка PDF</button>
-    </div>
+  <!-- Tabs — без застав -->
+  <div class="status-tabs">
+    <a class="stab {% if not sf %}active{% endif %}" href="?{% if filters.q %}q={{ filters.q }}&{% endif %}">Всі <span class="cnt">{{ counts.all }}</span></a>
+    {% for val, label in statuses_filtered %}
+    <a class="stab {% if sf == val %}active{% endif %}" href="?status={{ val }}{% if filters.q %}&q={{ filters.q }}{% endif %}">
+      {{ label }} <span class="cnt">{% if val == "success" %}{{ counts.success }}{% elif val == "pending" %}{{ counts.pending }}{% elif val == "failed" %}{{ counts.failed }}{% elif val == "refund" %}{{ counts.refund }}{% else %}0{% endif %}</span>
+    </a>
+    {% endfor %}
   </div>
 
-  <div class="content">
-
-    <!-- KPI -->
-    <div class="kpi-row">
-      <div class="kpi-card gold">
-        <div class="kpi-icon">💰</div>
-        <div class="kpi-val">14 280</div>
-        <div class="kpi-label">USD виручка (лютий)</div>
-        <div class="kpi-delta up">↑ +12% до минулого місяця</div>
-      </div>
-      <div class="kpi-card green">
-        <div class="kpi-icon">✅</div>
-        <div class="kpi-val">58</div>
-        <div class="kpi-label">Успішних платежів</div>
-        <div class="kpi-delta up">сьогодні: 5</div>
-      </div>
-      <div class="kpi-card blue">
-        <div class="kpi-icon">🔒</div>
-        <div class="kpi-val">37 500</div>
-        <div class="kpi-label">USD заставних заблоковано</div>
-        <div class="kpi-delta up">15 активних застав</div>
-      </div>
-      <div class="kpi-card red">
-        <div class="kpi-icon">⚠️</div>
-        <div class="kpi-val">3</div>
-        <div class="kpi-label">Неуспішних / Очікує</div>
-        <div class="kpi-delta down">Потребують уваги</div>
-      </div>
+  <!-- Filters -->
+  <form method="get">
+    {% if sf %}<input type="hidden" name="status" value="{{ sf }}">{% endif %}
+    <div class="filter-bar">
+      <input type="text" name="q" value="{{ filters.q }}" placeholder="🔍  ID, ім'я, email, № замовлення...">
+      <select name="type" onchange="this.form.submit()">
+        <option value="">Всі типи</option>
+        {% for val, label in types_filtered %}<option value="{{ val }}" {% if filters.type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <select name="method" onchange="this.form.submit()">
+        <option value="">Всі методи</option>
+        {% for val, label in methods %}<option value="{{ val }}" {% if filters.method == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+      <input type="date" name="date_from" value="{{ filters.date_from }}">
+      <input type="date" name="date_to" value="{{ filters.date_to }}">
+      <button type="submit" class="tb-btn primary">Застосувати</button>
+      {% if filters.q or filters.type or filters.method or filters.date_from or filters.date_to or sf %}
+      <a href="{% url 'manager_payments' %}" class="tb-btn">✕</a>{% endif %}
     </div>
+  </form>
 
-    <!-- MAIN CONTENT GRID -->
-    <div class="page-grid">
-      <!-- LEFT: TRANSACTIONS TABLE -->
-      <div>
-        <div class="status-tabs">
-          <div class="stab active">Всі <span class="cnt">217</span></div>
-          <div class="stab">Успішні <span class="cnt">201</span></div>
-          <div class="stab">Очікують <span class="cnt">8</span></div>
-          <div class="stab">Відхилено <span class="cnt">5</span></div>
-          <div class="stab">Повернення <span class="cnt">3</span></div>
-          <div class="stab">Застави <span class="cnt">15</span></div>
-        </div>
+  <!-- Bookings awaiting payment -->
+  {% if auto_bookings %}
+  <div class="sec-hdr"><span class="sec-hdr-title">📋 Замовлення — очікують / активні / завершені</span><span class="sec-hdr-count">{{ auto_bookings|length }}</span></div>
+  <div class="py-wrap"><table class="py-table">
+    <thead><tr><th>Замовлення</th><th>Дати</th><th>Клієнт</th><th>Авто</th><th>Сума (з заставою) ₴</th><th>Статус</th><th></th></tr></thead>
+    <tbody>{% for b in auto_bookings %}
+    <tr class="auto-bk">
+      <td><span class="txn">{{ b.number }}</span></td>
+      <td style="font-size:12px;white-space:nowrap;">{{ b.date_from|date:"d.m.Y" }}<br><span style="opacity:.5;">→ {{ b.date_to|date:"d.m.Y" }}</span></td>
+      <td><div class="hl">{{ b.user.get_full_name|default:b.user.username }}</div><div style="font-size:11px;">{{ b.user.email }}</div></td>
+      <td style="font-size:12px;">{{ b.car.brand }} {{ b.car.model }}</td>
+      <td><span class="gld">{{ b.total_with_deposit|floatformat:0 }}</span></td>
+      <td><span class="sp sp-{{ b.status }}">{{ b.get_status_display }}</span></td>
+      <td><div class="act">
+        <a class="abt" href="{% url 'manager_bookings' %}?q={{ b.number }}" title="Замовлення">📋</a>
+        <button class="abt" title="Прийняти оплату" onclick="openNewPaymentFor('{{ b.number }}','{{ b.user.get_full_name|default:b.user.username|escapejs }}','{{ b.car.brand }} {{ b.car.model|escapejs }}','{{ b.total_price|floatformat:0 }}','{{ b.pk }}')">💳</button>
+      </div></td>
+    </tr>{% endfor %}
+    </tbody>
+  </table></div>{% endif %}
 
-        <div class="filter-bar">
-          <div class="search-box">
-            <span style="color:var(--gray);font-size:14px">🔍</span>
-            <input type="text" placeholder="ID транзакції, ім'я клієнта...">
-          </div>
-          <input type="date" class="filter-select" style="width:140px">
-          <input type="date" class="filter-select" style="width:140px">
-          <select class="filter-select">
-            <option>Всі методи</option>
-            <option>💳 Картка</option>
-            <option>💵 Готівка</option>
-            <option>🏢 Безготівковий</option>
-          </select>
-        </div>
+  <!-- Fines -->
+  {% if auto_fines %}
+  <div class="sec-hdr"><span class="sec-hdr-title">⚠️ Штрафи — очікують / сплачені</span><span class="sec-hdr-count">{{ auto_fines|length }}</span></div>
+  <div class="py-wrap"><table class="py-table">
+    <thead><tr><th>Номер</th><th>Дата</th><th>Клієнт / Замовлення</th><th>Тип</th><th>Сума ₴</th><th>Статус</th><th></th></tr></thead>
+    <tbody>{% for f in auto_fines %}
+    <tr class="auto-fine">
+      <td><span class="txn">{{ f.number }}</span></td>
+      <td style="font-size:12px;">{{ f.created_at|date:"d.m.Y" }}</td>
+      <td><div class="hl">{{ f.booking.user.get_full_name|default:f.booking.user.username }}</div><div style="font-size:11px;"><a href="{% url 'manager_bookings' %}?q={{ f.booking.number }}" style="color:var(--gold);text-decoration:none;">{{ f.booking.number }}</a></div></td>
+      <td style="font-size:12px;">{{ f.get_fine_type_display }}</td>
+      <td><span class="gld">{{ f.amount|floatformat:0 }}</span></td>
+      <td>{% if f.status == 'unpaid' %}<span class="sp sp-unpaid">Непогашений</span>{% elif f.status == 'paid' %}<span class="sp sp-success">Сплачений</span>{% else %}<span class="sp sp-pending">{{ f.get_status_display }}</span>{% endif %}</td>
+      <td><div class="act">
+        <a class="abt" href="{% url 'manager_fines' %}" title="Штрафи">⚠️</a>
+        <button class="abt" onclick="openNewPaymentFor('{{ f.booking.number }}','{{ f.booking.user.get_full_name|default:f.booking.user.username|escapejs }}','Штраф','{{ f.amount|floatformat:0 }}','{{ f.booking.pk }}','fine')">💳</button>
+      </div></td>
+    </tr>{% endfor %}
+    </tbody>
+  </table></div>{% endif %}
 
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>ID ↕</th>
-                <th>Клієнт</th>
-                <th>Замовлення</th>
-                <th>Тип</th>
-                <th>Метод</th>
-                <th>Дата ↕</th>
-                <th>Сума ↕</th>
-                <th>Статус</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td class="hl">TXN-0241</td>
-                <td class="hl">Іван Іваненко</td>
-                <td>#0854</td>
-                <td>Оренда</td>
-                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
-                <td>26.02.2025 14:22</td>
-                <td class="gold-cell">1 400 USD</td>
-                <td><span class="pay-pill pp-success">Успішно</span></td>
-                <td><button class="action-ico" onclick="openDrawer('TXN-0241','Іван Іваненко','#0854','1400','success','Оренда')">📋</button></td>
-              </tr>
-              <tr>
-                <td class="hl">TXN-0240</td>
-                <td class="hl">Олена Кравець</td>
-                <td>#0853</td>
-                <td>Оренда</td>
-                <td><div class="pay-method"><span class="pay-method-icon">💵</span> Готівка</div></td>
-                <td>25.02.2025 11:05</td>
-                <td class="gold-cell">650 USD</td>
-                <td><span class="pay-pill pp-success">Успішно</span></td>
-                <td><button class="action-ico" onclick="openDrawer('TXN-0240','Олена Кравець','#0853','650','success','Оренда')">📋</button></td>
-              </tr>
-              <tr>
-                <td class="hl">TXN-0239</td>
-                <td class="hl">Дмитро Петренко</td>
-                <td>#0852</td>
-                <td>Застава</td>
-                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
-                <td>25.02.2025 09:48</td>
-                <td class="gold-cell">2 500 USD</td>
-                <td><span class="pay-pill pp-deposit">Заблокована</span></td>
-                <td><button class="action-ico" onclick="openDrawer('TXN-0239','Дмитро Петренко','#0852','2500','deposit','Застава')">📋</button></td>
-              </tr>
-              <tr>
-                <td class="hl">TXN-0238</td>
-                <td class="hl">Аліна Мороз</td>
-                <td>#0851</td>
-                <td>Оренда</td>
-                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
-                <td>24.02.2025 16:30</td>
-                <td class="gold-cell">312 USD</td>
-                <td><span class="pay-pill pp-pending">Очікує</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openDrawer('TXN-0238','Аліна Мороз','#0851','312','pending','Оренда')">📋</button>
-                  <button class="action-ico" style="color:var(--green)" title="Підтвердити">✅</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">TXN-0237</td>
-                <td class="hl">Роман Кравченко</td>
-                <td>#0850</td>
-                <td>Повернення</td>
-                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
-                <td>23.02.2025 10:15</td>
-                <td class="red-cell">−200 USD</td>
-                <td><span class="pay-pill pp-refund">Повернення</span></td>
-                <td><button class="action-ico" onclick="openDrawer('TXN-0237','Роман Кравченко','#0850','-200','refund','Повернення')">📋</button></td>
-              </tr>
-              <tr>
-                <td class="hl">TXN-0236</td>
-                <td class="hl">Сергій Василенко</td>
-                <td>#0849</td>
-                <td>Оренда</td>
-                <td><div class="pay-method"><span class="pay-method-icon">🏢</span> Безготівк.</div></td>
-                <td>22.02.2025 08:00</td>
-                <td class="gold-cell">1 750 USD</td>
-                <td><span class="pay-pill pp-success">Успішно</span></td>
-                <td><button class="action-ico" onclick="openDrawer('TXN-0236','Сергій Василенко','#0849','1750','success','Оренда')">📋</button></td>
-              </tr>
-              <tr>
-                <td class="hl">TXN-0235</td>
-                <td class="hl">Наталія Бондар</td>
-                <td>#0848</td>
-                <td>Оренда</td>
-                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
-                <td>21.02.2025 14:50</td>
-                <td class="gold-cell">165 USD</td>
-                <td><span class="pay-pill pp-failed">Відхилено</span></td>
-                <td><div class="actions-cell">
-                  <button class="action-ico" onclick="openDrawer('TXN-0235','Наталія Бондар','#0848','165','failed','Оренда')">📋</button>
-                  <button class="action-ico" style="color:var(--orange)" title="Повторити">🔄</button>
-                </div></td>
-              </tr>
-              <tr>
-                <td class="hl">TXN-0234</td>
-                <td class="hl">Максим Шевченко</td>
-                <td>#0847</td>
-                <td>Застава → повернена</td>
-                <td><div class="pay-method"><span class="pay-method-icon">💳</span> Картка</div></td>
-                <td>20.02.2025 09:00</td>
-                <td style="color:var(--green)">+1 500 USD</td>
-                <td><span class="pay-pill pp-refund">Розблокована</span></td>
-                <td><button class="action-ico" onclick="openDrawer('TXN-0234','Максим Шевченко','#0847','+1500','refund','Застава повернена')">📋</button></td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="pagination">
-            <div class="page-info">Показано 1–8 з 217 транзакцій</div>
-            <div class="page-btns">
-              <button class="page-btn">‹</button>
-              <button class="page-btn active">1</button>
-              <button class="page-btn">2</button>
-              <button class="page-btn">3</button>
-              <button class="page-btn">…</button>
-              <button class="page-btn">›</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT SIDEBAR -->
-      <div style="display:grid;gap:16px;align-content:start;">
-
-        <!-- REVENUE THIS MONTH -->
-        <div class="widget">
-          <div class="widget-header"><div class="widget-title">Виручка лютого</div></div>
-          <div style="margin-bottom:12px;">
-            <div style="font-family:'Playfair Display',serif;font-size:36px;color:var(--gold);">14 280</div>
-            <div style="font-size:12px;color:var(--gray);margin-top:4px;">USD · 26 днів пройшло</div>
-          </div>
-          <div class="mini-chart" id="miniChart"></div>
-          <div style="display:flex;justify-content:space-between;margin-top:24px;">
-            <div style="text-align:center">
-              <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">Прогноз місяця</div>
-              <div style="font-family:'Playfair Display',serif;font-size:18px;color:var(--gold);">15 600</div>
-            </div>
-            <div style="text-align:center">
-              <div style="font-size:11px;color:var(--gray);margin-bottom:4px;">Порівняно з янв.</div>
-              <div style="font-size:16px;color:var(--green);">↑ +12%</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- METHODS BREAKDOWN -->
-        <div class="widget">
-          <div class="widget-header"><div class="widget-title">Методи оплати</div></div>
-          <div class="method-list">
-            <div class="method-row">
-              <div class="method-icon-big">💳</div>
-              <div class="method-name">Картка</div>
-              <div class="method-bar-wrap"><div class="method-bar-fill" style="width:68%"></div></div>
-              <div class="method-pct">68%</div>
-            </div>
-            <div class="method-row">
-              <div class="method-icon-big">💵</div>
-              <div class="method-name">Готівка</div>
-              <div class="method-bar-wrap"><div class="method-bar-fill" style="width:22%;background:var(--blue)"></div></div>
-              <div class="method-pct" style="color:var(--blue)">22%</div>
-            </div>
-            <div class="method-row">
-              <div class="method-icon-big">🏢</div>
-              <div class="method-name">Безготівк.</div>
-              <div class="method-bar-wrap"><div class="method-bar-fill" style="width:10%;background:var(--orange)"></div></div>
-              <div class="method-pct" style="color:var(--orange)">10%</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ACTIVE DEPOSITS -->
-        <div class="widget">
-          <div class="widget-header">
-            <div class="widget-title">Активні застави</div>
-            <span style="font-size:11px;color:var(--gold)">37 500 USD</span>
-          </div>
-          <div style="display:grid;gap:4px;">
-            <div class="deposit-row">
-              <div><div class="dep-client">Іван Іваненко</div><div class="dep-car">BMW X5 · до 04.03</div></div>
-              <div style="text-align:right"><div class="dep-amount">2 500 USD</div><span class="dep-badge dep-held">Утримується</span></div>
-            </div>
-            <div class="deposit-row">
-              <div><div class="dep-client">Олена Кравець</div><div class="dep-car">Audi A6 · до 02.03</div></div>
-              <div style="text-align:right"><div class="dep-amount">1 800 USD</div><span class="dep-badge dep-held">Утримується</span></div>
-            </div>
-            <div class="deposit-row">
-              <div><div class="dep-client">Сергій В.</div><div class="dep-car">Tesla M3 · до 28.02</div></div>
-              <div style="text-align:right"><div class="dep-amount">1 500 USD</div><span class="dep-badge dep-held">Утримується</span></div>
-            </div>
-            <div class="deposit-row">
-              <div><div class="dep-client">Наталія Бондар</div><div class="dep-car">VW Tiguan · завершено</div></div>
-              <div style="text-align:right"><div class="dep-amount">1 200 USD</div><span class="dep-badge dep-released">Звільнено</span></div>
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
+  <!-- Transactions -->
+  <div class="sec-hdr"><span class="sec-hdr-title">💳 Транзакції</span><span class="sec-hdr-count">{{ payments|length }}</span></div>
+  <div class="py-wrap">
+  {% if payments %}
+  <table class="py-table">
+    <thead><tr><th>ID транзакції</th><th>Дата</th><th>Клієнт / Замовлення</th><th>Тип</th><th>Метод</th><th>Сума ₴</th><th>Статус</th><th></th></tr></thead>
+    <tbody>{% for p in payments %}
+    {% if p.payment_type != "deposit" %}
+    <tr>
+      <td><span class="txn">{{ p.transaction_id }}</span></td>
+      <td style="white-space:nowrap;font-size:12px;">{{ p.created_at|date:"d.m.Y" }}<br><span style="opacity:.5;">{{ p.created_at|date:"H:i" }}</span></td>
+      <td>{% if p.booking %}<div class="hl">{{ p.booking.user.get_full_name|default:p.booking.user.username }}</div><div style="font-size:11px;"><a href="{% url 'manager_bookings' %}?q={{ p.booking.number }}" style="color:var(--gold);text-decoration:none;">{{ p.booking.number }}</a> · {{ p.booking.car.full_name }}</div>
+      {% elif p.fine %}<div class="hl">{{ p.fine.booking.user.get_full_name|default:"—" }}</div><div style="font-size:11px;color:#cf6679;">Штраф</div>
+      {% else %}<span style="opacity:.4;">—</span>{% endif %}</td>
+      <td><span class="ty ty-{{ p.payment_type }}">{{ p.get_payment_type_display }}</span></td>
+      <td style="font-size:12px;">{{ p.get_method_display }}</td>
+      <td><span class="gld">{{ p.amount|floatformat:0 }}</span></td>
+      <td><span class="sp sp-{{ p.status }}">{{ p.get_status_display_custom }}</span></td>
+      <td><div class="act">
+        <button class="abt" onclick="openDetail({{ p.pk }})">👁</button>
+        <button class="abt" onclick="openStatus({{ p.pk }},'{{ p.transaction_id }}','{{ p.status }}')">🔄</button>
+      </div></td>
+    </tr>{% endif %}{% endfor %}
+    </tbody>
+  </table>
+  <div class="pagination"><span>{{ payments|length }} транзакцій</span></div>
+  {% else %}<div style="padding:48px;text-align:center;color:var(--gray);">Транзакцій не знайдено</div>{% endif %}
   </div>
 </div>
 
-<!-- DRAWER: Деталі транзакції -->
-<div class="modal-overlay" id="txDrawer">
+<!-- Detail drawer -->
+<div class="modal-overlay" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
   <div class="drawer">
-    <div class="drawer-header">
-      <h2 class="drawer-title">Транзакція <em id="drTxId">TXN-0241</em></h2>
-      <button class="close-btn" onclick="closeDrawer()">✕</button>
-    </div>
-
-    <div class="amount-display">
-      <div class="amount-big" id="drAmt">1 400 USD</div>
-      <div class="amount-label" id="drType">Оренда · Успішно</div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Деталі</div>
-      <div class="info-row"><span class="info-label">Клієнт</span><span class="info-val" id="drClient">—</span></div>
-      <div class="info-row"><span class="info-label">Замовлення</span><span class="info-val" id="drOrder">—</span></div>
-      <div class="info-row"><span class="info-label">Метод оплати</span><span class="info-val">💳 Visa **** 4242</span></div>
-      <div class="info-row"><span class="info-label">Дата та час</span><span class="info-val">26.02.2025, 14:22:07</span></div>
-      <div class="info-row"><span class="info-label">ID транзакції банку</span><span class="info-val" style="font-size:11px;letter-spacing:1px">BNK-9871234567</span></div>
-      <div class="info-row"><span class="info-label">Статус</span><span class="info-val green" id="drStatus">Успішно</span></div>
-    </div>
-
-    <div class="info-section">
-      <div class="info-section-title">Структура суми</div>
-      <div class="info-row"><span class="info-label">Оренда (7 діб × 200 USD)</span><span class="info-val">1 400 USD</span></div>
-      <div class="info-row"><span class="info-label">Додаткові послуги</span><span class="info-val">0 USD</span></div>
-      <div class="info-row"><span class="info-label">Знижка</span><span class="info-val green">−0 USD</span></div>
-      <div class="info-row"><span class="info-label"><strong>Разом сплачено</strong></span><span class="info-val gold">1 400 USD</span></div>
-    </div>
-
-    <div class="btn-row">
-      <button class="btn-save" onclick="closeDrawer()">Роздрукувати чек</button>
-      <button class="btn-refund" onclick="closeDrawer()">↩ Повернення</button>
-    </div>
-    <div style="margin-top:8px;">
-      <button class="btn-secondary" style="width:100%" onclick="closeDrawer()">Закрити</button>
-    </div>
+    <div class="drawer-header"><h2 class="drawer-title">Платіж <em id="detTitle">—</em></h2><button class="close-btn" onclick="closeDetail()">✕</button></div>
+    <div class="drawer-body" id="detBody"></div>
   </div>
+</div>
 
+<!-- Status modal -->
+<div class="modal-center" id="statusModal" onclick="if(event.target===this)closeStatus()">
+  <div class="modal-box">
+    <div class="drawer-header"><h2 class="drawer-title">Статус <em id="stTxn">—</em></h2><button class="close-btn" onclick="closeStatus()">✕</button></div>
+    <form method="post">{% csrf_token %}<input type="hidden" name="action" value="change_status"><input type="hidden" name="payment_pk" id="stPk">
+      <div class="drawer-body"><div class="d-field"><label>Новий статус</label><select name="new_status" id="stSel">{% for val,label in statuses_filtered %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div></div>
+      <div class="d-actions"><button type="submit" class="btn-save">Зберегти</button><button type="button" class="btn-secondary" onclick="closeStatus()">Скасувати</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- New payment modal -->
+<div class="modal-center" id="newModal" onclick="if(event.target===this)closeNewPayment()">
+  <div class="modal-box">
+    <div class="drawer-header"><h2 class="drawer-title">Новий <em>платіж</em></h2><button class="close-btn" onclick="closeNewPayment()">✕</button></div>
+    <form method="post" action="{% url 'manager_payments' %}">{% csrf_token %}<input type="hidden" name="action" value="add_payment"><input type="hidden" name="booking_pk" id="nbBkPk">
+      <div class="drawer-body">
+        <div class="d-field"><label>Замовлення</label>
+          <div class="bk-search-wrap">
+            <input type="text" id="bkSearchInput" name="booking_number" autocomplete="off" placeholder="Номер або ім'я клієнта..." oninput="bkSearch(this.value)">
+            <div class="bk-dropdown" id="bkDropdown"></div>
+          </div>
+          <div class="bk-selected" id="bkSelected"><span id="bkSelNum" style="color:var(--gold);font-family:monospace;"></span><div id="bkSelInfo" style="font-size:11px;color:var(--gray);margin-top:2px;"></div></div>
+        </div>
+        <div class="d-grid-2">
+          <div class="d-field"><label>Тип</label><select name="payment_type" id="nbType">{% for val,label in types_filtered %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div>
+          <div class="d-field"><label>Метод</label><select name="method">{% for val,label in methods %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="d-grid-2">
+          <div class="d-field"><label>Сума ₴</label><input type="number" name="amount" id="nbAmount" step="0.01" min="0" required></div>
+          <div class="d-field"><label>Статус</label><select name="status">{% for val,label in statuses_filtered %}<option value="{{ val }}" {% if val == "success" %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        </div>
+        <div class="d-field"><label>Банківський ID</label><input type="text" name="bank_ref" placeholder="REF-..."></div>
+        <div class="d-field"><label>Примітка</label><textarea name="note" rows="2" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical;"></textarea></div>
+      </div>
+      <div class="d-actions"><button type="submit" class="btn-save">Додати платіж</button><button type="button" class="btn-secondary" onclick="closeNewPayment()">Скасувати</button></div>
+    </form>
+  </div>
+</div>
 {% endblock %}
 
-{% block extra_js %}
-<script>
+{% block extra_js %}<script>
+var PD={{ pd_json|safe }};
 
-const statusMap={
-  success:'<span class="pay-pill pp-success" style="font-size:12px;padding:5px 14px;">Успішно</span>',
-  pending:'<span class="pay-pill pp-pending" style="font-size:12px;padding:5px 14px;">Очікує</span>',
-  failed:'<span class="pay-pill pp-failed" style="font-size:12px;padding:5px 14px;">Відхилено</span>',
-  refund:'<span class="pay-pill pp-refund" style="font-size:12px;padding:5px 14px;">Повернення</span>',
-  deposit:'<span class="pay-pill pp-deposit" style="font-size:12px;padding:5px 14px;">Застава</span>'
-};
-function openDrawer(id,client,order,amt,status,type){
-  document.getElementById('drTxId').textContent=id;
-  document.getElementById('drClient').textContent=client;
-  document.getElementById('drOrder').textContent=order;
-  document.getElementById('drAmt').textContent=amt+' USD';
-  document.getElementById('drType').innerHTML=type+' · '+statusMap[status];
-  document.getElementById('drStatus').innerHTML=statusMap[status];
-  document.getElementById('txDrawer').classList.add('open');
-}
-function closeDrawer(){document.getElementById('txDrawer').classList.remove('open');}
-document.getElementById('txDrawer').addEventListener('click',function(e){if(e.target===this)closeDrawer();});
-
-// Mini chart
-const mc=document.getElementById('miniChart');
-const wData=[2800,3400,3100,4980];
-const mMax=Math.max(...wData);
-wData.forEach((v,i)=>{
-  const w=document.createElement('div');w.className='mini-bar';
-  w.style.height=(v/mMax*56)+'px';
-  w.innerHTML=`<span class="mini-bar-label">Т${i+1}</span>`;
-  mc.appendChild(w);
-});
-
-document.querySelectorAll('.stab').forEach(t=>{
-  t.onclick=function(){document.querySelectorAll('.stab').forEach(s=>s.classList.remove('active'));this.classList.add('active');}
-});
-
-</script>
-{% endblock %}
+var SC={success:'sp-success',pending:'sp-pending',failed:'sp-failed',refund:'sp-refund'};
+function openDetail(pk){var p=PD[pk];if(!p)return;document.getElementById('detTitle').textContent=p.txn;document.getElementById('detBody').innerHTML='<div class="d-section"><div class="d-section-title">Транзакція</div><div class="d-row"><span class="d-lbl">ID</span><span class="d-val txn">'+p.txn+'</span></div><div class="d-row"><span class="d-lbl">Дата</span><span class="d-val">'+p.date+'</span></div><div class="d-row"><span class="d-lbl">Тип</span><span class="d-val">'+p.type+'</span></div><div class="d-row"><span class="d-lbl">Метод</span><span class="d-val">'+p.method+'</span></div><div class="d-row"><span class="d-lbl">Сума</span><span class="d-val gold">₴'+p.amount+'</span></div><div class="d-row"><span class="d-lbl">Статус</span><span class="d-val"><span class="sp '+(SC[p.status]||'')+'">'+p.statusL+'</span></span></div>'+(p.bank_ref?'<div class="d-row"><span class="d-lbl">Банк ID</span><span class="d-val" style="font-family:monospace;font-size:11px;">'+p.bank_ref+'</span></div>':'')+'</div>'+(p.client||p.bk_num?'<div class="d-section"><div class="d-section-title">Прив\'язка</div>'+(p.client?'<div class="d-row"><span class="d-lbl">Клієнт</span><span class="d-val hl">'+p.client+'</span></div>':'')+(p.bk_num?'<div class="d-row"><span class="d-lbl">Замовлення</span><span class="d-val"><a href="'+p.bk_url+'" style="color:var(--gold);text-decoration:none;">'+p.bk_num+'</a></span></div>':'')+'</div>':'')+(p.note?'<div class="d-section"><div class="d-section-title">Примітка</div><div style="padding:10px;background:var(--dark3);font-size:13px;color:var(--gray);">'+p.note+'</div></div>':'')+'<div style="margin-top:12px;"><button class="btn-save" onclick="closeDetail();openStatus('+pk+',\''+p.txn+'\',\''+p.status+'\')">🔄 Змінити статус</button></div>';document.getElementById('detailOverlay').classList.add('open');}
+function closeDetail(){document.getElementById('detailOverlay').classList.remove('open');}
+function openStatus(pk,txn,cur){document.getElementById('stTxn').textContent=txn;document.getElementById('stPk').value=pk;document.getElementById('stSel').value=cur;document.getElementById('statusModal').classList.add('open');}
+function closeStatus(){document.getElementById('statusModal').classList.remove('open');}
+function openNewPayment(){resetNP();document.getElementById('newModal').classList.add('open');}
+function openNewPaymentFor(num,client,car,amount,pk,type){resetNP();document.getElementById('bkSearchInput').value=num;document.getElementById('nbBkPk').value=pk||'';document.getElementById('nbAmount').value=amount||'';if(type){var s=document.getElementById('nbType');for(var i=0;i<s.options.length;i++)if(s.options[i].value===type){s.selectedIndex=i;break;}}document.getElementById('bkSelNum').textContent=num;document.getElementById('bkSelInfo').textContent=client+' · '+car;document.getElementById('bkSelected').classList.add('show');document.getElementById('newModal').classList.add('open');}
+function closeNewPayment(){document.getElementById('newModal').classList.remove('open');}
+function resetNP(){document.getElementById('bkSearchInput').value='';document.getElementById('nbBkPk').value='';document.getElementById('nbAmount').value='';document.getElementById('bkDropdown').classList.remove('show');document.getElementById('bkSelected').classList.remove('show');}
+var bkT=null;
+function bkSearch(v){clearTimeout(bkT);if(v.length<2){document.getElementById('bkDropdown').classList.remove('show');return;}bkT=setTimeout(function(){fetch('/manager/api/booking-search/?q='+encodeURIComponent(v)).then(r=>r.json()).then(function(d){var dd=document.getElementById('bkDropdown');dd.innerHTML=d.results&&d.results.length?d.results.map(b=>'<div class="bk-opt" onclick="selBk('+b.pk+',\''+esc(b.number)+'\',\''+esc(b.client)+'\',\''+esc(b.car)+'\',\''+b.amount+'\')"><span style="color:var(--gold);font-family:monospace;font-size:12px;">'+b.number+'</span><span style="float:right;font-size:12px;">₴'+parseFloat(b.amount).toFixed(0)+'</span><div style="font-size:11px;color:var(--gray);margin-top:2px;">'+b.client+' · '+b.car+'</div></div>').join(''):'<div style="padding:12px;font-size:12px;color:var(--gray);">Нічого не знайдено</div>';dd.classList.add('show');});},250);}
+function selBk(pk,num,client,car,amount){document.getElementById('bkSearchInput').value=num;document.getElementById('nbBkPk').value=pk;document.getElementById('nbAmount').value=parseFloat(amount).toFixed(0);document.getElementById('bkDropdown').classList.remove('show');document.getElementById('bkSelNum').textContent=num;document.getElementById('bkSelInfo').textContent=client+' · '+car;document.getElementById('bkSelected').classList.add('show');}
+function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+document.addEventListener('click',e=>{if(!e.target.closest('.bk-search-wrap'))document.getElementById('bkDropdown').classList.remove('show');});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();closeStatus();closeNewPayment();}});
+</script>{% endblock %}

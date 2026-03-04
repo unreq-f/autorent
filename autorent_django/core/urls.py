@@ -14,4 +14,7 @@ urlpatterns = [
     path('auth/', views.auth_view, name='auth'),
     path('logout/', views.logout_view, name='logout'),
     path('wishlist/toggle/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('promo/check/', views.check_promo, name='check_promo'),
+    path('terms/', views.terms, name='terms'),
+    path('privacy/', views.privacy, name='privacy'),
 ]

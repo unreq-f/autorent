@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}AutoRent Manager{% endblock %}</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/manager.css' %}">
+<link rel="stylesheet" href="{% static 'css/manager.css' %}?v=3">
 <style>
 /* Django nav active state helpers */
 .nav-item.active { color: var(--gold) !important; background: rgba(201,168,76,0.08); border-left: 2px solid var(--gold); }
@@ -28,9 +28,7 @@
   </div>
   <nav class="sidebar-nav">
     <div class="nav-section-label">Головне</div>
-    <a class="nav-item {% if request.resolver_match.url_name == 'manager_dashboard' %}active{% endif %}" href="{% url 'manager_dashboard' %}">
-      <span class="nav-icon">📊</span> Дашборд
-    </a>
+
     <a class="nav-item {% if 'booking' in request.resolver_match.url_name|default:'' %}active{% endif %}" href="{% url 'manager_bookings' %}">
       <span class="nav-icon">📋</span> Замовлення
       {% if pending_count %}<span class="nav-badge">{{ pending_count }}</span>{% endif %}
@@ -49,8 +47,13 @@
       <span class="nav-icon">⚠️</span> Штрафи
       {% if unpaid_fines %}<span class="nav-badge">{{ unpaid_fines }}</span>{% endif %}
     </a>
-    <a class="nav-item {% if request.resolver_match.url_name == 'manager_reports' %}active{% endif %}" href="{% url 'manager_reports' %}">
-      <span class="nav-icon">📈</span> Звіти
+    <a class="nav-item {% if request.resolver_match.url_name == 'manager_promos' %}active{% endif %}" href="{% url 'manager_promos' %}">
+      <span class="nav-icon">🎟️</span> Промокоди
+    </a>
+
+    <a class="nav-item {% if request.resolver_match.url_name == 'manager_inquiries' %}active{% endif %}" href="{% url 'manager_inquiries' %}">
+      <span class="nav-icon">💬</span> Питання
+      {% with new_count=0 %}{% endwith %}
     </a>
     <div class="nav-section-label">Система</div>
     <a class="nav-item" href="{% url 'index' %}">
@@ -85,7 +88,7 @@
   {% block main_content %}{% endblock %}
 </div>
 
-<script src="{% static 'js/manager.js' %}"></script>
+<script src="{% static 'js/manager.js' %}?v=2"></script>
 {% block extra_js %}{% endblock %}
 <script>
   setTimeout(() => {

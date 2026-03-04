@@ -1,328 +1,538 @@
 {% extends 'manager/base_manager.html' %}
 {% block title %}Клієнти — AutoRent Manager{% endblock %}
 
-{% block main_content %}
+{% block extra_css %}
+<style>
+/* ── Stats ── */
+.cl-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px;}
+.cl-stat{background:var(--dark2);border:1px solid var(--border);padding:18px 20px;cursor:pointer;transition:border-color .2s;}
+.cl-stat:hover{border-color:var(--gold);}
+.cl-stat.active-stat{border-color:var(--gold);background:rgba(201,168,76,.04);}
+.cl-stat-val{font-family:'Playfair Display',serif;font-size:26px;color:var(--gold);}
+.cl-stat-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-top:4px;}
 
-  <div class="topbar">
-    <div class="topbar-title">Клієнти · <strong>Управління базою</strong></div>
-    <div style="display:flex;gap:10px;">
-      <button class="tb-btn">⬇ Експорт CSV</button>
-      <button class="tb-btn">📧 Масова розсилка</button>
-    </div>
-  </div>
+/* ── Seg tabs ── */
+.seg-tabs{display:flex;gap:0;margin-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.seg-tab{padding:11px 18px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;transition:.2s;text-decoration:none;display:flex;gap:8px;align-items:center;white-space:nowrap;}
+.seg-tab:hover{color:var(--white);}
+.seg-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
+.seg-tab .cnt{font-size:11px;padding:2px 6px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+.seg-tab.active .cnt{background:var(--gold);color:var(--black);}
 
-  <div class="content">
-    <!-- KPI -->
-    <div class="kpi-row">
-      <div class="kpi-card blue">
-        <div class="kpi-val">12 043</div>
-        <div class="kpi-label">👥 Всього клієнтів</div>
-        <div class="kpi-delta up">↑ +3 сьогодні</div>
-      </div>
-      <div class="kpi-card gold">
-        <div class="kpi-val">847</div>
-        <div class="kpi-label">👑 VIP-клієнти</div>
-        <div class="kpi-delta up">7% від бази</div>
-      </div>
-      <div class="kpi-card green">
-        <div class="kpi-val">3 218</div>
-        <div class="kpi-label">🔄 Активні цього місяця</div>
-        <div class="kpi-delta up">↑ +12% до минулого</div>
-      </div>
-      <div class="kpi-card red">
-        <div class="kpi-val">14</div>
-        <div class="kpi-label">🚫 Заблоковані</div>
-        <div class="kpi-delta down">Штрафи / порушення</div>
-      </div>
-    </div>
+/* ── Filter ── */
+.filter-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;}
+.filter-bar input[type=text],.filter-bar select{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;transition:border-color .2s;}
+.filter-bar input[type=text]:focus,.filter-bar select:focus{border-color:var(--gold);}
+.filter-bar input[type=text]{flex:1;min-width:220px;}
+.filter-bar select{min-width:140px;}
+.filter-bar option{background:var(--dark3);}
 
-    <!-- SEGMENT TABS -->
-    <div class="status-tabs">
-      <div class="stab active">Всі <span class="cnt">12 043</span></div>
-      <div class="stab">VIP <span class="cnt">847</span></div>
-      <div class="stab">Постійні <span class="cnt">4 211</span></div>
-      <div class="stab">Нові <span class="cnt">3 062</span></div>
-      <div class="stab">Заблоковані <span class="cnt">14</span></div>
-    </div>
+/* ── Table ── */
+.cl-wrap{overflow-x:auto;}
+.cl-table{width:100%;border-collapse:collapse;min-width:960px;}
+.cl-table th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--dark3);white-space:nowrap;}
+.cl-table td{padding:11px 14px;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,0.03);vertical-align:middle;}
+.cl-table tr:hover td{background:rgba(255,255,255,.015);}
+.cl-table tr.seg-blocked{opacity:.55;}
+.hl{color:var(--white);}
+.gld{color:var(--gold);font-family:'Playfair Display',serif;}
 
-    <!-- FILTERS -->
-    <div class="filter-bar">
-      <div class="search-box">
-        <span style="color:var(--gray);font-size:14px;">🔍</span>
-        <input type="text" placeholder="Ім'я, email, телефон, номер ВП...">
-      </div>
-      <select class="filter-select">
-        <option>Всі сегменти</option>
-        <option>VIP</option>
-        <option>Постійні</option>
-        <option>Нові</option>
-      </select>
-      <select class="filter-select">
-        <option>Сортування: За датою реєстрації</option>
-        <option>За кількістю замовлень</option>
-        <option>За сумою витрат</option>
-        <option>За рейтингом</option>
-        <option>За алфавітом</option>
-      </select>
-    </div>
+/* ── Avatar ── */
+.cl-avatar{width:34px;height:34px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);display:inline-flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);flex-shrink:0;}
+.cl-info{display:flex;align-items:center;gap:10px;}
+.cl-name{color:var(--white);font-size:13px;}
+.cl-email{font-size:11px;color:var(--gray);margin-top:1px;}
 
-    <!-- TABLE -->
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Клієнт ↕</th>
-            <th>Телефон</th>
-            <th>Реєстрація ↕</th>
-            <th>Замовлень ↕</th>
-            <th>Витрачено ↕</th>
-            <th>Рейтинг ↕</th>
-            <th>Сегмент ↕</th>
-            <th>Верифікація</th>
-            <th>Дії</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>
-              <div class="client-cell">
-                <div class="cli-avatar">ІІ</div>
-                <div>
-                  <div class="cli-name">Іван Іваненко <span class="verified-badge">✓</span></div>
-                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3dac5d2ddf3d6ded2dadf9dd0dcde">[email&#160;protected]</a></div>
-                </div>
-              </div>
-            </td>
-            <td>+38 067 000 00 01</td>
-            <td>12.03.2021</td>
-            <td style="color:var(--white);font-weight:500;">14</td>
-            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">4 820 USD</td>
-            <td><div class="rating-stars">★★★★★</div><div style="font-size:11px;color:var(--gray);">4.9</div></td>
-            <td><span class="segment-pill seg-vip">VIP</span></td>
-            <td style="color:var(--green);font-size:12px;">✓ Повна</td>
-            <td><div class="actions-cell">
-              <button class="action-ico" onclick="openDrawer('Іван Іваненко','ІІ','ivan@email.com','+38 067 000 00 01',14,'4820','4.9','vip')" title="Профіль">👤</button>
-              <button class="action-ico" title="Написати">✉️</button>
-              <button class="action-ico" title="Нове замовлення">📋</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="client-cell">
-                <div class="cli-avatar">ОК</div>
-                <div>
-                  <div class="cli-name">Олена Кравець <span class="verified-badge">✓</span></div>
-                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="dab5b6bfb4bb9abfb7bbb3b6f4b9b5b7">[email&#160;protected]</a></div>
-                </div>
-              </div>
-            </td>
-            <td>+38 067 000 00 02</td>
-            <td>08.07.2022</td>
-            <td style="color:var(--white);font-weight:500;">8</td>
-            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">2 340 USD</td>
-            <td><div class="rating-stars">★★★★★</div><div style="font-size:11px;color:var(--gray);">5.0</div></td>
-            <td><span class="segment-pill seg-vip">VIP</span></td>
-            <td style="color:var(--green);font-size:12px;">✓ Повна</td>
-            <td><div class="actions-cell">
-              <button class="action-ico" onclick="openDrawer('Олена Кравець','ОК','olena@email.com','+38 067 000 00 02',8,'2340','5.0','vip')" title="Профіль">👤</button>
-              <button class="action-ico" title="Написати">✉️</button>
-              <button class="action-ico" title="Нове замовлення">📋</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="client-cell">
-                <div class="cli-avatar">ДП</div>
-                <div>
-                  <div class="cli-name">Дмитро Петренко</div>
-                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="52363f2b26203d12373f333b3e7c313d3f">[email&#160;protected]</a></div>
-                </div>
-              </div>
-            </td>
-            <td>+38 067 000 00 03</td>
-            <td>19.01.2023</td>
-            <td style="color:var(--white);font-weight:500;">5</td>
-            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">1 150 USD</td>
-            <td><div class="rating-stars">★★★★☆</div><div style="font-size:11px;color:var(--gray);">4.4</div></td>
-            <td><span class="segment-pill seg-regular">Постійний</span></td>
-            <td style="color:var(--orange);font-size:12px;">⏳ Часткова</td>
-            <td><div class="actions-cell">
-              <button class="action-ico" onclick="openDrawer('Дмитро Петренко','ДП','dmytro@email.com','+38 067 000 00 03',5,'1150','4.4','regular')" title="Профіль">👤</button>
-              <button class="action-ico" title="Написати">✉️</button>
-              <button class="action-ico" title="Нове замовлення">📋</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="client-cell">
-                <div class="cli-avatar">НБ</div>
-                <div>
-                  <div class="cli-name">Наталія Бондар <span class="verified-badge">✓</span></div>
-                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="ff919e8b9e93969ebf9a929e9693d19c9092">[email&#160;protected]</a></div>
-                </div>
-              </div>
-            </td>
-            <td>+38 067 000 00 04</td>
-            <td>03.11.2023</td>
-            <td style="color:var(--white);font-weight:500;">3</td>
-            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">680 USD</td>
-            <td><div class="rating-stars">★★★★★</div><div style="font-size:11px;color:var(--gray);">4.8</div></td>
-            <td><span class="segment-pill seg-regular">Постійний</span></td>
-            <td style="color:var(--green);font-size:12px;">✓ Повна</td>
-            <td><div class="actions-cell">
-              <button class="action-ico" onclick="openDrawer('Наталія Бондар','НБ','natalia@email.com','+38 067 000 00 04',3,'680','4.8','regular')" title="Профіль">👤</button>
-              <button class="action-ico" title="Написати">✉️</button>
-              <button class="action-ico" title="Нове замовлення">📋</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="client-cell">
-                <div class="cli-avatar" style="background:rgba(224,146,76,0.2);color:var(--orange);">АМ</div>
-                <div>
-                  <div class="cli-name">Андрій Мельник</div>
-                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="3b5a555f4952427b5e565a525715585456">[email&#160;protected]</a></div>
-                </div>
-              </div>
-            </td>
-            <td>+38 067 000 00 05</td>
-            <td>14.02.2025</td>
-            <td style="color:var(--white);font-weight:500;">1</td>
-            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">165 USD</td>
-            <td><div class="rating-stars" style="color:var(--gray);">★★★★★</div><div style="font-size:11px;color:var(--gray);">—</div></td>
-            <td><span class="segment-pill seg-new">Новий</span></td>
-            <td style="color:var(--orange);font-size:12px;">⏳ Очікує</td>
-            <td><div class="actions-cell">
-              <button class="action-ico" onclick="openDrawer('Андрій Мельник','АМ','andriy@email.com','+38 067 000 00 05',1,'165','—','new')" title="Профіль">👤</button>
-              <button class="action-ico" title="Написати">✉️</button>
-              <button class="action-ico" title="Нове замовлення">📋</button>
-            </div></td>
-          </tr>
-          <tr>
-            <td>
-              <div class="client-cell">
-                <div class="cli-avatar" style="background:rgba(207,102,121,0.15);color:var(--red);">ВС</div>
-                <div>
-                  <div class="cli-name">Василь Степаненко</div>
-                  <div class="cli-email"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="8dfbecfef4e1cde8e0ece4e1a3eee2e0">[email&#160;protected]</a></div>
-                </div>
-              </div>
-            </td>
-            <td>+38 067 000 00 06</td>
-            <td>07.05.2022</td>
-            <td style="color:var(--white);font-weight:500;">4</td>
-            <td style="color:var(--gold);font-family:'Playfair Display',serif;font-size:15px;">920 USD</td>
-            <td><div class="rating-stars" style="color:var(--red)">★★☆☆☆</div><div style="font-size:11px;color:var(--gray);">2.1</div></td>
-            <td><span class="segment-pill seg-blocked">Заблокований</span></td>
-            <td style="color:var(--red);font-size:12px;">✗ Заблоковано</td>
-            <td><div class="actions-cell">
-              <button class="action-ico" onclick="openDrawer('Василь Степаненко','ВС','vasyl@email.com','+38 067 000 00 06',4,'920','2.1','blocked')" title="Профіль">👤</button>
-              <button class="action-ico" style="color:var(--green);" title="Розблокувати">🔓</button>
-            </div></td>
-          </tr>
-        </tbody>
-      </table>
-      <div class="pagination">
-        <div class="page-info">Показано 1–6 з 12 043 клієнтів</div>
-        <div class="page-btns">
-          <button class="page-btn">‹</button>
-          <button class="page-btn active">1</button>
-          <button class="page-btn">2</button>
-          <button class="page-btn">3</button>
-          <button class="page-btn">…</button>
-          <button class="page-btn">›</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+/* ── Segment pills ── */
+.sp{display:inline-flex;align-items:center;font-size:11px;letter-spacing:.5px;padding:3px 9px;border:1px solid;white-space:nowrap;}
+.sp-new     {color:#888;   border-color:rgba(136,136,136,.3);background:rgba(136,136,136,.06);}
+.sp-regular {color:#5b9bd5;border-color:rgba(91,155,213,.3); background:rgba(91,155,213,.08);}
+.sp-vip     {color:#c9a84c;border-color:rgba(201,168,76,.3); background:rgba(201,168,76,.08);}
+.sp-blocked {color:#cf6679;border-color:rgba(207,102,121,.3);background:rgba(207,102,121,.08);}
 
-<!-- DRAWER: Профіль клієнта -->
-<div class="modal-overlay" id="clientDrawer">
-  <div class="drawer">
-    <div class="drawer-header">
-      <h2 class="drawer-title">Профіль <em id="drName">клієнта</em></h2>
-      <button class="close-btn" onclick="closeDrawer()">✕</button>
-    </div>
+/* ── Docs ── */
+.docs-ok {color:#4caf7d;font-size:12px;}
+.docs-bad{color:#cf6679;font-size:12px;}
+.docs-mid{color:#e0924c;font-size:12px;}
 
-    <div class="client-header">
-      <div class="client-avatar-lg" id="drAvatar">ІІ</div>
-      <div>
-        <div class="client-full" id="drFullName">Іван Іваненко</div>
-        <div class="client-meta" id="drContact"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f76697e715f7a727e7673317c7072">[email&#160;protected]</a> · +38 067 000 00 01</div>
-        <span class="segment-pill seg-vip" id="drSegment">VIP</span>
-      </div>
-    </div>
+/* ── Actions ── */
+.act{display:flex;gap:4px;}
+.abt{width:30px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--dark3);border:1px solid var(--border);cursor:pointer;font-size:13px;transition:.15s;color:var(--gray);text-decoration:none;}
+.abt:hover{border-color:var(--gold);color:var(--white);}
+.abt.red:hover{border-color:#cf6679;color:#cf6679;}
 
-    <div class="info-section">
-      <div class="info-section-title">Статистика</div>
-      <div class="info-row"><span class="info-label">Всього замовлень</span><span class="info-val" id="drOrders">14</span></div>
-      <div class="info-row"><span class="info-label">Загальна сума</span><span class="info-val gold" id="drSpent">4 820 USD</span></div>
-      <div class="info-row"><span class="info-label">Рейтинг клієнта</span><span class="info-val" id="drRating">★★★★★ 4.9</span></div>
-      <div class="info-row"><span class="info-label">Улюблений клас</span><span class="info-val">VIP / BMW</span></div>
-      <div class="info-row"><span class="info-label">Середній термін оренди</span><span class="info-val">6.4 доби</span></div>
-    </div>
+/* ── Pagination ── */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-top:1px solid var(--border);font-size:12px;color:var(--gray);}
 
-    <div class="info-section">
-      <div class="info-section-title">Остання активність</div>
-      <div class="history-list">
-        <div class="hist-item">
-          <div class="hist-car">🏎️</div>
-          <div><div class="hist-name">BMW X5</div><div class="hist-dates">25.02 – 04.03.2025</div></div>
-          <div class="hist-sum">1 400 USD</div>
-          <div class="hist-status hist-ok">✓</div>
-        </div>
-        <div class="hist-item">
-          <div class="hist-car">👑</div>
-          <div><div class="hist-name">Audi A6</div><div class="hist-dates">10–17.01.2025</div></div>
-          <div class="hist-sum">1 260 USD</div>
-          <div class="hist-status hist-ok">✓</div>
-        </div>
-        <div class="hist-item">
-          <div class="hist-car">🚙</div>
-          <div><div class="hist-name">VW Tiguan</div><div class="hist-dates">05–08.12.2024</div></div>
-          <div class="hist-sum">390 USD</div>
-          <div class="hist-status hist-ok">✓</div>
-        </div>
-      </div>
-    </div>
+/* ════════════════════════════
+   DRAWER
+════════════════════════════ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;justify-content:flex-end;}
+.modal-overlay.open{display:flex;}
+.drawer{width:500px;height:100vh;background:var(--dark2);border-left:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;animation:slideIn .22s ease;}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;padding:22px 28px;border-bottom:1px solid var(--border);flex-shrink:0;}
+.drawer-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);}
+.drawer-title em{color:var(--gold);font-style:italic;}
+.close-btn{background:none;border:1px solid var(--border);color:var(--gray);width:32px;height:32px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:.2s;}
+.close-btn:hover{border-color:var(--gold);color:var(--white);}
+.drawer-body{padding:24px 28px;flex:1;}
+.d-actions{display:flex;gap:10px;padding:18px 28px;border-top:1px solid var(--border);flex-shrink:0;}
+.btn-save{flex:1;background:var(--gold);color:var(--black);border:none;padding:13px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:background .2s;}
+.btn-save:hover{background:#d4aa4a;}
+.btn-secondary{flex:0 0 auto;background:transparent;color:var(--gray);border:1px solid var(--border);padding:13px 18px;font-family:'DM Sans',sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:.2s;}
+.btn-secondary:hover{border-color:var(--gray);color:var(--white);}
 
-    <div class="info-section">
-      <div class="info-section-title">Управління акаунтом</div>
-      <div class="field">
-        <label>Сегмент клієнта</label>
-        <select id="drSegSelect">
-          <option value="new">Новий</option>
-          <option value="regular">Постійний</option>
-          <option value="vip" selected>VIP</option>
-          <option value="blocked">Заблокований</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Персональна знижка (%)</label>
-        <input type="number" value="10" min="0" max="50">
-      </div>
-      <div class="field">
-        <label>Нотатка менеджера</label>
-        <textarea placeholder="Внутрішня нотатка про клієнта...">Постійний клієнт, завжди повертає авто вчасно. Перевага — BMW та Audi.</textarea>
-      </div>
-    </div>
+/* Drawer internals */
+.d-avatar-big{width:54px;height:54px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);}
+.d-section{margin-bottom:22px;}
+.d-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.d-row{display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;}
+.d-row:last-child{border:none;}
+.d-lbl{color:var(--gray);}
+.d-val{color:var(--white);text-align:right;max-width:60%;}
+.d-val.gold{color:var(--gold);font-family:'Playfair Display',serif;font-size:16px;}
+.d-val.red{color:#cf6679;}
+.d-val.grn{color:#4caf7d;}
+.d-val.org{color:#e0924c;}
 
-    <div class="btn-row">
-      <button class="btn-save" onclick="closeDrawer()">Зберегти зміни</button>
-      <button class="btn-danger" onclick="closeDrawer()">Заблокувати</button>
-    </div>
-  </div>
-</div>
+/* Edit form */
+.d-field{margin-bottom:14px;}
+.d-field label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:7px;}
+.d-field select,.d-field input,.d-field textarea{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .3s;box-sizing:border-box;}
+.d-field select:focus,.d-field input:focus,.d-field textarea:focus{border-color:var(--gold);}
+.d-field textarea{resize:vertical;min-height:90px;}
+.d-field option{background:var(--dark3);}
+.d-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
-const segClasses={vip:'seg-vip',regular:'seg-regular',new:'seg-new',blocked:'seg-blocked'};
-const segLabels={vip:'VIP',regular:'Постійний',new:'Новий',blocked:'Заблокований'};
-function openDrawer(name,initials,email,phone,orders,spent,rating,seg){
-  document.getElementById('drName').textContent=name.split(' ')[0];
-  document.getElementById('drAvatar').textContent=initials;
-  document.getElementById('drFullName').textContent=name;
-  document.getElementById('drContact'
+/* Mini booking card */
+.bk-mini{padding:10px 12px;background:var(--dark3);border:1px solid rgba(255,255,255,.04);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.bk-mini-left .bk-num{font-size:11px;color:var(--gold);}
+.bk-mini-left .bk-car{font-size:12px;color:var(--white);margin-top:2px;}
+.bk-mini-left .bk-dates{font-size:11px;color:var(--gray);margin-top:1px;}
+.bk-mini-right .bk-sum{font-size:13px;color:var(--gold);font-family:'Playfair Display',serif;}
+.bk-mini-right .bk-status{font-size:11px;color:var(--gray);text-align:right;margin-top:2px;}
+
+/* Block confirm */
+.block-confirm{display:none;background:rgba(207,102,121,.06);border:1px solid rgba(207,102,121,.2);padding:14px;margin:14px 0 0;}
+.block-confirm.show{display:block;}
+</style>
 {% endblock %}
 
+{% block main_content %}
+<div class="topbar">
+  <div class="topbar-title">Клієнти</div>
+  <div style="display:flex;gap:10px;">
+    <a href="?{% if seg %}segment={{ seg }}&{% endif %}{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}export=csv" class="tb-btn">⬇ Експорт CSV</a>
+  </div>
+</div>
 
+<div class="content">
+
+  <!-- Stats bar (clickable segment filters) -->
+  <div class="cl-stats">
+    <a href="{% url 'manager_clients' %}" class="cl-stat {% if not seg %}active-stat{% endif %}" style="text-decoration:none;">
+      <div class="cl-stat-val">{{ stats.total }}</div>
+      <div class="cl-stat-lbl">Всього клієнтів</div>
+    </a>
+    <a href="?segment=new" class="cl-stat {% if seg == 'new' %}active-stat{% endif %}" style="text-decoration:none;">
+      <div class="cl-stat-val" style="color:#888;">{{ stats.new }}</div>
+      <div class="cl-stat-lbl">Нових</div>
+    </a>
+    <a href="?segment=regular" class="cl-stat {% if seg == 'regular' %}active-stat{% endif %}" style="text-decoration:none;">
+      <div class="cl-stat-val" style="color:#5b9bd5;">{{ stats.regular }}</div>
+      <div class="cl-stat-lbl">Постійних</div>
+    </a>
+    <a href="?segment=vip" class="cl-stat {% if seg == 'vip' %}active-stat{% endif %}" style="text-decoration:none;">
+      <div class="cl-stat-val">{{ stats.vip }}</div>
+      <div class="cl-stat-lbl">VIP</div>
+    </a>
+    <a href="?segment=blocked" class="cl-stat {% if seg == 'blocked' %}active-stat{% endif %}" style="text-decoration:none;">
+      <div class="cl-stat-val" style="color:#cf6679;">{{ stats.blocked }}</div>
+      <div class="cl-stat-lbl">Заблокованих</div>
+    </a>
+  </div>
+
+  <!-- Filter bar -->
+  <form method="get" id="filterForm">
+    {% if seg %}<input type="hidden" name="segment" value="{{ seg }}">{% endif %}
+    <div class="filter-bar">
+      <input type="text" name="q" value="{{ request.GET.q }}" placeholder="🔍  Ім'я, email, телефон...">
+      <select name="sort" onchange="this.form.submit()">
+        <option value="" {% if not request.GET.sort %}selected{% endif %}>За датою реєстрації</option>
+        <option value="name" {% if request.GET.sort == 'name' %}selected{% endif %}>За ім'ям А–Я</option>
+      </select>
+      <button type="submit" class="tb-btn primary">Знайти</button>
+      {% if request.GET.q or seg or request.GET.sort %}
+      <a href="{% url 'manager_clients' %}" class="tb-btn">✕ Скинути</a>
+      {% endif %}
+    </div>
+  </form>
+
+  <!-- Table -->
+  <div class="cl-wrap">
+    {% if users %}
+    <table class="cl-table">
+      <thead>
+        <tr>
+          <th>Клієнт</th>
+          <th>Телефон</th>
+          <th>Документи</th>
+          <th>Сегмент</th>
+          <th>Замовлень</th>
+          <th>Витрачено ₴</th>
+          <th>Знижка</th>
+          <th>Реєстрація</th>
+          <th>Дії</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        {% with p=u.profile %}
+        <tr class="seg-{{ p.segment|default:'new' }}" id="cl-row-{{ u.pk }}">
+          <td>
+            <div class="cl-info">
+              <div class="cl-avatar">{{ p.initials }}</div>
+              <div>
+                <div class="cl-name">{{ u.get_full_name|default:u.username }}</div>
+                <div class="cl-email">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if p.phone %}<a href="tel:{{ p.phone }}" style="color:var(--white);text-decoration:none;">{{ p.phone }}</a>
+            {% else %}<span style="opacity:.3;">—</span>{% endif %}
+          </td>
+          <td>
+            {% if p.passport_number and p.tax_id and p.driver_license %}
+              <span class="docs-ok" title="Всі документи вказано">✔ Повні</span>
+            {% elif p.passport_number or p.tax_id or p.driver_license %}
+              <span class="docs-mid" title="Заповнено частково">⚠ Частково</span>
+            {% else %}
+              <span class="docs-bad" title="Документи відсутні">✘ Немає</span>
+            {% endif %}
+          </td>
+          <td><span class="sp sp-{{ p.segment|default:'new' }}">{{ p.get_segment_display }}</span></td>
+          <td><span class="hl">{{ u.bookings.count }}</span></td>
+          <td><span class="gld">{{ p.total_spent|floatformat:0 }}</span></td>
+          <td>
+            {% if p.discount_pct %}<span style="color:#4caf7d;">{{ p.discount_pct }}%</span>
+            {% else %}<span style="opacity:.3;">—</span>{% endif %}
+          </td>
+          <td style="white-space:nowrap;font-size:12px;">{{ u.date_joined|date:"d.m.Y" }}</td>
+          <td>
+            <div class="act">
+              <button class="abt" title="Деталі" onclick="openView({{ u.pk }})">👁</button>
+              <button class="abt" title="Редагувати" onclick="openEdit({{ u.pk }})">✏</button>
+              <a class="abt" title="Замовлення" href="{% url 'manager_bookings' %}?q={{ u.email }}">📋</a>
+              {% if p.segment != 'blocked' %}
+              <button class="abt red" title="Заблокувати" onclick="promptBlock({{ u.pk }},'{{ u.get_full_name|default:u.username|escapejs }}')">🚫</button>
+              {% else %}
+              <button class="abt" title="Розблокувати" style="color:#4caf7d;" onclick="doUnblock({{ u.pk }})">✔</button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endwith %}
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="pagination">
+      <div>Показано <strong style="color:var(--white);">{{ users|length }}</strong> клієнтів</div>
+      {% if request.GET.q or seg %}<div style="color:var(--gold);font-size:11px;">Фільтр активний</div>{% endif %}
+    </div>
+    {% else %}
+    <div style="padding:70px;text-align:center;color:var(--gray);">
+      <div style="font-size:44px;margin-bottom:14px;">👥</div>
+      <div style="font-size:14px;">Клієнтів не знайдено</div>
+      {% if request.GET.q or seg %}<a href="{% url 'manager_clients' %}" style="color:var(--gold);font-size:12px;margin-top:10px;display:inline-block;">✕ Скинути фільтр</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+</div><!-- /content -->
+
+
+<!-- ══════════════════════════════════════
+     DRAWER: Перегляд клієнта
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="viewOverlay" onclick="if(event.target===this)closeView()">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Клієнт <em id="vTitle">—</em></h2>
+      <button class="close-btn" onclick="closeView()">✕</button>
+    </div>
+    <div class="drawer-body" id="viewBody">
+      <div style="text-align:center;padding:40px;color:var(--gray);">Завантаження...</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════
+     DRAWER: Редагування клієнта
+══════════════════════════════════════ -->
+<div class="modal-overlay" id="editOverlay" onclick="if(event.target===this)closeEdit()">
+  <div class="drawer">
+    <div class="drawer-header">
+      <h2 class="drawer-title">Редагування <em id="eTitle">—</em></h2>
+      <button class="close-btn" onclick="closeEdit()">✕</button>
+    </div>
+    <form method="post" id="editForm" action="">
+      {% csrf_token %}
+      <div class="drawer-body">
+
+        <div class="d-section">
+          <div class="d-section-title">Особисті дані</div>
+          <div class="d-grid-2">
+            <div class="d-field"><label>Ім'я</label>
+              <input type="text" name="first_name" id="eFirstName" placeholder="Ім'я">
+            </div>
+            <div class="d-field"><label>Прізвище</label>
+              <input type="text" name="last_name" id="eLastName" placeholder="Прізвище">
+            </div>
+          </div>
+          <div class="d-field"><label>Email</label>
+            <input type="email" name="email" id="eEmail" placeholder="email@example.com">
+          </div>
+          <div class="d-grid-2">
+            <div class="d-field"><label>Телефон</label>
+              <input type="tel" name="phone" id="ePhone" placeholder="+38 0XX XXX XX XX">
+            </div>
+            <div class="d-field"><label>Місто</label>
+              <input type="text" name="city" id="eCity" placeholder="Харків">
+            </div>
+          </div>
+          <div class="d-field"><label>Адреса</label>
+            <input type="text" name="address" id="eAddress" placeholder="Вул. Назва, буд. №">
+          </div>
+          <div class="d-grid-2">
+            <div class="d-field"><label>Дата народження</label>
+              <input type="date" name="birth_date" id="eBirthDate" style="color-scheme:dark;">
+            </div>
+            <div class="d-field"><label>Стаж (років)</label>
+              <input type="number" name="experience_years" id="eExp" min="0" max="60">
+            </div>
+          </div>
+        </div>
+
+        <div class="d-section">
+          <div class="d-section-title">Документи</div>
+          <div class="d-field"><label>Номер паспорту</label>
+            <input type="text" name="passport_number" id="ePassport" placeholder="КА 123456">
+          </div>
+          <div class="d-grid-2">
+            <div class="d-field"><label>ІПН</label>
+              <input type="text" name="tax_id" id="eTaxId" placeholder="1234567890">
+            </div>
+            <div class="d-field"><label>Водійське посвідчення</label>
+              <input type="text" name="driver_license" id="eLicense" placeholder="КАА 123456">
+            </div>
+          </div>
+        </div>
+
+        <div class="d-section">
+          <div class="d-section-title">Сегмент та умови</div>
+          <div class="d-grid-2">
+            <div class="d-field"><label>Сегмент</label>
+              <select name="segment" id="eSegment">
+                {% for val, label in segments %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="d-field"><label>Знижка %</label>
+              <input type="number" name="discount_pct" id="eDiscount" min="0" max="50">
+            </div>
+          </div>
+        </div>
+
+        <div class="d-section">
+          <div class="d-section-title">Нотатка менеджера</div>
+          <div class="d-field">
+            <textarea name="manager_note" id="eNote" placeholder="Внутрішня нотатка..."></textarea>
+          </div>
+        </div>
+
+                <!-- Block confirm -->
+        <div class="block-confirm" id="blockConfirm">
+          <div style="color:#cf6679;font-weight:500;margin-bottom:8px;">⚠ Підтвердження блокування</div>
+          <div style="font-size:13px;color:var(--gray);margin-bottom:12px;">Клієнт <strong id="blockName" style="color:var(--white);"></strong> не зможе оформлювати замовлення.</div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="btn-save" style="background:#cf6679;flex:0 0 auto;padding:10px 20px;" onclick="confirmBlock()">Заблокувати</button>
+            <button type="button" class="btn-secondary" onclick="document.getElementById('blockConfirm').classList.remove('show')">Скасувати</button>
+          </div>
+        </div>
+      </div>
+      <div class="d-actions">
+        <button type="submit" class="btn-save">Зберегти зміни</button>
+        <button type="button" class="btn-secondary" onclick="closeEdit()">Скасувати</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ── CLIENT DATA ── */
+var CD = {
+{% for u in users %}
+  {{ u.pk }}: {
+    pk:       {{ u.pk }},
+    name:     "{{ u.get_full_name|default:u.username|escapejs }}",
+    initials: "{{ u.profile.initials|escapejs }}",
+    email:    "{{ u.email|escapejs }}",
+    phone:    "{{ u.profile.phone|escapejs }}",
+    city:     "{{ u.profile.city|escapejs }}",
+    seg:      "{{ u.profile.segment|default:'new' }}",
+    segLbl:   "{{ u.profile.get_segment_display|escapejs }}",
+    first_name: "{{ u.first_name|escapejs }}",
+    last_name:  "{{ u.last_name|escapejs }}",
+    address:    "{{ u.profile.address|escapejs }}",
+    birth_date: "{{ u.profile.birth_date|default:'' }}",
+    exp:        {{ u.profile.experience_years }},
+    disc:     {{ u.profile.discount_pct }},
+    note:     "{{ u.profile.manager_note|escapejs }}",
+    passport: "{{ u.profile.passport_number|escapejs }}",
+    tax_id:   "{{ u.profile.tax_id|escapejs }}",
+    license:  "{{ u.profile.driver_license|escapejs }}",
+    joined:   "{{ u.date_joined|date:'d.m.Y' }}",
+    bookings: {{ u.bookings.count }},
+    spent:    "{{ u.profile.total_spent|floatformat:0 }}",
+    editUrl:  "{% url 'manager_client_edit' u.pk %}",
+    bkUrl:    "{% url 'manager_bookings' %}?q={{ u.email }}",
+  },
+{% endfor %}
+};
+
+var SEG_COLOR = {new:'#888',regular:'#5b9bd5',vip:'#c9a84c',blocked:'#cf6679'};
+var CSRF = "{{ csrf_token }}";
+
+/* ── VIEW DRAWER ── */
+function openView(pk) {
+  var c = CD[pk]; if (!c) return;
+  document.getElementById('vTitle').textContent = c.name;
+
+  var docsAll  = c.passport && c.tax_id && c.license;
+  var docsSome = c.passport || c.tax_id || c.license;
+  var docsHtml = docsAll
+    ? '<span style="color:#4caf7d;">✔ Всі заповнені</span>'
+    : (docsSome ? '<span style="color:#e0924c;">⚠ Частково</span>' : '<span style="color:#cf6679;">✘ Не вказані</span>');
+
+  var bkLink = '<a href="' + c.bkUrl + '" style="color:var(--gold);text-decoration:none;font-size:12px;">Переглянути всі замовлення →</a>';
+
+  document.getElementById('viewBody').innerHTML =
+    '<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">' +
+      '<div class="d-avatar-big">' + c.initials + '</div>' +
+      '<div>' +
+        '<div style="font-family:\'Playfair Display\',serif;font-size:20px;color:var(--white);">' + c.name + '</div>' +
+        '<div style="font-size:12px;color:var(--gray);margin-top:3px;">' + c.email + (c.phone ? ' · ' + c.phone : '') + '</div>' +
+        '<span class="sp sp-' + c.seg + '" style="margin-top:6px;display:inline-flex;">' + c.segLbl + '</span>' +
+      '</div>' +
+    '</div>' +
+
+    '<div class="d-section">' +
+      '<div class="d-section-title">Особисті дані</div>' +
+      '<div class="d-row"><span class="d-lbl">Телефон</span><span class="d-val">' + (c.phone || '—') + '</span></div>' +
+      '<div class="d-row"><span class="d-lbl">Місто</span><span class="d-val">' + (c.city || '—') + '</span></div>' +
+      '<div class="d-row"><span class="d-lbl">Дата реєстрації</span><span class="d-val">' + c.joined + '</span></div>' +
+      '<div class="d-row"><span class="d-lbl">Знижка</span><span class="d-val ' + (c.disc ? 'grn' : '') + '">' + (c.disc ? c.disc + '%' : '—') + '</span></div>' +
+    '</div>' +
+
+    '<div class="d-section">' +
+      '<div class="d-section-title">Документи &nbsp;' + docsHtml + '</div>' +
+      '<div class="d-row"><span class="d-lbl">Паспорт</span><span class="d-val ' + (c.passport ? '' : 'red') + '">' + (c.passport || 'не вказано') + '</span></div>' +
+      '<div class="d-row"><span class="d-lbl">ІПН</span><span class="d-val ' + (c.tax_id ? '' : 'red') + '">' + (c.tax_id || 'не вказано') + '</span></div>' +
+      '<div class="d-row"><span class="d-lbl">Вод. посвідчення</span><span class="d-val ' + (c.license ? '' : 'red') + '">' + (c.license || 'не вказано') + '</span></div>' +
+    '</div>' +
+
+    '<div class="d-section">' +
+      '<div class="d-section-title">Статистика</div>' +
+      '<div class="d-row"><span class="d-lbl">Замовлень</span><span class="d-val gold">' + c.bookings + '</span></div>' +
+      '<div class="d-row"><span class="d-lbl">Витрачено (завершені)</span><span class="d-val gold">₴' + c.spent + '</span></div>' +
+    '</div>' +
+
+    (c.note
+      ? '<div class="d-section"><div class="d-section-title">Нотатка менеджера</div>' +
+        '<div style="font-size:13px;color:var(--gray);line-height:1.6;padding:10px 12px;background:var(--dark3);border:1px solid rgba(255,255,255,.04);">' + c.note + '</div></div>'
+      : '') +
+
+    '<div style="display:flex;gap:8px;margin-top:4px;">' +
+      '<button class="btn-save" onclick="closeView();openEdit(' + pk + ')">✏ Редагувати</button>' +
+      '<a class="btn-secondary" href="' + c.bkUrl + '" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">📋 Замовлення</a>' +
+    '</div>';
+
+  document.getElementById('viewOverlay').classList.add('open');
+}
+
+function closeView() { document.getElementById('viewOverlay').classList.remove('open'); }
+
+/* ── EDIT DRAWER ── */
+function openEdit(pk) {
+  var c = CD[pk]; if (!c) return;
+  document.getElementById('eTitle').textContent = c.name;
+  document.getElementById('eFirstName').value  = c.first_name || '';
+  document.getElementById('eLastName').value   = c.last_name  || '';
+  document.getElementById('eEmail').value      = c.email      || '';
+  document.getElementById('ePhone').value      = c.phone      || '';
+  document.getElementById('eCity').value       = c.city       || '';
+  document.getElementById('eAddress').value    = c.address    || '';
+  document.getElementById('eBirthDate').value  = c.birth_date || '';
+  document.getElementById('eExp').value        = (c.exp != null) ? c.exp : 0;
+  document.getElementById('ePassport').value   = c.passport   || '';
+  document.getElementById('eTaxId').value      = c.tax_id     || '';
+  document.getElementById('eLicense').value    = c.license    || '';
+  document.getElementById('eSegment').value    = c.seg;
+  document.getElementById('eDiscount').value   = c.disc;
+  document.getElementById('eNote').value       = c.note;
+  document.getElementById('editForm').action   = c.editUrl;
+  document.getElementById('blockConfirm').classList.remove('show');
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function closeEdit() { document.getElementById('editOverlay').classList.remove('open'); }
+
+/* ── BLOCK / UNBLOCK ── */
+var _blockPk = null;
+
+function promptBlock(pk, name) {
+  _blockPk = pk;
+  document.getElementById('blockName').textContent = name;
+  openEdit(pk);
+  document.getElementById('blockConfirm').classList.add('show');
+}
+
+function confirmBlock() {
+  if (!_blockPk) return;
+  var c = CD[_blockPk];
+  submitQuick(c.editUrl, {segment:'blocked', discount_pct: c.disc, manager_note: c.note});
+}
+
+function doUnblock(pk) {
+  var c = CD[pk];
+  if (!confirm('Розблокувати клієнта ' + c.name + '?')) return;
+  submitQuick(c.editUrl, {segment:'new', discount_pct: c.disc, manager_note: c.note});
+}
+
+function submitQuick(url, fields) {
+  var form = document.createElement('form');
+  form.method = 'POST';
+  form.action = url;
+  var csrf = document.createElement('input');
+  csrf.name = 'csrfmiddlewaretoken'; csrf.value = CSRF;
+  form.appendChild(csrf);
+  for (var k in fields) {
+    var inp = document.createElement('input');
+    inp.name = k; inp.value = fields[k];
+    form.appendChild(inp);
+  }
+  document.body.appendChild(form);
+  form.submit();
+}
+
+/* ── Keyboard ── */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { closeView(); closeEdit(); }
+});
+</script>
+{% endblock %}

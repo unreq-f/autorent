@@ -1,6 +1,79 @@
 {% extends 'base.html' %}
 {% block title %}Контакти — AutoRent Харків{% endblock %}
 
+{% block extra_css %}
+<style>
+.contacts-section { padding:60px; }
+.contacts-grid { display:grid; grid-template-columns:1fr 1fr; gap:60px; }
+.contact-blocks { display:grid; gap:16px; }
+.contact-block { display:flex; align-items:flex-start; gap:16px; padding:20px; background:var(--dark2); border:1px solid var(--border); }
+.cb-icon { font-size:24px; flex-shrink:0; }
+.cb-label { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:4px; }
+.cb-value { font-size:15px; color:var(--white); margin-bottom:2px; }
+.cb-value a { color:var(--white); text-decoration:none; transition:color .2s; }
+.cb-value a:hover { color:var(--gold); }
+.cb-sub { font-size:12px; color:var(--gray); }
+.social-row { display:flex; gap:10px; }
+.soc-btn { display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px; border:1px solid var(--border); color:var(--gray); text-decoration:none; font-size:18px; transition:.2s; }
+.soc-btn:hover { border-color:var(--gold); color:var(--gold); }
+.form-card { background:var(--dark2); border:1px solid var(--border); padding:40px; }
+.form-title { font-size:28px; color:var(--white); margin-bottom:8px; }
+.form-title em { color:var(--gold); font-style:normal; }
+.form-sub { font-size:14px; color:var(--gray); margin-bottom:28px; line-height:1.6; }
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.field { margin-bottom:16px; }
+.field label { display:block; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+.field input, .field select, .field textarea { width:100%; background:var(--dark3); border:1px solid var(--border); color:var(--white); padding:14px 16px; font-family:'DM Sans',sans-serif; font-size:14px; outline:none; transition:border-color .3s; box-sizing:border-box; }
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--gold); }
+.field textarea { height:120px; resize:vertical; }
+.field select option { background:var(--dark2); }
+.contact-toggle {
+  display:flex; gap:0; height:49px;
+}
+.ct-btn {
+  flex:1; background:var(--dark3); border:1px solid var(--border);
+  color:var(--gray); font-family:'DM Sans',sans-serif;
+  font-size:12px; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; transition:.2s;
+}
+.ct-btn:first-child { border-right:none; }
+.ct-btn:hover { color:var(--white); border-color:rgba(201,168,76,.4); }
+.ct-btn.active { background:rgba(201,168,76,.1); border-color:var(--gold); color:var(--gold); }
+.btn-send { width:100%; background:var(--gold); color:var(--black); border:none; padding:18px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; letter-spacing:2px; text-transform:uppercase; cursor:pointer; transition:.2s; }
+.btn-send:hover { background:var(--gold-light); }
+.map-section { padding:0 60px 60px; }
+.map-section h2 { font-size:32px; color:var(--white); margin-bottom:4px; }
+.map-section h2 em { color:var(--gold); font-style:normal; }
+.map-section p { font-size:14px; color:var(--gray); margin-bottom:24px; }
+.map-embed { width:100%; height:420px; border:1px solid var(--border); display:block; }
+.schedule-section { padding:0 60px 80px; }
+.schedule-title { font-size:32px; color:var(--white); margin-bottom:32px; }
+.schedule-title em { color:var(--gold); font-style:normal; }
+.schedule-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; }
+.schedule-item { background:var(--dark2); border:1px solid var(--border); padding:28px; }
+.sch-point { font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--gold); margin-bottom:8px; }
+.sch-name { font-size:18px; color:var(--white); font-family:'Playfair Display',serif; margin-bottom:4px; }
+.sch-address { font-size:13px; color:var(--gray); margin-bottom:12px; }
+.sch-hours { font-size:14px; color:var(--gray); }
+.sch-hours span { color:var(--white); }
+@media(max-width:900px){.contacts-grid,.schedule-grid{grid-template-columns:1fr;}.form-row{grid-template-columns:1fr;}.contacts-section,.map-section,.schedule-section{padding:40px 20px;}}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setContact(method) {
+  var isEmail = method === 'email';
+  document.getElementById('fieldEmail').style.display = isEmail ? 'block' : 'none';
+  document.getElementById('fieldPhone').style.display = isEmail ? 'none' : 'block';
+  document.getElementById('inputEmail').required = isEmail;
+  document.getElementById('inputPhone').required = !isEmail;
+  document.getElementById('ctEmail').classList.toggle('active', isEmail);
+  document.getElementById('ctPhone').classList.toggle('active', !isEmail);
+}
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="page-header">
   <div class="breadcrumb"><a href="{% url 'index' %}">Головна</a> → Контакти</div>
@@ -12,71 +85,50 @@
   <div class="contacts-grid">
     <div>
       <div class="contact-blocks">
-        <div class="contact-block">
-          <div class="cb-icon">📞</div>
-          <div>
-            <div class="cb-label">Телефон</div>
-            <div class="cb-value"><a href="tel:+380670000000">+38 067 000 00 00</a></div>
-            <div class="cb-sub">Цілодобово, 7 днів на тиждень</div>
-          </div>
-        </div>
-        <div class="contact-block">
-          <div class="cb-icon">✉️</div>
-          <div>
-            <div class="cb-label">Email</div>
-            <div class="cb-value"><a href="mailto:info@autorent.ua">info@autorent.ua</a></div>
-            <div class="cb-sub">Відповідаємо протягом 1 години</div>
-          </div>
-        </div>
-        <div class="contact-block">
-          <div class="cb-icon">📍</div>
-          <div>
-            <div class="cb-label">Головний офіс</div>
-            <div class="cb-value">вул. Клочківська, 94а</div>
-            <div class="cb-sub">Харків, Україна · Пн–Нд 8:00–22:00</div>
-          </div>
-        </div>
-        <div class="contact-block">
-          <div class="cb-icon">✈️</div>
-          <div>
-            <div class="cb-label">Аеропорт «Харків»</div>
-            <div class="cb-value">Термінал прильоту, стійка AutoRent</div>
-            <div class="cb-sub">Цілодобово</div>
-          </div>
-        </div>
+        <div class="contact-block"><div class="cb-icon">📞</div><div><div class="cb-label">Телефон</div><div class="cb-value"><a href="tel:+380670000000">+38 067 000 00 00</a></div><div class="cb-sub">Цілодобово, 7 днів на тиждень</div></div></div>
+        <div class="contact-block"><div class="cb-icon">✉️</div><div><div class="cb-label">Email</div><div class="cb-value"><a href="mailto:info@autorent.ua">info@autorent.ua</a></div><div class="cb-sub">Відповідаємо протягом 1 години</div></div></div>
+        <div class="contact-block"><div class="cb-icon">📍</div><div><div class="cb-label">Головний офіс</div><div class="cb-value">вул. Клочківська, 94а</div><div class="cb-sub">Харків, Україна · Пн–Нд 8:00–22:00</div></div></div>
+        <div class="contact-block"><div class="cb-icon">✈️</div><div><div class="cb-label">Аеропорт «Харків»</div><div class="cb-value">Термінал прильоту, стійка AutoRent</div><div class="cb-sub">Цілодобово</div></div></div>
       </div>
       <div style="margin-top:28px;">
         <div style="font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;">Ми в соцмережах</div>
         <div class="social-row">
-          <a class="soc-btn" href="#">📘</a>
-          <a class="soc-btn" href="#">✈️</a>
-          <a class="soc-btn" href="#">📸</a>
-          <a class="soc-btn" href="#">💬</a>
+          <a class="soc-btn" href="https://www.instagram.com/autorent.kharkiv/" target="_blank" rel="noopener" title="Instagram">
+              <img src="/media/instagram_logo.png" alt="Instagram" style="width:26px;height:26px;object-fit:contain;">
+            </a>
+            <a class="soc-btn" href="https://www.facebook.com/autorent.kharkiv/" target="_blank" rel="noopener" title="Facebook">
+              <img src="/media/facebook_logo.png" alt="Facebook" style="width:26px;height:26px;object-fit:contain;">
+            </a>
         </div>
       </div>
     </div>
-
     <div class="form-card">
       <h2 class="form-title">Напишіть <em>нам</em></h2>
       <p class="form-sub">Є запитання або хочете уточнити деталі? Заповніть форму — ми відповімо якнайшвидше.</p>
       <form method="post">
         {% csrf_token %}
         <div class="form-row">
-          <div class="field"><label>Ім'я</label><input type="text" name="name" placeholder="Іван"></div>
-          <div class="field"><label>Телефон</label><input type="tel" name="phone" placeholder="+38 067..."></div>
+          <div class="field"><label>Ім'я</label><input type="text" name="name" placeholder="Іван" required></div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="ivan@email.com" required>
+          </div>
         </div>
-        <div class="field"><label>Email</label><input type="email" name="email" placeholder="ivan@email.com"></div>
+        <div class="field">
+          <label>Номер телефону</label>
+          <input type="tel" name="phone" placeholder="+38 067 000 00 00" required>
+        </div>
         <div class="field">
           <label>Тема звернення</label>
           <select name="subject">
-            <option>Питання щодо бронювання</option>
-            <option>Умови прокату</option>
-            <option>Технічна підтримка</option>
-            <option>Корпоративне співробітництво</option>
-            <option>Інше</option>
+            <option value="booking">Питання щодо бронювання</option>
+            <option value="conditions">Умови прокату</option>
+            <option value="support">Технічна підтримка</option>
+            <option value="corporate">Корпоративне співробітництво</option>
+            <option value="other">Інше</option>
           </select>
         </div>
-        <div class="field"><label>Повідомлення</label><textarea name="message" placeholder="Опишіть ваше питання..."></textarea></div>
+        <div class="field"><label>Повідомлення</label><textarea name="message" placeholder="Опишіть ваше питання..." required></textarea></div>
         <button class="btn-send" type="submit">Надіслати повідомлення</button>
       </form>
     </div>
@@ -84,35 +136,24 @@
 </section>
 
 <section class="map-section">
-  <div class="map-box">
-    <div class="map-pin">📍</div>
-    <div class="map-address">вул. Клочківська, 94а, Харків</div>
-    <div class="map-sub">Головний офіс AutoRent · Поруч з метро «Університет»</div>
-    <a href="https://maps.google.com/?q=вул.+Клочківська+94а+Харків" target="_blank" class="map-btn">Відкрити в Google Maps</a>
-  </div>
+  <h2>Ми на <em>карті</em></h2>
+  <p>Головний офіс AutoRent · вул. Клочківська, 94а · Поруч з метро «Університет»</p>
+  <iframe
+    class="map-embed"
+    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d500!2d36.2181!3d49.9934!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x412b7cc4de8e3a47%3A0xfceabfe3903ea5f3!2z0LLRg9C70LjRhtGPINCa0LvQvtGH0LrRltCy0YHRjNC60LAsIDk0YSwg0KXQsNGA0LrRltCyLCDQpdCw0YDQutGW0LLRgdGM0LrQsCDQvtCx0LvQsNGB0YLRjA!5e0!3m2!1suk!2sua!4v1700000000001!5m2!1suk!2sua"
+    allowfullscreen=""
+    loading="lazy"
+    referrerpolicy="no-referrer-when-downgrade"
+    title="AutoRent офіс — вул. Клочківська 94а, Харків"
+  ></iframe>
 </section>
 
 <section class="schedule-section">
   <h2 class="schedule-title">Наші <em>пункти</em></h2>
   <div class="schedule-grid">
-    <div class="schedule-item">
-      <div class="sch-point">Головний офіс</div>
-      <div class="sch-name">вул. Клочківська, 94а</div>
-      <div class="sch-address">Харківський район, центр міста</div>
-      <div class="sch-hours">Пн–Нд: <span>8:00 – 22:00</span></div>
-    </div>
-    <div class="schedule-item">
-      <div class="sch-point">Аеропорт</div>
-      <div class="sch-name">Аеропорт «Харків»</div>
-      <div class="sch-address">Зона прильоту, стійка AutoRent</div>
-      <div class="sch-hours"><span>Цілодобово 24/7</span></div>
-    </div>
-    <div class="schedule-item">
-      <div class="sch-point">Вокзал</div>
-      <div class="sch-name">Залізничний вокзал</div>
-      <div class="sch-address">Привокзальна площа, 1</div>
-      <div class="sch-hours">Пн–Нд: <span>8:00 – 22:00</span></div>
-    </div>
+    <div class="schedule-item"><div class="sch-point">Головний офіс</div><div class="sch-name">вул. Клочківська, 94а</div><div class="sch-address">Харківський район, центр міста</div><div class="sch-hours">Пн–Нд: <span>8:00 – 22:00</span></div></div>
+    <div class="schedule-item"><div class="sch-point">Аеропорт</div><div class="sch-name">Аеропорт «Харків»</div><div class="sch-address">Зона прильоту, стійка AutoRent</div><div class="sch-hours"><span>Цілодобово 24/7</span></div></div>
+    <div class="schedule-item"><div class="sch-point">Вокзал</div><div class="sch-name">Залізничний вокзал</div><div class="sch-address">Привокзальна площа, 1</div><div class="sch-hours">Пн–Нд: <span>8:00 – 22:00</span></div></div>
   </div>
 </section>
 {% endblock %}

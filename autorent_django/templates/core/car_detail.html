@@ -17,16 +17,32 @@
 
     <!-- LEFT: Image + Gallery -->
     <div class="car-media">
-      <div class="car-main-img">
-        {% if car.image %}
-        <img src="{{ car.image.url }}" alt="{{ car.full_name }}">
+      <div class="car-main-img" id="mainImgWrap">
+        {% if photos %}
+          <img src="{{ photos.0.image.url }}" alt="{{ car.full_name }}" id="mainImg">
+          {% if photos|length > 1 %}
+          <button class="gallery-nav gallery-prev" onclick="galleryNav(-1)">&#8249;</button>
+          <button class="gallery-nav gallery-next" onclick="galleryNav(1)">&#8250;</button>
+          <div class="gallery-counter" id="galCounter">1 / {{ photos|length }}</div>
+          {% endif %}
+        {% elif car.image %}
+          <img src="{{ car.image.url }}" alt="{{ car.full_name }}" id="mainImg">
         {% else %}
-        <div class="car-emoji-large">{{ car.emoji }}</div>
+          <div class="car-emoji-large">{{ car.emoji }}</div>
         {% endif %}
         <div class="car-status-overlay {% if car.is_available %}available{% else %}unavailable{% endif %}">
           {% if car.is_available %}✅ Вільний{% else %}🔒 {{ car.get_status_display }}{% endif %}
         </div>
       </div>
+      {% if photos|length > 1 %}
+      <div class="gallery-thumbs">
+        {% for ph in photos %}
+        <div class="gallery-thumb {% if forloop.first %}active{% endif %}" onclick="gallerySet({{ forloop.counter0 }})">
+          <img src="{{ ph.image.url }}" alt="{{ ph.caption|default:car.full_name }}">
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
       <div class="car-badges-row">
         <span class="badge-item">🏷 {{ car.get_car_class_display }}</span>
         <span class="badge-item">⛽ {{ car.get_fuel_display }}</span>
@@ -43,12 +59,12 @@
         <div class="pricing-header">
           <div>
             <div class="pricing-label">Тариф Base</div>
-            <div class="pricing-price">${{ car.price_base }} <span>/ доба</span></div>
-            <div class="pricing-sub">Застава: ${{ car.deposit }}</div>
+            <div class="pricing-price">₴{{ car.price_base }} <span>/ доба</span></div>
+            <div class="pricing-sub">Застава: ₴{{ car.deposit }}</div>
           </div>
           <div style="text-align:right;">
             <div class="pricing-label">Тариф Prime</div>
-            <div class="pricing-price">${{ car.price_prime }} <span>/ доба</span></div>
+            <div class="pricing-price">₴{{ car.price_prime }} <span>/ доба</span></div>
             <div class="pricing-sub">Без застави</div>
           </div>
         </div>
@@ -101,9 +117,15 @@
     <div class="similar-grid">
       {% for c in similar %}
       <a href="{% url 'car_detail' c.pk %}" class="similar-card">
-        <div class="similar-img">{{ c.emoji }}</div>
+        <div class="similar-img">
+          {% with sp=c.photos.all|first %}
+          {% if sp %}<img src="{{ sp.image.url }}" alt="{{ c.full_name }}" style="width:100%;height:100%;object-fit:cover;">
+          {% elif c.image %}<img src="{{ c.image.url }}" alt="{{ c.full_name }}" style="width:100%;height:100%;object-fit:cover;">
+          {% else %}<span style="font-size:40px;">{{ c.emoji }}</span>{% endif %}
+          {% endwith %}
+        </div>
         <div class="similar-name">{{ c.full_name }}</div>
-        <div class="similar-price">від ${{ c.price_base }} / доба</div>
+        <div class="similar-price">від ₴{{ c.price_base }} / доба</div>
       </a>
       {% endfor %}
     </div>
@@ -114,7 +136,7 @@
 <style>
 .car-detail-section{padding:40px 60px 80px;}
 .car-detail-grid{display:grid;grid-template-columns:1fr 420px;gap:40px;margin-bottom:60px;}
-.car-main-img{height:320px;background:linear-gradient(135deg,#161616,#222);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1px solid var(--border);}
+.car-main-img{height:480px;background:linear-gradient(135deg,#161616,#222);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border:1px solid var(--border);}
 .car-main-img img{width:100%;height:100%;object-fit:cover;}
 .car-emoji-large{font-size:120px;}
 .car-status-overlay{position:absolute;bottom:16px;left:16px;padding:8px 16px;font-size:13px;font-weight:500;}
@@ -144,14 +166,65 @@
 .similar-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
 .similar-card{background:var(--dark2);border:1px solid var(--border);padding:20px;text-decoration:none;transition:border-color .3s;display:block;}
 .similar-card:hover{border-color:var(--gold);}
-.similar-img{font-size:48px;margin-bottom:12px;}
+.similar-img{height:100px;overflow:hidden;margin-bottom:12px;display:flex;align-items:center;justify-content:center;background:var(--dark3);}
 .similar-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);margin-bottom:6px;}
 .similar-price{font-size:13px;color:var(--gold);}
+
+/* Gallery */
+.car-main-img { position:relative; }
+.gallery-nav {
+  position:absolute; top:50%; transform:translateY(-50%);
+  background:rgba(10,10,10,.7); border:1px solid var(--border);
+  color:var(--gold); font-size:28px; line-height:1;
+  width:44px; height:44px; cursor:pointer; z-index:5;
+  transition:.2s; display:flex; align-items:center; justify-content:center;
+}
+.gallery-nav:hover { background:rgba(201,168,76,.15); border-color:var(--gold); }
+.gallery-prev { left:12px; }
+.gallery-next { right:12px; }
+.gallery-counter {
+  position:absolute; bottom:12px; right:12px;
+  background:rgba(10,10,10,.75); color:var(--gray);
+  font-size:11px; letter-spacing:1px; padding:4px 10px;
+}
+.gallery-thumbs {
+  display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;
+}
+.gallery-thumb {
+  width:72px; height:52px; overflow:hidden; cursor:pointer;
+  border:2px solid transparent; transition:border-color .2s; flex-shrink:0;
+}
+.gallery-thumb img { width:100%; height:100%; object-fit:cover; }
+.gallery-thumb.active { border-color:var(--gold); }
+.gallery-thumb:hover { border-color:rgba(201,168,76,.5); }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+{% if photos %}
+var PHOTOS = [{% for ph in photos %}'{{ ph.image.url }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+var galIdx = 0;
+function gallerySet(idx) {
+  galIdx = idx;
+  document.getElementById('mainImg').src = PHOTOS[idx];
+  document.querySelectorAll('.gallery-thumb').forEach(function(t, i) {
+    t.classList.toggle('active', i === idx);
+  });
+  var counter = document.getElementById('galCounter');
+  if (counter) counter.textContent = (idx+1) + ' / ' + PHOTOS.length;
+}
+function galleryNav(dir) {
+  var next = (galIdx + dir + PHOTOS.length) % PHOTOS.length;
+  gallerySet(next);
+}
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowLeft') galleryNav(-1);
+  if (e.key === 'ArrowRight') galleryNav(1);
+});
+{% endif %}
+
 function toggleWishlist(carId, btn) {
   fetch("{% url 'toggle_wishlist' %}", {
     method:'POST',

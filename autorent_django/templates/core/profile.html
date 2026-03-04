@@ -47,30 +47,44 @@
         {% for b in active_bookings %}
         <div class="booking-card">
           <div class="booking-card-header">
-            <div>
-              <div class="bc-number">{{ b.number }}</div>
-              <div class="bc-car">{{ b.car.full_name }} ({{ b.car.year }})</div>
+            <div style="display:flex;gap:14px;align-items:center;">
+              <div class="bc-car-thumb">
+                {% if b.car.photos.first %}
+                  <img src="{{ b.car.photos.first.image.url }}" alt="{{ b.car.full_name }}">
+                {% elif b.car.image %}
+                  <img src="{{ b.car.image.url }}" alt="{{ b.car.full_name }}">
+                {% else %}
+                  <div class="bc-car-thumb-placeholder">{{ b.car.emoji|default:"🚗" }}</div>
+                {% endif %}
+              </div>
+              <div>
+                <div class="bc-number">{{ b.number }}</div>
+                <div class="bc-car">{{ b.car.full_name }} ({{ b.car.year }})</div>
+              </div>
             </div>
             <div class="bc-status sp-{{ b.status }}">{{ b.get_status_display }}</div>
           </div>
           <div class="booking-card-body">
             <div class="bc-info-row">
-              <span>📅 {{ b.date_from }} — {{ b.date_to }}</span>
-              <span>{{ b.days }} днів</span>
+              <span>📅 {{ b.date_from|date:"d.m.Y" }} — {{ b.date_to|date:"d.m.Y" }}</span>
+              <span>{{ b.days }} діб</span>
             </div>
             <div class="bc-info-row">
-              <span>📍 {{ b.get_pickup_location_display }}</span>
-              <span class="bc-price">${{ b.total_price }}</span>
+              <span>📍 {{ b.get_pickup_display_custom }}{% if b.delivery_address %}{% if b.pickup_location == 'delivery' or b.pickup_location == 'delivery_out' %} ({{ b.delivery_address }}){% endif %}{% endif %}</span>
+              <span class="bc-price">₴{{ b.total_with_deposit|floatformat:0 }}</span>
             </div>
           </div>
-          {% if b.status == 'pending' %}
-          <form method="post" style="margin-top:14px;">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="cancel_booking">
-            <input type="hidden" name="booking_id" value="{{ b.pk }}">
-            <button type="submit" class="btn-cancel-booking" onclick="return confirm('Скасувати замовлення {{ b.number }}?')">Скасувати</button>
-          </form>
-          {% endif %}
+          <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
+            <button class="btn-detail" onclick="openDetail({{ b.pk }})">🔍 Деталі</button>
+            {% if b.status == 'pending' %}
+            <form method="post" style="display:inline;">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="cancel_booking">
+              <input type="hidden" name="booking_id" value="{{ b.pk }}">
+              <button type="submit" class="btn-cancel-booking" onclick="return confirm('Скасувати замовлення {{ b.number }}?')">Скасувати</button>
+            </form>
+            {% endif %}
+          </div>
         </div>
         {% endfor %}
         {% else %}
@@ -89,17 +103,31 @@
         {% for b in past_bookings %}
         <div class="booking-card">
           <div class="booking-card-header">
-            <div>
-              <div class="bc-number">{{ b.number }}</div>
-              <div class="bc-car">{{ b.car.full_name }}</div>
+            <div style="display:flex;gap:14px;align-items:center;">
+              <div class="bc-car-thumb">
+                {% if b.car.photos.first %}
+                  <img src="{{ b.car.photos.first.image.url }}" alt="{{ b.car.full_name }}">
+                {% elif b.car.image %}
+                  <img src="{{ b.car.image.url }}" alt="{{ b.car.full_name }}">
+                {% else %}
+                  <div class="bc-car-thumb-placeholder">{{ b.car.emoji|default:"🚗" }}</div>
+                {% endif %}
+              </div>
+              <div>
+                <div class="bc-number">{{ b.number }}</div>
+                <div class="bc-car">{{ b.car.full_name }}</div>
+              </div>
             </div>
             <div class="bc-status sp-{{ b.status }}">{{ b.get_status_display }}</div>
           </div>
           <div class="booking-card-body">
             <div class="bc-info-row">
-              <span>📅 {{ b.date_from }} — {{ b.date_to }}</span>
-              <span class="bc-price">${{ b.total_price }}</span>
+              <span>📅 {{ b.date_from|date:"d.m.Y" }} — {{ b.date_to|date:"d.m.Y" }}</span>
+              <span class="bc-price">₴{{ b.total_with_deposit|floatformat:0 }}</span>
             </div>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn-detail" onclick="openDetail({{ b.pk }})">🔍 Деталі</button>
           </div>
         </div>
         {% endfor %}
@@ -115,14 +143,24 @@
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;">
           {% for w in wishlist %}
           <div class="wishlist-card">
-            <div class="wc-img">{{ w.car.emoji }}</div>
+            <div class="wc-img">
+              {% if w.car.photos.first %}
+                <img src="{{ w.car.photos.first.image.url }}" alt="{{ w.car.full_name }}">
+              {% elif w.car.image %}
+                <img src="{{ w.car.image.url }}" alt="{{ w.car.full_name }}">
+              {% else %}
+                <div class="wc-img-placeholder">{{ w.car.emoji|default:"🚗" }}</div>
+              {% endif %}
+            </div>
+            <div class="wc-body">
             <div class="wc-name">{{ w.car.full_name }}</div>
-            <div class="wc-price">від ${{ w.car.price_base }}/доба</div>
+            <div class="wc-price">від ₴{{ w.car.price_base }}/доба</div>
             <div style="display:flex;gap:8px;margin-top:12px;">
               <a href="{% url 'car_detail' w.car.pk %}" class="wc-btn-detail">Детальніше</a>
               {% if w.car.is_available %}
               <a href="{% url 'order_car' w.car.pk %}" class="wc-btn-book">Замовити</a>
               {% endif %}
+            </div>
             </div>
           </div>
           {% endfor %}
@@ -143,7 +181,7 @@
               <div class="bc-number">{{ f.number }}</div>
               <div class="bc-car">{{ f.get_fine_type_display }}</div>
             </div>
-            <div style="font-family:'Playfair Display',serif;font-size:20px;color:{% if f.status == 'unpaid' %}#cf6679{% else %}var(--gold){% endif %};">${{ f.amount }}</div>
+            <div style="font-family:'Playfair Display',serif;font-size:20px;color:{% if f.status == 'unpaid' %}#cf6679{% else %}var(--gold){% endif %};">₴{{ f.amount }}</div>
           </div>
           <div class="booking-card-body">
             <div class="bc-info-row">
@@ -172,9 +210,27 @@
             <div class="s-field"><label>Email</label><input type="email" name="email" value="{{ user.email }}"></div>
             <div class="s-field"><label>Телефон</label><input type="tel" name="phone" value="{{ profile.phone }}" placeholder="+38 067 000 00 00"></div>
             <div class="s-field"><label>Місто</label><input type="text" name="city" value="{{ profile.city }}" placeholder="Харків"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-              <div class="s-field"><label>Водійське посвідчення</label><input type="text" name="driver_license" value="{{ profile.driver_license }}"></div>
-              <div class="s-field"><label>Стаж (років)</label><input type="number" name="experience_years" value="{{ profile.experience_years }}" min="0" max="60"></div>
+
+            <div style="margin:4px 0 14px;padding:14px 16px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-left:3px solid var(--gold);">
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">📋 Документи (обов'язково для замовлення)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="s-field" style="margin-bottom:0;">
+                  <label>Номер паспорту</label>
+                  <input type="text" name="passport_number" value="{{ profile.passport_number }}" placeholder="КА 123456">
+                </div>
+                <div class="s-field" style="margin-bottom:0;">
+                  <label>Ідентифікаційний код</label>
+                  <input type="text" name="tax_id" value="{{ profile.tax_id }}" placeholder="1234567890">
+                </div>
+                <div class="s-field" style="margin-bottom:0;">
+                  <label>Водійське посвідчення</label>
+                  <input type="text" name="driver_license" value="{{ profile.driver_license }}" placeholder="КАА 123456">
+                </div>
+                <div class="s-field" style="margin-bottom:0;">
+                  <label>Стаж (років)</label>
+                  <input type="number" name="experience_years" value="{{ profile.experience_years }}" min="0" max="60">
+                </div>
+              </div>
             </div>
             <button type="submit" style="background:var(--gold);color:var(--black);padding:13px 32px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-top:8px;">Зберегти зміни</button>
           </div>
@@ -185,7 +241,53 @@
   </div>
 </section>
 
+<!-- ── Booking Detail Modal ── -->
+<div id="detailOverlay" onclick="if(event.target===this)closeDetail()" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.85);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div style="background:var(--dark);border:1px solid var(--border);width:540px;max-height:90vh;overflow-y:auto;padding:36px;animation:fadeUp .3s ease;position:relative;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <h2 style="font-family:'Playfair Display',serif;font-size:22px;" id="detNumber">—</h2>
+      <button onclick="closeDetail()" style="background:none;border:none;color:var(--gray);font-size:22px;cursor:pointer;">✕</button>
+    </div>
+
+    <!-- Car image -->
+    <div id="detCarImg" style="height:160px;background:var(--dark2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;margin-bottom:20px;overflow:hidden;">
+    </div>
+
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);">Автомобіль</div>
+    <div class="det-row"><span>Авто</span><span id="detCar">—</span></div>
+    <div class="det-row"><span>Тариф</span><span id="detTariff">—</span></div>
+
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:16px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);">Терміни та місце</div>
+    <div class="det-row"><span>Дати та час</span><span id="detDates">—</span></div>
+    <div class="det-row"><span>Тривалість</span><span id="detDays">—</span></div>
+    <div class="det-row"><span>Місце отримання</span><span id="detPickup">—</span></div>
+    <div class="det-row" id="detAddressRow" style="display:none;"><span>Адреса доставки</span><span id="detAddress" style="color:var(--white);text-align:right;max-width:260px;">—</span></div>
+    <div class="det-row"><span>Місце повернення</span><span id="detReturn">—</span></div>
+    <div class="det-row" id="detReturnAddrRow" style="display:none;"><span>Адреса повернення</span><span id="detReturnAddr" style="color:var(--white);text-align:right;max-width:260px;">—</span></div>
+
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:16px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);">Вартість</div>
+    <div class="det-row"><span>Оренда</span><span id="detRent">—</span></div>
+    <div id="detExtrasRow" class="det-row" style="display:none;"><span>Доп. послуги</span><span id="detExtras" style="text-align:right;max-width:240px;">—</span></div>
+    <div id="detDeliveryRow" class="det-row" style="display:none;"><span>Доставка</span><span id="detDeliveryPrice">—</span></div>
+    <div id="detDiscountRow" class="det-row" style="display:none;"><span style="color:#c9a84c;">Знижка клієнта</span><span id="detClientDisc" style="color:#c9a84c;">—</span></div>
+    <div id="detPromoRow" class="det-row" style="display:none;"><span style="color:#4caf7d;">Промокод</span><span id="detPromoDisc" style="color:#4caf7d;">—</span></div>
+    <div id="detDepositRow" class="det-row" style="display:none;"><span>Застава (утримується)</span><span id="detDeposit" style="color:#e0924c;">—</span></div>
+    <div class="det-row" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;"><span style="color:var(--white);font-weight:500;">Загальна вартість</span><span id="detTotal" style="color:var(--gold);font-family:'Playfair Display',serif;font-size:18px;">—</span></div>
+
+    <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin:16px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);">Оплата та статус</div>
+    <div class="det-row"><span>Спосіб оплати</span><span id="detPayment">—</span></div>
+    <div class="det-row"><span>Статус</span><span id="detStatus">—</span></div>
+    <div id="detNoteRow" style="display:none;margin-top:14px;padding:12px;background:var(--dark2);border:1px solid var(--border);">
+      <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:6px;">Нотатка менеджера</div>
+      <div id="detNote" style="font-size:13px;color:var(--gray);line-height:1.6;">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- Booking data placeholder - filled in extra_js -->
+
 <style>
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .p-nav-item{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;color:var(--gray);font-size:13px;cursor:pointer;transition:.2s;border-radius:2px;}
 .p-nav-item:hover{color:var(--white);background:rgba(255,255,255,0.03);}
 .p-nav-item.active{color:var(--gold);background:rgba(201,168,76,0.07);}
@@ -196,32 +298,44 @@
 .tab-title{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin-bottom:20px;}
 .booking-card{background:var(--dark2);border:1px solid var(--border);padding:20px;margin-bottom:12px;transition:border-color .3s;}
 .booking-card:hover{border-color:rgba(201,168,76,0.3);}
-.booking-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.booking-card-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
 .bc-number{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:4px;}
 .bc-car{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);}
+.bc-car-thumb{width:64px;height:48px;flex-shrink:0;overflow:hidden;background:var(--dark3);border:1px solid var(--border);}
+.bc-car-thumb img{width:100%;height:100%;object-fit:cover;}
+.bc-car-thumb-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;}
 .booking-card-body{border-top:1px solid rgba(255,255,255,0.04);padding-top:12px;}
 .bc-info-row{display:flex;justify-content:space-between;font-size:13px;color:var(--gray);margin-bottom:6px;}
 .bc-price{color:var(--gold);font-family:'Playfair Display',serif;font-size:16px;}
 .bc-status{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:4px 10px;}
 .sp-pending{background:rgba(224,146,76,.12);color:#e0924c;}
+.sp-awaiting_payment{background:rgba(91,155,213,.12);color:#5b9bd5;}
+.sp-paid{background:rgba(76,175,125,.15);color:#4caf7d;}
 .sp-active{background:rgba(76,175,125,.15);color:#4caf7d;}
 .sp-completed{background:rgba(201,168,76,.12);color:var(--gold);}
 .sp-cancelled{background:rgba(207,102,121,.12);color:#cf6679;}
 .sp-unpaid{background:rgba(207,102,121,.12);color:#cf6679;}
-.sp-paid{background:rgba(76,175,125,.15);color:#4caf7d;}
 .btn-cancel-booking{background:transparent;border:1px solid rgba(207,102,121,0.3);color:#cf6679;padding:8px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
 .btn-cancel-booking:hover{background:rgba(207,102,121,0.1);}
+.btn-detail{background:var(--dark3);border:1px solid var(--border);color:var(--gray);padding:8px 16px;font-size:11px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:.2s;}
+.btn-detail:hover{border-color:var(--gold);color:var(--gold);}
 .empty-state{text-align:center;padding:60px 20px;}
 .empty-icon{font-size:48px;margin-bottom:16px;}
 .empty-title{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:16px;}
 .btn-empty{display:inline-block;background:var(--gold);color:var(--black);padding:12px 28px;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;text-decoration:none;}
-.wishlist-card{background:var(--dark2);border:1px solid var(--border);padding:20px;}
-.wc-img{font-size:48px;margin-bottom:10px;}
+.wishlist-card{background:var(--dark2);border:1px solid var(--border);padding:0;overflow:hidden;}
+.wc-img{height:150px;overflow:hidden;background:var(--dark3);}
+.wc-img img{width:100%;height:100%;object-fit:cover;}
+.wc-img-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;}
+.wc-body{padding:16px;}
 .wc-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--white);margin-bottom:4px;}
 .wc-price{font-size:13px;color:var(--gold);}
 .wc-btn-detail,.wc-btn-book{font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;text-decoration:none;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .wc-btn-detail{border:1px solid var(--border);color:var(--gray);}
 .wc-btn-book{background:var(--gold);color:var(--black);}
+.det-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;}
+.det-row span:first-child{color:var(--gray);}
+.det-row span:last-child{color:var(--white);}
 .s-field{margin-bottom:14px;}
 .s-field label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
 .s-field input{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .3s;}
@@ -231,11 +345,139 @@
 
 {% block extra_js %}
 <script>
+var BOOKINGS = {
+{% for b in all_bookings %}
+  {{ b.pk }}: {
+    number:       '{{ b.number }}',
+    car:          '{{ b.car.full_name|escapejs }} ({{ b.car.year }})',
+    tariff:       '{% if b.is_prime %}Prime (без застави){% else %}Base (зі заставою){% endif %}',
+    dateFrom:     '{{ b.date_from|date:"d.m.Y" }}',
+    dateTo:       '{{ b.date_to|date:"d.m.Y" }}',
+    timeFrom:     '{{ b.time_from|time:"H:i" }}',
+    timeTo:       '{{ b.time_to|time:"H:i" }}',
+    days:         '{{ b.days }} діб',
+    pickup:       '{{ b.get_pickup_display_custom|escapejs }}',
+    returnLoc:    '{{ b.get_return_location_display|escapejs }}',
+    address:      '{{ b.delivery_address|default:""|escapejs }}',
+    returnAddr:   '{{ b.return_address|default:""|escapejs }}',
+    hasAddress:   {% if b.delivery_address and b.pickup_location == 'delivery' %}true{% elif b.delivery_address and b.pickup_location == 'delivery_out' %}true{% else %}false{% endif %},
+    hasReturnAddr:{% if b.return_address and b.return_location == 'delivery' %}true{% elif b.return_address and b.return_location == 'delivery_out' %}true{% else %}false{% endif %},
+    rent:         '₴{{ b.rent_price|floatformat:0 }}',
+    extrasAmt:    {{ b.extras_price|floatformat:0|default:0 }},
+    deliveryAmt:  {{ b.delivery_price|floatformat:0|default:0 }},
+    deposit:      '{{ b.deposit_amount|floatformat:0 }}',
+    total:        '₴{{ b.total_price|floatformat:0 }}',
+    totalFull:    '₴{{ b.total_with_deposit|floatformat:0 }}',
+    payment:      '{{ b.get_payment_method_display|escapejs }}',
+    status:       '{{ b.get_status_display|escapejs }}',
+    statusCls:    '{{ b.status }}',
+    imgUrl:       '{% if b.car.photos.first %}{{ b.car.photos.first.image.url }}{% elif b.car.image %}{{ b.car.image.url }}{% endif %}',
+    emoji:        '{{ b.car.emoji|default:"🚗"|escapejs }}',
+    extras:       '{% spaceless %}{% if b.extra_gps %}GPS {% endif %}{% if b.extra_child_seat %}Дит.крісло {% endif %}{% if b.extra_wifi %}Wi-Fi {% endif %}{% if b.extra_driver %}Доп.водій {% endif %}{% if b.extra_tire %}Захист шин {% endif %}{% if b.extra_green_card %}Зелена картка {% endif %}{% endspaceless %}'.trim(),
+    note:         '{{ b.manager_note|default:""|escapejs }}',
+    discountPct:  {{ b.total_discount_pct|default:0 }},
+    clientDisc:   {{ b.client_discount_pct|default:0 }},
+    promoDisc:    {{ b.promo_discount_pct|default:0 }},
+    promoCode:    '{{ b.promo_code|default:""|escapejs }}',
+    discountAmt:  {{ b.discount_amount|default:0 }}
+  }{% if not forloop.last %},{% endif %}
+{% endfor %}
+};
+</script>
+<script>
 function showTab(name, el) {
   document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.p-nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   el.classList.add('active');
+}
+
+function openDetail(pk) {
+  var b = BOOKINGS[pk];
+  if (!b) return;
+  document.getElementById('detNumber').textContent = b.number;
+  document.getElementById('detCar').textContent     = b.car;
+  document.getElementById('detTariff').textContent  = b.tariff;
+  document.getElementById('detDates').textContent   = b.dateFrom + ' ' + b.timeFrom + ' — ' + b.dateTo + ' ' + b.timeTo;
+  document.getElementById('detDays').textContent    = b.days;
+  document.getElementById('detPickup').textContent  = b.pickup;
+  document.getElementById('detReturn').textContent  = b.returnLoc;
+  document.getElementById('detRent').textContent    = b.rent;
+  document.getElementById('detTotal').textContent   = b.totalFull;
+  document.getElementById('detPayment').textContent = b.payment;
+  document.getElementById('detStatus').innerHTML    = '<span class="bc-status sp-' + b.statusCls + '">' + b.status + '</span>';
+
+  // Pickup address
+  var addrRow = document.getElementById('detAddressRow');
+  if (b.hasAddress && b.address) {
+    document.getElementById('detAddress').textContent = b.address;
+    addrRow.style.display = 'flex';
+  } else { addrRow.style.display = 'none'; }
+
+  // Return address
+  var retAddrRow = document.getElementById('detReturnAddrRow');
+  if (b.hasReturnAddr && b.returnAddr) {
+    document.getElementById('detReturnAddr').textContent = b.returnAddr;
+    retAddrRow.style.display = 'flex';
+  } else { retAddrRow.style.display = 'none'; }
+
+  // Extras list
+  var extRow = document.getElementById('detExtrasRow');
+  if (b.extrasAmt > 0) {
+    document.getElementById('detExtras').textContent = (b.extras || '') + '  +₴' + b.extrasAmt;
+    extRow.style.display = 'flex';
+  } else { extRow.style.display = 'none'; }
+
+  // Delivery
+  var delRow = document.getElementById('detDeliveryRow');
+  if (b.deliveryAmt > 0) {
+    document.getElementById('detDeliveryPrice').textContent = '₴' + b.deliveryAmt;
+    delRow.style.display = 'flex';
+  } else { delRow.style.display = 'none'; }
+
+  // Deposit
+  var depRow = document.getElementById('detDepositRow');
+  var dep = parseFloat(b.deposit) || 0;
+  if (dep > 0) {
+    document.getElementById('detDeposit').textContent = '₴' + b.deposit;
+    depRow.style.display = 'flex';
+  } else { depRow.style.display = 'none'; }
+
+  // Discount
+  var discRow  = document.getElementById('detDiscountRow');
+  var promoRow2 = document.getElementById('detPromoRow');
+  if (b.clientDisc > 0) {
+    document.getElementById('detClientDisc').textContent = b.clientDisc + '%  −₴' + b.discountAmt;
+    discRow.style.display = 'flex';
+  } else { discRow.style.display = 'none'; }
+  if (b.promoDisc > 0 && b.promoCode) {
+    var rentBase = parseFloat((b.rent||'0').replace('₴','')) + (b.extrasAmt||0);
+    var promoAmt = Math.round(rentBase * b.promoDisc / 100);
+    document.getElementById('detPromoDisc').textContent = b.promoCode + '  ' + b.promoDisc + '%  −₴' + promoAmt;
+    promoRow2.style.display = 'flex';
+  } else { promoRow2.style.display = 'none'; }
+
+  // Manager note
+  var noteRow = document.getElementById('detNoteRow');
+  if (b.note) {
+    document.getElementById('detNote').textContent = b.note;
+    noteRow.style.display = 'block';
+  } else { noteRow.style.display = 'none'; }
+
+  // Car image
+  var imgBox = document.getElementById('detCarImg');
+  if (b.imgUrl) {
+    imgBox.innerHTML = '<img src="' + b.imgUrl + '" style="width:100%;height:100%;object-fit:cover;">';
+  } else {
+    imgBox.innerHTML = '<div style="font-size:60px;">' + b.emoji + '</div>';
+  }
+
+  var ov = document.getElementById('detailOverlay');
+  ov.style.display = 'flex';
+}
+
+function closeDetail() {
+  document.getElementById('detailOverlay').style.display = 'none';
 }
 </script>
 {% endblock %}
