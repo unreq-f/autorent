@@ -78,6 +78,12 @@
             {% if b.user.profile.segment %}{{ b.user.profile.get_segment_display }}{% else %}<span style="opacity:.4;">—</span>{% endif %}
           </span>
         </div>
+        {% if b.user.profile.discount_pct > 0 %}
+        <div class="info-row">
+          <span class="info-lbl" style="color:#c9a84c;">Постійна знижка</span>
+          <span class="info-val" style="color:#c9a84c;font-weight:500;">{{ b.user.profile.discount_pct }}%</span>
+        </div>
+        {% endif %}
       </div>
 
       <!-- Rental details -->
@@ -92,32 +98,43 @@
         <div class="info-row"><span class="info-lbl">Адреса доставки</span><span class="info-val">{{ b.delivery_address }}</span></div>
         {% endif %}
         <div class="info-row"><span class="info-lbl">Оплата</span><span class="info-val">{{ b.get_payment_method_display }}</span></div>
-        <div class="info-row"><span class="info-lbl">Оренда ({{ b.days_count }} дн.)</span><span class="info-val gold">{{ b.rent_price|floatformat:0 }} грн</span></div>
+        <div class="info-row"><span class="info-lbl">Оренда ({{ b.days_count }} дн.)</span><span class="info-val gold">₴{{ b.rent_price|floatformat:0 }}</span></div>
         {% if b.extras_price > 0 %}
-        <div class="info-row"><span class="info-lbl">Доп. послуги</span><span class="info-val gold">{{ b.extras_price|floatformat:0 }} грн</span></div>
+        <div class="info-row"><span class="info-lbl">Доп. послуги</span><span class="info-val gold">₴{{ b.extras_price|floatformat:0 }}</span></div>
         {% endif %}
         {% if b.delivery_price > 0 %}
-        <div class="info-row"><span class="info-lbl">Доставка</span><span class="info-val gold">{{ b.delivery_price|floatformat:0 }} грн</span></div>
+        <div class="info-row"><span class="info-lbl">Доставка</span><span class="info-val gold">₴{{ b.delivery_price|floatformat:0 }}</span></div>
+        {% endif %}
+        {% if b.client_discount_pct > 0 or b.promo_code %}
+        <div class="info-row" style="border-top:1px solid rgba(255,255,255,.06);padding-top:8px;margin-top:4px;padding-bottom:8px;">
+          <span class="info-lbl" style="color:var(--gray);font-size:11px;">Знижки</span><span></span>
+        </div>
         {% endif %}
         {% if b.client_discount_pct > 0 %}
-        <div class="info-row"><span class="info-lbl" style="color:#c9a84c;">Знижка клієнта</span><span class="info-val" style="color:#c9a84c;">{{ b.client_discount_pct }}%  −{{ b.discount_amount|floatformat:0 }} грн</span></div>
+        {% with client_amt=b.rent_price|add:b.extras_price %}
+        <div class="info-row"><span class="info-lbl" style="color:#c9a84c;">&#9733; Знижка клієнта</span>
+          <span class="info-val" style="color:#c9a84c;">{{ b.client_discount_pct }}%  −{{ b.discount_amount|floatformat:0 }}</span></div>
+        {% endwith %}
         {% endif %}
-        {% if b.promo_discount_pct > 0 %}
-        <div class="info-row"><span class="info-lbl" style="color:#4caf7d;">Промокод {{ b.promo_code }}</span><span class="info-val" style="color:#4caf7d;">{{ b.promo_discount_pct }}%</span></div>
+        {% if b.promo_code %}
+        <div class="info-row">
+          <span class="info-lbl" style="color:#4caf7d;">&#10003; Промокод {{ b.promo_code }}</span>
+          <span class="info-val" style="color:#4caf7d;">{% if b.promo_discount_pct > 0 %}{{ b.promo_discount_pct }}%{% else %}—{% endif %}</span>
+        </div>
         {% endif %}
         {% if b.total_discount_pct > 0 %}
-        <div class="info-row" style="border-top:1px solid rgba(255,255,255,.06);padding-top:8px;margin-top:4px;">
-          <span class="info-lbl" style="color:#c9a84c;">Разом знижка</span>
-          <span class="info-val" style="color:#c9a84c;">{{ b.total_discount_pct }}%  −{{ b.discount_amount|floatformat:0 }} грн</span>
+        <div class="info-row" style="background:rgba(201,168,76,.04);padding:8px 0;">
+          <span class="info-lbl" style="color:#c9a84c;font-weight:500;">Разом знижка</span>
+          <span class="info-val" style="color:#c9a84c;font-weight:500;">{{ b.total_discount_pct }}%  −₴{{ b.discount_amount|floatformat:0 }}</span>
         </div>
         {% endif %}
         {% if b.deposit_amount > 0 %}
-        <div class="info-row"><span class="info-lbl">Застава</span><span class="info-val" style="color:#e0924c;">{{ b.deposit_amount|floatformat:0 }} грн</span></div>
+        <div class="info-row"><span class="info-lbl">Застава</span><span class="info-val" style="color:#e0924c;">₴{{ b.deposit_amount|floatformat:0 }}</span></div>
         {% endif %}
         <div class="info-row" style="border-top:1px solid rgba(201,168,76,.3);margin-top:6px;padding-top:10px;">
           <span class="info-lbl" style="color:var(--white);font-weight:500;">До оплати</span>
           <span class="info-val gold" style="font-size:18px;">
-            {{ b.total_price|floatformat:0 }}{% if b.deposit_amount > 0 %} + {{ b.deposit_amount|floatformat:0 }} застава{% endif %} грн
+            ₴{{ b.total_price|floatformat:0 }}{% if b.deposit_amount > 0 %} + ₴{{ b.deposit_amount|floatformat:0 }} (застава){% endif %}
           </span>
         </div>
       </div>
@@ -130,7 +147,7 @@
         {% for name, price in extras_list %}
         <div class="info-row">
           <span class="info-lbl">{{ name }}</span>
-          <span class="info-val" style="color:var(--gold);">+{{ price }} грн</span>
+          <span class="info-val" style="color:var(--gold);">+₴{{ price }}</span>
         </div>
         {% endfor %}
       </div>
@@ -142,23 +159,108 @@
     <!-- RIGHT: edit form -->
     <div style="display:flex;flex-direction:column;gap:20px;">
 
-      <!-- Status + note form -->
+      <!-- Edit form -->
       <div class="edit-card">
-        <div class="edit-card-title">Редагування</div>
+        <div class="edit-card-title">Редагування замовлення</div>
         <form method="post">
           {% csrf_token %}
-          <div class="field">
-            <label>Статус замовлення</label>
-            <select name="status">
-              {% for val, label in statuses %}
-              <option value="{{ val }}" {% if b.status == val %}selected{% endif %}>{{ label }}</option>
-              {% endfor %}
-            </select>
+
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin-bottom:12px;">Статус та оплата</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Статус</label>
+              <select name="status">
+                {% for val, label in statuses %}
+                <option value="{{ val }}" {% if b.status == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Спосіб оплати</label>
+              <select name="payment_method">
+                {% for val, label in b.PAYMENTS %}
+                <option value="{{ val }}" {% if b.payment_method == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
           </div>
-          <div class="field">
-            <label>Нотатка менеджера</label>
-            <textarea name="manager_note" rows="5" placeholder="Внутрішня нотатка...">{{ b.manager_note }}</textarea>
+
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin:16px 0 12px;">Дати та час</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Дата отримання</label>
+              <input type="date" name="date_from" value="{{ b.date_from|date:'Y-m-d' }}">
+            </div>
+            <div class="field">
+              <label>Дата повернення</label>
+              <input type="date" name="date_to" value="{{ b.date_to|date:'Y-m-d' }}">
+            </div>
+            <div class="field">
+              <label>Час отримання</label>
+              <input type="time" name="time_from" value="{{ b.time_from|time:'H:i' }}">
+            </div>
+            <div class="field">
+              <label>Час повернення</label>
+              <input type="time" name="time_to" value="{{ b.time_to|time:'H:i' }}">
+            </div>
           </div>
+
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin:16px 0 12px;">Місця та адреси</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Місце отримання</label>
+              <select name="pickup_location" onchange="toggleAddr('pickup',this.value)">
+                {% for val, label in b.PICKUPS %}
+                <option value="{{ val }}" {% if b.pickup_location == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Місце повернення</label>
+              <select name="return_location" onchange="toggleAddr('return',this.value)">
+                {% for val, label in b.PICKUPS %}
+                <option value="{{ val }}" {% if b.return_location == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="field" id="pickupAddrRow" style="{% if b.pickup_location == 'delivery' or b.pickup_location == 'delivery_out' %}display:block{% else %}display:none{% endif %};">
+            <label>Адреса доставки</label>
+            <input type="text" name="delivery_address" value="{{ b.delivery_address }}" placeholder="вул. Приклад, 1">
+          </div>
+          <div class="field" id="returnAddrRow" style="{% if b.return_location == 'delivery' or b.return_location == 'delivery_out' %}display:block{% else %}display:none{% endif %};">
+            <label>Адреса повернення</label>
+            <input type="text" name="return_address" value="{{ b.return_address }}" placeholder="вул. Приклад, 1">
+          </div>
+
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin:16px 0 12px;">Тариф та знижка</div>
+          <div class="form-grid-2">
+            <div class="field">
+              <label>Тариф</label>
+              <select name="tariff">
+                {% for val, label in b.TARIFFS %}
+                <option value="{{ val }}" {% if b.tariff == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Промокод</label>
+              <input type="text" name="promo_code" value="{{ b.promo_code }}" placeholder="AUTORENT2025"
+                     style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+            </div>
+          </div>
+          {% if b.client_discount_pct > 0 %}
+          <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);padding:10px 14px;font-size:12px;color:#c9a84c;margin-bottom:16px;">
+            &#9733; Постійна знижка клієнта: <strong>{{ b.client_discount_pct }}%</strong>
+            {% if b.promo_discount_pct > 0 %} + промокод {{ b.promo_discount_pct }}% = разом {{ b.total_discount_pct }}%{% endif %}
+          </div>
+          {% endif %}
+
+          <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gray);margin:16px 0 12px;">Нотатка</div>
+          <div class="field">
+            <textarea name="manager_note" rows="4" placeholder="Внутрішня нотатка...">{{ b.manager_note }}</textarea>
+          </div>
+
           <div class="btn-row">
             <button type="submit" class="btn-save">Зберегти зміни</button>
           </div>
@@ -217,7 +319,7 @@
           {% for f in fines %}
           <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;">
             <span style="color:var(--white);">{{ f.get_fine_type_display_custom }}</span>
-            <span style="color:#cf6679;font-family:'Playfair Display',serif;">{{ f.amount }} грн</span>
+            <span style="color:#cf6679;font-family:'Playfair Display',serif;">₴{{ f.amount }}</span>
           </div>
           {% endfor %}
         </div>
@@ -258,6 +360,11 @@ function onFineType(sel) {
 }
 function confirmCancel() {
   document.getElementById('cancelConfirm').classList.toggle('show');
+}
+function toggleAddr(type, val) {
+  var isDelivery = val === 'delivery' || val === 'delivery_out';
+  var rowId = type === 'pickup' ? 'pickupAddrRow' : 'returnAddrRow';
+  document.getElementById(rowId).style.display = isDelivery ? 'block' : 'none';
 }
 </script>
 {% endblock %}

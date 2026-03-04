@@ -269,7 +269,7 @@
     <div class="det-row"><span>Оренда</span><span id="detRent">—</span></div>
     <div id="detExtrasRow" class="det-row" style="display:none;"><span>Доп. послуги</span><span id="detExtras" style="text-align:right;max-width:240px;">—</span></div>
     <div id="detDeliveryRow" class="det-row" style="display:none;"><span>Доставка</span><span id="detDeliveryPrice">—</span></div>
-    <div id="detDiscountRow" class="det-row" style="display:none;"><span style="color:#c9a84c;">Знижка клієнта</span><span id="detClientDisc" style="color:#c9a84c;">—</span></div>
+    <div id="detDiscountRow" class="det-row" style="display:none;"><span id="detDiscountLabel" style="color:#c9a84c;">Знижка</span><span id="detClientDisc" style="color:#c9a84c;">—</span></div>
     <div id="detPromoRow" class="det-row" style="display:none;"><span style="color:#4caf7d;">Промокод</span><span id="detPromoDisc" style="color:#4caf7d;">—</span></div>
     <div id="detDepositRow" class="det-row" style="display:none;"><span>Застава (утримується)</span><span id="detDeposit" style="color:#e0924c;">—</span></div>
     <div class="det-row" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;"><span style="color:var(--white);font-weight:500;">Загальна вартість</span><span id="detTotal" style="color:var(--gold);font-family:'Playfair Display',serif;font-size:18px;">—</span></div>
@@ -443,17 +443,38 @@ function openDetail(pk) {
     depRow.style.display = 'flex';
   } else { depRow.style.display = 'none'; }
 
-  // Discount
-  var discRow  = document.getElementById('detDiscountRow');
+  // Discount — reverse-calculate from saved total vs gross
+  var discRow   = document.getElementById('detDiscountRow');
   var promoRow2 = document.getElementById('detPromoRow');
-  if (b.clientDisc > 0) {
-    document.getElementById('detClientDisc').textContent = b.clientDisc + '%  −₴' + b.discountAmt;
+  var rentVal    = parseFloat((b.rent||'0').replace('₴','')) || 0;
+  var extrasVal  = b.extrasAmt || 0;
+  var deliveryV  = b.deliveryAmt || 0;
+  var totalVal   = parseFloat((b.total||'0').replace('₴','')) || 0;
+  var gross      = rentVal + extrasVal + deliveryV;   // undiscounted rental+extras+delivery
+  // Actual discount = gross - total_price (delivery not discounted, so subtract it)
+  var grossNoDelivery = rentVal + extrasVal;
+  var savedAmt   = Math.round(gross - totalVal);      // positive = money saved
+
+  // Determine best label and percentage
+  var discPct    = b.clientDisc || b.discountPct || 0;
+  if (discPct === 0 && savedAmt > 0 && grossNoDelivery > 0) {
+    discPct = Math.round(savedAmt / grossNoDelivery * 100);
+  }
+
+  if (savedAmt > 0) {
+    var label = discPct > 0 ? discPct + '%  −₴' + savedAmt : '−₴' + savedAmt;
+    var rowLabel = b.clientDisc > 0 ? 'Знижка клієнта' : (b.promoCode ? 'Промокод ' + b.promoCode : 'Знижка');
+    document.getElementById('detDiscountLabel').textContent = rowLabel;
+    document.getElementById('detClientDisc').textContent = label;
     discRow.style.display = 'flex';
-  } else { discRow.style.display = 'none'; }
-  if (b.promoDisc > 0 && b.promoCode) {
-    var rentBase = parseFloat((b.rent||'0').replace('₴','')) + (b.extrasAmt||0);
-    var promoAmt = Math.round(rentBase * b.promoDisc / 100);
-    document.getElementById('detPromoDisc').textContent = b.promoCode + '  ' + b.promoDisc + '%  −₴' + promoAmt;
+  } else {
+    discRow.style.display = 'none';
+  }
+
+  // Promo row — show separately only if BOTH client and promo discount exist
+  if (b.promoDisc > 0 && b.clientDisc > 0) {
+    var pAmt = Math.round(grossNoDelivery * b.promoDisc / 100);
+    document.getElementById('detPromoDisc').textContent = (b.promoCode ? b.promoCode + '  ' : '') + b.promoDisc + '%  −₴' + pAmt;
     promoRow2.style.display = 'flex';
   } else { promoRow2.style.display = 'none'; }
 
