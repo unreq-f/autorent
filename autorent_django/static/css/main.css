@@ -1084,7 +1084,10 @@ nav{position:relative;z-index:10;display:flex;align-items:center;justify-content
 .field label{display:block;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
 .field input{width:100%;background:var(--dark2);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:14px 16px;font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:border-color .3s;}
 .field input:focus{border-color:var(--gold);}
-.field .eye-btn{position:absolute;right:14px;bottom:14px;background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px;}
+.pwd-row{position:relative;display:flex;align-items:center;}
+.pwd-row input{flex:1;padding-right:48px;}
+.pwd-row .eye-btn{position:absolute;right:0;top:0;bottom:0;width:46px;background:none;border:none;color:var(--gray);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:color .2s;}
+.pwd-row .eye-btn:hover{color:var(--gold);}
 
 .form-options{display:flex;justify-content:space-between;align-items:center;margin:8px 0 24px;}
 .remember{display:flex;align-items:center;gap:8px;cursor:pointer;}
@@ -1824,3 +1827,163 @@ footer:has(.footer-grid) { padding: 80px 60px 40px; display: block; }
 .footer-col ul a:hover { color: var(--white); }
 .footer-bottom { border-top: 1px solid var(--border); padding-top: 30px; display: flex; justify-content: space-between; align-items: center; }
 .footer-phone-bottom { font-size: 16px; color: var(--gold); font-family: 'Playfair Display', serif; }
+
+/* ============================================================
+   RESPONSIVE STYLES — tablet/mobile (~480px–768px)
+   ============================================================ */
+
+@media (max-width: 768px) {
+
+  /* ── GLOBAL SPACING ── */
+  .section { padding: 60px 20px; }
+  .hero { padding: 100px 20px 60px; }
+
+  /* ── HERO (index) ── */
+  .hero-title { font-size: clamp(28px, 8vw, 42px); }
+  .hero-actions { flex-direction: row; flex-wrap: wrap; gap: 12px; }
+  .hero-stats { flex-wrap: wrap; gap: 24px; margin-top: 40px; }
+  .search-box { padding: 24px 20px; }
+
+  /* ── HOME: categories ── */
+  .categories-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── HOME: popular cars ── */
+  .cars-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ── HOME: why us ── */
+  .why-grid { grid-template-columns: 1fr; gap: 40px; }
+  .why-features { grid-template-columns: 1fr 1fr; }
+
+  /* ── HOME: testimonials ── */
+  .testimonials-grid { grid-template-columns: 1fr; gap: 16px; }
+
+  /* ── HOME: stats row ── */
+  .stats-row { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+  /* ── FOOTER ── */
+  .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+  footer,
+  footer:has(.footer-grid) { padding: 36px 20px 24px !important; }
+  .footer-bottom { flex-direction: column; gap: 8px; text-align: center; }
+  .footer-desc { max-width: 100%; }
+  .footer-col h4 { margin-bottom: 12px; }
+
+  /* ── CATALOG ── */
+  .catalog-layout { grid-template-columns: 1fr; }
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 24px 20px;
+  }
+  .catalog-main { padding: 24px 20px; }
+  .catalog-toolbar { flex-wrap: wrap; gap: 12px; }
+  .filter-tags { flex-wrap: wrap; gap: 8px; }
+  .cars-grid.catalog-grid { grid-template-columns: 1fr; gap: 16px; }
+
+  /* car card — vertical layout (як на десктопі) */
+  .car-card { display: block; }
+  .car-img { height: 185px; }
+  .car-img img { width: 100%; height: 100%; object-fit: cover; }
+  .car-body { padding: 16px; }
+  .car-specs { flex-wrap: wrap; gap: 6px; }
+
+  /* ── CAR DETAIL ── */
+  .detail-layout { grid-template-columns: 1fr; gap: 32px; padding: 0 20px 60px; }
+  .thumbs { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .specs-grid { grid-template-columns: repeat(2, 1fr); }
+  .features-list { grid-template-columns: 1fr 1fr; }
+  .reviews-grid { grid-template-columns: 1fr; gap: 16px; }
+  .similar-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .price-tiers { flex-direction: row; flex-wrap: wrap; gap: 12px; }
+
+  /* ── ORDER FORM ── */
+  .order-layout { grid-template-columns: 1fr; gap: 24px; padding: 0 20px 60px; }
+  .order-summary { position: static; order: -1; }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .extras-grid { grid-template-columns: 1fr 1fr; }
+  .date-row { grid-template-columns: 1fr 1fr; }
+
+  /* ── CONDITIONS ── */
+  .content-layout { grid-template-columns: 1fr; gap: 32px; padding: 40px 20px; }
+  .conditions-aside { position: static; }
+
+  /* ── ABOUT ── */
+  .about-hero { padding: 100px 20px 60px; }
+  .about-hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .hero-nums { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .mission-inner { grid-template-columns: 1fr; gap: 40px; }
+  .team-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .partners-grid { grid-template-columns: repeat(3, 1fr); }
+  .timeline-item { flex-direction: column; gap: 12px; }
+
+  /* ── CONTACTS ── */
+  .contacts-grid { grid-template-columns: 1fr; gap: 32px; }
+  .form-row { grid-template-columns: 1fr; }
+  .schedule-grid { grid-template-columns: 1fr; }
+
+  /* ── PROFILE ── */
+  .profile-layout { grid-template-columns: 1fr; margin-top: 72px; }
+  .profile-sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  }
+  .profile-avatar { width: 56px; height: 56px; font-size: 20px; }
+  .profile-nav { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 0; }
+  .profile-nav a { padding: 8px 14px; border: 1px solid var(--border); font-size: 11px; }
+  .profile-content { padding: 24px 20px; }
+  .booking-card { grid-template-columns: 60px 1fr; gap: 12px; padding: 16px; }
+  .booking-card-img { width: 60px; height: 60px; }
+  .booking-card-actions { grid-column: 1 / -1; display: flex; gap: 8px; flex-wrap: wrap; }
+  .stats-row.profile-stats { grid-template-columns: repeat(2, 1fr); }
+  .wishlist-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .settings-grid { grid-template-columns: 1fr; }
+
+  /* ── BOOKING PAGE (full screen) ── */
+  .booking-page { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  .social-btns { grid-template-columns: 1fr; }
+
+  /* ── GENERAL TEXT & HEADINGS ── */
+  h1 { font-size: clamp(28px, 7vw, 44px); }
+  h2 { font-size: clamp(22px, 6vw, 36px); }
+  .section-title { font-size: clamp(22px, 6vw, 36px); }
+}
+
+  /* ── ABOUT sections ── */
+  .mission-section { padding: 60px 20px; }
+  .team-section { padding: 60px 20px; }
+  .timeline-section { padding: 60px 20px; }
+  .partners-section { padding: 48px 20px; }
+  .cta-banner { padding: 0 20px 60px; }
+  .partners-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── PAGE HEADERS ── */
+  .page-header { padding: 100px 20px 36px !important; }
+  .page-top { padding: 100px 20px 36px !important; }
+
+  /* ── CAR DETAIL (main.css classes) ── */
+  .detail-layout { grid-template-columns: 1fr !important; gap: 32px; padding: 0 20px 60px !important; }
+  .specs-grid { grid-template-columns: repeat(2, 1fr); }
+  .similar-section { padding: 40px 20px; }
+
+/* ── Very small screens (< 400px) ── */
+@media (max-width: 400px) {
+  .cars-grid { grid-template-columns: 1fr; }
+  .car-card { grid-template-columns: 1fr; }
+  .car-img { height: 180px; }
+  .categories-grid { grid-template-columns: repeat(2, 1fr); }
+  .footer-grid { grid-template-columns: 1fr 1fr; }
+  footer,
+  footer:has(.footer-grid) { padding: 28px 16px 20px !important; }
+  .team-grid { grid-template-columns: 1fr 1fr; }
+  .specs-grid { grid-template-columns: 1fr 1fr; }
+  .extras-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+  .hero-actions { flex-direction: column; }
+}

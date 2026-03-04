@@ -7,7 +7,7 @@
   <p>Управляйте бронюваннями, профілем та списком бажань.</p>
 </div>
 
-<section style="padding:40px 60px 80px;">
+<section id="profileSection" style="padding:40px 60px 80px;">
   <div style="display:grid;grid-template-columns:260px 1fr;gap:28px;align-items:start;">
 
     <div style="background:var(--dark2);border:1px solid var(--border);padding:28px;position:sticky;top:88px;">
@@ -33,10 +33,12 @@
         </div>
         <div class="p-nav-item {% if active_tab == 'settings' %}active{% endif %}" onclick="showTab('settings',this)">⚙️ Налаштування</div>
       </div>
-      <a href="{% url 'logout' %}" style="display:block;margin-top:20px;text-align:center;font-size:12px;color:var(--gray);text-decoration:none;letter-spacing:1px;text-transform:uppercase;padding:10px;border:1px solid var(--border);">Вийти з акаунту</a>
-    </div>
+      <a id="profileLogoutBtn" href="{% url 'logout' %}" style="display:block;margin-top:20px;text-align:center;font-size:12px;color:var(--gray);text-decoration:none;letter-spacing:1px;text-transform:uppercase;padding:10px;border:1px solid var(--border);">Вийти з акаунту</a>
+    </div><!-- /profileSidebarInner -->
+    </div><!-- /profileSidebar -->
 
-    <div>
+    <!-- Main Content -->
+    <div id="profileContent">
 
       <div class="p-tab {% if active_tab == 'bookings' or not active_tab %}active{% endif %}" id="tab-bookings">
         <div class="tab-title">Активні замовлення</div>
@@ -196,7 +198,7 @@
           {% csrf_token %}
           <input type="hidden" name="action" value="update_profile">
           <div style="background:var(--dark2);border:1px solid var(--border);padding:28px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="docs-grid">
               <div class="s-field"><label>Ім'я</label><input type="text" name="first_name" value="{{ user.first_name }}"></div>
               <div class="s-field"><label>Прізвище</label><input type="text" name="last_name" value="{{ user.last_name }}"></div>
             </div>
@@ -205,8 +207,8 @@
             <div class="s-field"><label>Місто</label><input type="text" name="city" value="{{ profile.city }}" placeholder="Харків"></div>
 
             <div style="margin:4px 0 14px;padding:14px 16px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-left:3px solid var(--gold);">
-              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">📋 Документи (обов'язково для замовлення)</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+              <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Документи (обов'язково для замовлення)</div>
+              <div class="docs-grid">
                 <div class="s-field" style="margin-bottom:0;">
                   <label>Номер паспорту</label>
                   <input type="text" name="passport_number" value="{{ profile.passport_number }}" placeholder="КА 123456">
@@ -260,7 +262,7 @@
     <div class="det-row"><span>Оренда</span><span id="detRent">—</span></div>
     <div id="detExtrasRow" class="det-row" style="display:none;"><span>Доп. послуги</span><span id="detExtras" style="text-align:right;max-width:240px;">—</span></div>
     <div id="detDeliveryRow" class="det-row" style="display:none;"><span>Доставка</span><span id="detDeliveryPrice">—</span></div>
-    <div id="detDiscountRow" class="det-row" style="display:none;"><span id="detDiscountLabel" style="color:#c9a84c;">Знижка</span><span id="detClientDisc" style="color:#c9a84c;">—</span></div>
+    <div id="detDiscountRow" class="det-row" style="display:none;"><span style="color:#c9a84c;">Знижка клієнта</span><span id="detClientDisc" style="color:#c9a84c;">—</span></div>
     <div id="detPromoRow" class="det-row" style="display:none;"><span style="color:#4caf7d;">Промокод</span><span id="detPromoDisc" style="color:#4caf7d;">—</span></div>
     <div id="detDepositRow" class="det-row" style="display:none;"><span>Застава (утримується)</span><span id="detDeposit" style="color:#e0924c;">—</span></div>
     <div class="det-row" style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;"><span style="color:var(--white);font-weight:500;">Загальна вартість</span><span id="detTotal" style="color:var(--gold);font-family:'Playfair Display',serif;font-size:18px;">—</span></div>
@@ -329,6 +331,87 @@
 .s-field label{display:block;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:8px;}
 .s-field input{width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);color:var(--white);padding:12px 14px;font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .3s;}
 .s-field input:focus{border-color:var(--gold);}
+.docs-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ── RESPONSIVE PROFILE ── */
+@media (max-width: 900px) {
+
+  /* Зовнішня секція: скидаємо padding */
+  #profileSection {
+    padding: 0 !important;
+  }
+
+  /* Grid → flex колонка: sidebar зверху, контент знизу */
+  #profileSection > div[style*="grid-template-columns"] {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  /* ── Sidebar: повний вигляд як на десктопі, але ЗВЕРХУ ── */
+  #profileSidebar {
+    position: static !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-right: none !important;
+    border-bottom: 2px solid var(--border) !important;
+    padding: 24px !important;
+    /* Залишаємо повний вигляд: аватар + ім'я + пункти меню */
+  }
+
+  /* Сайдбар внутрішній: вертикальний (як на десктопі) */
+  #profileSidebarInner {
+    display: block !important;
+  }
+
+  /* Пункти меню - залишаємо як є (вертикально як на десктопі) */
+  .p-nav-item {
+    display: block !important;
+  }
+
+  /* Кнопка виходу */
+  #profileLogoutBtn {
+    display: block !important;
+    margin-top: 16px !important;
+  }
+
+  /* Основний контент */
+  #profileContent {
+    padding: 20px 16px 60px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+  }
+
+  /* ── Виправлення накладання карток замовлень ── */
+  .booking-card {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin-bottom: 12px !important;
+    overflow: visible !important;
+  }
+  .booking-card-header {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .booking-card-header > div:first-child {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+  .bc-car { font-size: 14px !important; }
+  .bc-info-row {
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #profileSidebar { padding: 16px !important; }
+  /* Документи: один за одним */
+  .docs-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+}
 </style>
 {% endblock %}
 
@@ -433,35 +516,16 @@ function openDetail(pk) {
   } else { depRow.style.display = 'none'; }
 
   // Discount
-  var discRow   = document.getElementById('detDiscountRow');
+  var discRow  = document.getElementById('detDiscountRow');
   var promoRow2 = document.getElementById('detPromoRow');
-  var rentVal    = parseFloat((b.rent||'0').replace('₴','')) || 0;
-  var extrasVal  = b.extrasAmt || 0;
-  var deliveryV  = b.deliveryAmt || 0;
-  var totalVal   = parseFloat((b.total||'0').replace('₴','')) || 0;
-  var gross      = rentVal + extrasVal + deliveryV;
-  var grossNoDelivery = rentVal + extrasVal;
-  var savedAmt   = Math.round(gross - totalVal);
-
-  var discPct    = b.clientDisc || b.discountPct || 0;
-  if (discPct === 0 && savedAmt > 0 && grossNoDelivery > 0) {
-    discPct = Math.round(savedAmt / grossNoDelivery * 100);
-  }
-
-  if (savedAmt > 0) {
-    var label = discPct > 0 ? discPct + '%  −₴' + savedAmt : '−₴' + savedAmt;
-    var rowLabel = b.clientDisc > 0 ? 'Знижка клієнта' : (b.promoCode ? 'Промокод ' + b.promoCode : 'Знижка');
-    document.getElementById('detDiscountLabel').textContent = rowLabel;
-    document.getElementById('detClientDisc').textContent = label;
+  if (b.clientDisc > 0) {
+    document.getElementById('detClientDisc').textContent = b.clientDisc + '%  −₴' + b.discountAmt;
     discRow.style.display = 'flex';
-  } else {
-    discRow.style.display = 'none';
-  }
-
-  // Promo row
-  if (b.promoDisc > 0 && b.clientDisc > 0) {
-    var pAmt = Math.round(grossNoDelivery * b.promoDisc / 100);
-    document.getElementById('detPromoDisc').textContent = (b.promoCode ? b.promoCode + '  ' : '') + b.promoDisc + '%  −₴' + pAmt;
+  } else { discRow.style.display = 'none'; }
+  if (b.promoDisc > 0 && b.promoCode) {
+    var rentBase = parseFloat((b.rent||'0').replace('₴','')) + (b.extrasAmt||0);
+    var promoAmt = Math.round(rentBase * b.promoDisc / 100);
+    document.getElementById('detPromoDisc').textContent = b.promoCode + '  ' + b.promoDisc + '%  −₴' + promoAmt;
     promoRow2.style.display = 'flex';
   } else { promoRow2.style.display = 'none'; }
 

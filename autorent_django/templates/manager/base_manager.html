@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}AutoRent Manager{% endblock %}</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'css/manager.css' %}?v=3">
+<link rel="stylesheet" href="{% static 'css/manager.css' %}?v=10">
 <style>
 /* Django nav active state helpers */
 .nav-item.active { color: var(--gold) !important; background: rgba(201,168,76,0.08); border-left: 2px solid var(--gold); }
@@ -21,7 +21,13 @@
 </head>
 <body>
 
-<aside class="sidebar">
+<!-- Mobile: overlay та pull-tab -->
+<div class="mob-overlay" id="mobOverlay" onclick="closeMgrSidebar()"></div>
+<button class="sidebar-pull" id="sidebarPull" onclick="toggleMgrSidebar()" aria-label="Меню">
+  <span class="sidebar-pull-text" id="mgrPullText">☰ Меню</span>
+</button>
+
+<aside class="sidebar" id="mgrSidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">Auto<span>Rent</span></div>
     <div class="logo-sub">Менеджер-портал</div>
@@ -89,6 +95,33 @@
 </div>
 
 <script src="{% static 'js/manager.js' %}?v=2"></script>
+<script>
+/* ── Mobile sidebar toggle ── */
+(function() {
+  var sidebar = document.getElementById('mgrSidebar');
+  var pull    = document.getElementById('sidebarPull');
+  var overlay = document.getElementById('mobOverlay');
+  var pullTxt = document.getElementById('mgrPullText');
+
+  window.openMgrSidebar = function() {
+    sidebar.classList.add('open');
+    pull.classList.add('is-open');
+    overlay.classList.add('open');
+    pullTxt.textContent = '✕';
+    document.body.style.overflow = 'hidden';
+  };
+  window.closeMgrSidebar = function() {
+    sidebar.classList.remove('open');
+    pull.classList.remove('is-open');
+    overlay.classList.remove('open');
+    pullTxt.textContent = '☰';
+    document.body.style.overflow = '';
+  };
+  window.toggleMgrSidebar = function() {
+    sidebar.classList.contains('open') ? closeMgrSidebar() : openMgrSidebar();
+  };
+})();
+</script>
 {% block extra_js %}{% endblock %}
 <script>
   setTimeout(() => {

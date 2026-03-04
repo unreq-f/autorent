@@ -85,6 +85,31 @@
 .nb-row-lbl{font-size:11px;letter-spacing:1px;text-transform:uppercase;}
 .nb-row.total-row{font-size:16px;color:var(--white);padding-top:10px;margin-top:6px;border-top:1px solid var(--border);}
 .nb-row.total-row .nb-row-val{color:var(--gold);font-family:'Playfair Display',serif;font-size:22px;}
+
+/* ── MOBILE ── */
+
+/* ── MOBILE: вкладки з прокруткою ── */
+@media (max-width: 900px) {
+  .status-tabs {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    border-bottom: none !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 12px !important;
+  }
+  .stab, .seg-tab {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 7px 12px !important;
+    font-size: 11px !important;
+    border: 1px solid var(--border) !important;
+    border-bottom: 2px solid transparent !important;
+  }
+  .stab.active, .seg-tab.active {
+    border-bottom-color: var(--gold) !important;
+    color: var(--gold) !important;
+  }
+}
 </style>
 {% endblock %}
 
@@ -164,7 +189,7 @@
             <th>Повернення</th>
             <th>Тариф</th>
             <th>Сума &#8372;</th>
-            <th>Місце</th>
+            <th style="max-width:110px;">Місце</th>
             <th>Статус</th>
             <th>Дії</th>
           </tr>
@@ -190,7 +215,7 @@
               <div style="font-size:10px;color:var(--gray);margin-top:2px;">{{ b.total_price|floatformat:0 }} + {{ b.deposit_amount|floatformat:0 }} застава</div>
               {% endif %}
             </td>
-            <td style="font-size:12px;max-width:130px;line-height:1.4;">{{ b.get_pickup_display_custom }}{% if b.delivery_address %}{% if b.pickup_location == 'delivery' or b.pickup_location == 'delivery_out' %}<br>({{ b.delivery_address }}){% endif %}{% endif %}</td>
+            <td style="font-size:12px;max-width:110px;line-height:1.4;word-break:break-word;white-space:normal;">{{ b.get_pickup_display_custom }}{% if b.delivery_address %}{% if b.pickup_location == 'delivery' or b.pickup_location == 'delivery_out' %}<br>({{ b.delivery_address }}){% endif %}{% endif %}</td>
             <td><span class="sp sp-{{ b.status }}" id="pill-{{ b.pk }}">{{ b.get_status_display }}</span></td>
             <td>
               <div class="act">

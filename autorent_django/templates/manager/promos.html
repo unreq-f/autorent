@@ -40,16 +40,70 @@
 .btn-danger:hover{background:rgba(207,102,121,.08);}
 .btn-cancel{flex:1;background:transparent;color:var(--gray);border:1px solid var(--border);padding:11px;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .btn-cancel:hover{border-color:var(--gold);color:var(--white);}
+
+/* ── MOBILE ── */
+@media (max-width: 900px) {
+  .promo-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    width: 100% !important;
+  }
+  .promo-grid > div:first-child { order: 0 !important; width: 100% !important; }
+  .add-card {
+    order: 1 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 18px !important;
+  }
+  /* Таблиця — прокрутка */
+  .pt-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+  }
+  .pt { min-width: 520px !important; }
+  /* Форма — 1 колонка */
+  .dg2 { grid-template-columns: 1fr !important; }
+  /* Інпути не виходять за екран */
+  .df input, .df select { width: 100% !important; box-sizing: border-box !important; }
+}
+/* ── Status tabs ── */
+.status-tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.stab{display:inline-flex;align-items:center;gap:6px;padding:7px 13px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--gray);cursor:pointer;border:1px solid var(--border);border-bottom:2px solid transparent;transition:.2s;text-decoration:none;white-space:nowrap;margin:0 4px 4px 0;}
+.stab:hover{color:var(--white);border-color:rgba(201,168,76,.3);}
+.stab.active{color:var(--gold);border-color:var(--gold);border-bottom-color:var(--gold);}
+.stab .cnt{font-size:10px;padding:1px 5px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.2);}
+.stab.active .cnt{background:var(--gold);color:var(--black);}
+
 </style>{% endblock %}
 
 {% block main_content %}
 <div class="topbar"><div class="topbar-title">Промокоди</div></div>
 <div class="content">
+
+  <!-- Status tabs -->
+  <div style="display:block;margin-bottom:20px;line-height:2.2;">
+    <a class="stab {% if not sf %}active{% endif %}" href="{% url 'manager_promos' %}">
+      Всі <span class="cnt">{{ counts.all }}</span>
+    </a>
+    <a class="stab {% if sf == 'active' %}active{% endif %}" href="?status=active">
+      Активні <span class="cnt">{{ counts.active }}</span>
+    </a>
+    <a class="stab {% if sf == 'inactive' %}active{% endif %}" href="?status=inactive">
+      Неактивні <span class="cnt">{{ counts.inactive }}</span>
+    </a>
+    <a class="stab {% if sf == 'expired' %}active{% endif %}" href="?status=expired">
+      Прострочені <span class="cnt">{{ counts.expired }}</span>
+    </a>
+  </div>
+
 <div class="promo-grid">
 
   <!-- Table -->
   <div>
     {% if promos %}
+    <div class="pt-wrap">
     <table class="pt">
       <thead><tr><th>Код</th><th>Знижка</th><th>Використань</th><th>Макс.</th><th>Діє до</th><th>Статус</th><th></th></tr></thead>
       <tbody>
@@ -75,6 +129,7 @@
       {% endfor %}
       </tbody>
     </table>
+    </div>
     <div style="padding:12px 14px;font-size:12px;color:var(--gray);border-top:1px solid var(--border);">{{ promos|length }} промокодів</div>
     {% else %}
     <div style="padding:60px;text-align:center;color:var(--gray);"><div style="font-size:40px;margin-bottom:12px;">🎟️</div><div>Промокодів ще немає</div><div style="font-size:12px;margin-top:6px;opacity:.5;">Додайте перший промокод у формі праворуч</div></div>

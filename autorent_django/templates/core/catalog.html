@@ -200,15 +200,30 @@ html { overflow-x: hidden; }
     position:fixed; left:0; top:72px; height:calc(100vh - 72px);
     transform:translateX(-100%);
     box-shadow:6px 0 32px rgba(0,0,0,.6);
+    z-index:160 !important; /* вище overlay */
   }
   .filter-sidebar.open { transform:translateX(0); }
   .sidebar-pull { display:flex; align-items:center; }
-  .mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:140; }
+  .mob-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:150; }
   .mob-overlay.open { display:block; }
   .catalog-main { padding:24px 16px 60px; }
+  /* Sidebar scroll area поверх overlay */
+  .sidebar-scroll { position:relative; z-index:161; }
+  /* Чіпи та лейбли клікабельні */
+  .chip, .chip label, .chip input,
+  .rchip, .rchip label, .rchip input,
+  .f-input, .btn-apply {
+    position: relative;
+    z-index: 162;
+    pointer-events: auto;
+  }
 }
-@media(max-width:500px) {
-  .cars-grid { grid-template-columns:1fr; }
+@media(max-width:768px) {
+  /* 1 колонка — картки вертикальні як на головній */
+  .cars-grid { grid-template-columns:1fr !important; gap:12px; }
+  .car-img { height:200px; }
+  .car-body { padding:16px; }
+  .car-name { font-size:18px; }
 }
 </style>
 {% endblock %}
@@ -493,12 +508,13 @@ var pull    = document.getElementById('sidebarPull');
 var overlay = document.getElementById('mobOverlay');
 var pullTxt = document.getElementById('pullText');
 
-function toggleSidebar() {
-  var open = sidebar.classList.toggle('open');
-  pull.classList.toggle('is-open', open);
-  overlay.classList.toggle('open', open);
-  pullTxt.textContent = open ? '✕ Закрити' : '⚙ Фільтри';
-  document.body.style.overflow = open ? 'hidden' : '';
+function openSidebar() {
+  sidebar.classList.add('open');
+  pull.classList.add('is-open');
+  overlay.classList.add('open');
+  pullTxt.textContent = '✕ Закрити';
+  document.body.style.overflow = 'hidden';
+  try { sessionStorage.setItem('catalogSidebar', '1'); } catch(e) {}
 }
 function closeSidebar() {
   sidebar.classList.remove('open');
@@ -506,7 +522,28 @@ function closeSidebar() {
   overlay.classList.remove('open');
   pullTxt.textContent = '⚙ Фільтри';
   document.body.style.overflow = '';
+  try { sessionStorage.removeItem('catalogSidebar'); } catch(e) {}
 }
+function toggleSidebar() {
+  if (sidebar.classList.contains('open')) { closeSidebar(); }
+  else { openSidebar(); }
+}
+
+/* Restore sidebar open state after filter-triggered page reload */
+(function() {
+  try {
+    if (sessionStorage.getItem('catalogSidebar') === '1') {
+      /* Only restore on mobile (sidebar is overlay) */
+      if (window.innerWidth <= 960) {
+        sidebar.classList.add('open');
+        pull.classList.add('is-open');
+        overlay.classList.add('open');
+        pullTxt.textContent = '✕ Закрити';
+        /* Don't lock body scroll on restore - user can still scroll */
+      }
+    }
+  } catch(e) {}
+})();
 
 /* ── Sort: preserve all current params ── */
 function applySort(val) {

@@ -14,7 +14,7 @@
 .filter-bar input,.filter-bar select{background:var(--dark3);border:1px solid var(--border);color:var(--white);padding:9px 12px;font-family:'DM Sans',sans-serif;font-size:12px;outline:none;}
 .filter-bar input:focus,.filter-bar select:focus{border-color:var(--gold);}
 .filter-bar input[type=text]{flex:1;min-width:200px;}
-.ft{width:100%;border-collapse:collapse;}
+.ft{width:100%;border-collapse:collapse;min-width:860px;}
 .ft th{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);padding:11px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--dark3);white-space:nowrap;}
 .ft td{padding:12px 14px;font-size:13px;color:var(--gray);border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
 .ft tr:hover td{background:rgba(255,255,255,.015);}
@@ -56,6 +56,41 @@
 .modal-center{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;}
 .modal-center.open{display:flex;}
 .mbox{background:var(--dark2);border:1px solid var(--border);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;}
+
+/* ── MOBILE (глобальний mobile CSS в manager.css) ── */
+/* ── MOBILE ── */
+
+/* ── MOBILE: вкладки з прокруткою ── */
+@media (max-width: 900px) {
+  .stats-row {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .stat-card { padding: 12px 10px !important; }
+  .stat-val  { font-size: 20px !important; }
+  .stat-lbl  { font-size: 9px !important; }
+  .ft { min-width: 860px !important; }
+
+  .status-tabs {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    border-bottom: none !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 12px !important;
+  }
+  .stab, .seg-tab {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 7px 12px !important;
+    font-size: 11px !important;
+    border: 1px solid var(--border) !important;
+    border-bottom: 2px solid transparent !important;
+  }
+  .stab.active, .seg-tab.active {
+    border-bottom-color: var(--gold) !important;
+    color: var(--gold) !important;
+  }
+}
 </style>{% endblock %}
 
 {% block main_content %}
@@ -75,9 +110,13 @@
 
   <!-- Status tabs -->
   <div class="status-tabs">
-    <a class="stab {% if not sf %}active{% endif %}" href="{% url 'manager_fines' %}{% if request.GET.q %}?q={{ request.GET.q }}{% endif %}">Всі</a>
-    {% for val, label in fine_statuses %}
-    <a class="stab {% if sf == val %}active{% endif %}" href="?status={{ val }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">{{ label }}</a>
+    <a class="stab {% if not sf %}active{% endif %}" href="{% url 'manager_fines' %}{% if request.GET.q %}?q={{ request.GET.q }}{% endif %}">
+      Всі <span class="cnt">{{ fine_counts_all }}</span>
+    </a>
+    {% for val, label, cnt in fine_statuses_counts %}
+    <a class="stab {% if sf == val %}active{% endif %}" href="?status={{ val }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+      {{ label }} <span class="cnt">{{ cnt }}</span>
+    </a>
     {% endfor %}
   </div>
 

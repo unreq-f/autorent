@@ -984,3 +984,174 @@ body { display: flex; }
 
 /* ===== Django compatibility ===== */
 .main-content .main { margin-left: 0 !important; width: 100%; }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE RESPONSIVE — менеджер-портал (≤900px)
+   ═══════════════════════════════════════════════════ */
+
+/* Десктоп: pull-tab схований */
+.sidebar-pull { display: none; }
+
+@media (max-width: 900px) {
+
+  /* ── Sidebar ── */
+  .sidebar {
+    transform: translateX(-100%) !important;
+    transition: transform .35s cubic-bezier(.4,0,.2,1) !important;
+    z-index: 300 !important;
+    box-shadow: 6px 0 32px rgba(0,0,0,.7) !important;
+  }
+  .sidebar.open { transform: translateX(0) !important; }
+
+  /* ── Overlay ── */
+  .mob-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 290;
+  }
+  .mob-overlay.open { display: block; }
+
+  /* ── Pull-tab ── */
+  .sidebar-pull {
+    display: flex !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    background: var(--gold) !important;
+    color: var(--black) !important;
+    border: none !important;
+    padding: 14px 7px !important;
+    cursor: pointer !important;
+    z-index: 310 !important;
+    border-radius: 0 4px 4px 0 !important;
+    box-shadow: 3px 0 16px rgba(0,0,0,.5) !important;
+    transition: left .35s cubic-bezier(.4,0,.2,1) !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .sidebar-pull.is-open { left: 240px !important; }
+  .sidebar-pull-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── Main content ── */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* ── Topbar: кнопки під заголовок ── */
+  .topbar {
+    padding: 10px 12px !important;
+    height: auto !important;
+    min-height: 52px !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .topbar-title {
+    font-size: 12px !important;
+    flex: 1 1 100% !important;
+    order: 0 !important;
+  }
+  .topbar > div[style],
+  .topbar > div:last-child {
+    flex: 1 1 100% !important;
+    order: 1 !important;
+    display: flex !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
+  }
+  .tb-btn {
+    flex: 1 1 auto !important;
+    font-size: 11px !important;
+    padding: 8px 10px !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+  }
+
+  /* ── Content ── */
+  .content {
+    padding: 14px 12px 60px !important;
+    overflow-x: visible !important;
+  }
+
+  /* ── KPI: 2 колонки ── */
+  .kpi-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin-bottom: 14px !important;
+    overflow-x: visible !important;
+  }
+  .kpi-card {
+    padding: 12px 10px !important;
+    min-width: 0 !important;
+    flex: none !important;
+  }
+  .kpi-val  { font-size: 20px !important; }
+  .kpi-label{ font-size: 10px !important; letter-spacing: 0.5px !important; margin-top: 4px !important; }
+  .kpi-delta{ font-size: 10px !important; }
+  .kpi-icon { font-size: 16px !important; margin-bottom: 8px !important; }
+
+  /* ── Page-grid стек ── */
+  .page-grid { grid-template-columns: 1fr !important; }
+
+  /* ── Promo-grid: таблиця зверху, форма знизу ── */
+  .promo-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+  }
+  .promo-grid > div:first-child { order: 0 !important; }
+  .promo-grid > .add-card       { order: 1 !important; }
+
+  /* ── Таблиці: окрема горизонтальна прокрутка ── */
+  .table-wrap  { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .cars-table-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .bk-wrap     { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .pt-wrap     { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+  .py-wrap     { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+
+  .table    { min-width: 680px !important; white-space: nowrap; }
+  .bk-table { min-width: 900px !important; white-space: nowrap; }
+  .ct       { min-width: 820px !important; white-space: nowrap; }
+  .pt       { min-width: 520px !important; white-space: nowrap; }
+  .py-table { min-width: 800px !important; white-space: nowrap; }
+  .ft       { min-width: 860px !important; white-space: nowrap; }
+
+  /* ── Вкладки: горизонтальний скрол ── */
+  .status-tabs {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 4px !important;
+    padding-bottom: 8px !important;
+    scrollbar-width: none !important;
+    margin-bottom: 12px !important;
+  }
+  .status-tabs::-webkit-scrollbar { display: none; }
+  .stab {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    padding: 8px 14px !important;
+    font-size: 11px !important;
+  }
+
+  /* ── Filter bar ── */
+  .filter-bar  { flex-wrap: wrap !important; gap: 8px !important; }
+  .view-controls { flex-wrap: wrap !important; }
+  .search-box  { flex: 1 1 100% !important; min-width: 0 !important; }
+  .filter-select { flex: 1 1 calc(50% - 4px) !important; min-width: 0 !important; }
+
+}

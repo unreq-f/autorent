@@ -50,21 +50,27 @@
 
 /* ── CARS ── */
 .cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
-.car-card{background:var(--dark2);border:1px solid var(--border);overflow:hidden;transition:transform .3s,border-color .3s;}
-.car-card:hover{transform:translateY(-6px);border-color:var(--gold);}
-.car-img{height:200px;background:linear-gradient(135deg,#1a1a1a,#222);display:flex;align-items:center;justify-content:center;font-size:72px;position:relative;overflow:hidden;}
-.car-img::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,rgba(201,168,76,0.05),transparent);}
-.car-badge{position:absolute;top:16px;left:16px;background:var(--gold);color:var(--black);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;padding:4px 10px;font-weight:500;}
-.car-body{padding:28px;}
-.car-class{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);}
-.car-name{font-family:'Playfair Display',serif;font-size:22px;color:var(--white);margin:8px 0 16px;}
-.car-specs{display:flex;gap:20px;font-size:12px;color:var(--gray);margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,0.06);}
-.car-spec{display:flex;align-items:center;gap:6px;}
-.car-footer{display:flex;align-items:center;justify-content:space-between;}
-.car-price strong{font-family:'Playfair Display',serif;font-size:26px;color:var(--gold);}
-.car-price span{font-size:12px;color:var(--gray);}
-.car-btn{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:10px 20px;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background .3s,color .3s;text-decoration:none;display:inline-block;}
-.car-btn:hover{background:var(--gold);color:var(--black);}
+.car-card{background:var(--dark2);border:1px solid var(--border);overflow:hidden;transition:border-color .3s,transform .2s;display:block;text-decoration:none;}
+.car-card:hover{border-color:rgba(201,168,76,.4);transform:translateY(-2px);}
+.car-img{height:185px;background:linear-gradient(135deg,#161616,#222);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.car-img img{width:100%;height:100%;object-fit:cover;}
+.car-badge-cls{position:absolute;top:10px;left:10px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,.4);padding:3px 8px;background:rgba(10,10,10,.85);}
+.car-badge-st{position:absolute;top:10px;right:10px;font-size:9px;padding:3px 8px;}
+.st-free{background:rgba(76,175,125,.35);color:#6dd9a0;}
+.st-busy{background:rgba(201,168,76,.30);color:var(--gold);}
+.car-body{padding:18px;}
+.car-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);margin-bottom:8px;line-height:1.25;}
+.car-specs{display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--gray);margin-bottom:14px;}
+.car-specs span::after{content:'·';margin-left:8px;}
+.car-specs span:last-child::after{content:'';}
+.car-ft{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;padding-top:12px;}
+.car-price-val{font-family:'Playfair Display',serif;font-size:20px;color:var(--gold);}
+.car-price-per{font-size:11px;color:var(--gray);margin-top:1px;}
+.car-btns{display:flex;flex-direction:column;gap:5px;}
+.btn-book{background:var(--gold);color:var(--black);border:1px solid var(--gold);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:7px 12px;cursor:pointer;transition:.2s;text-decoration:none;display:block;text-align:center;white-space:nowrap;}
+.btn-book:hover{background:var(--gold-light);}
+.btn-det{border:1px solid var(--border);color:var(--gray);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:7px 12px;cursor:pointer;transition:.2s;text-decoration:none;display:block;text-align:center;white-space:nowrap;}
+.btn-det:hover{border-color:var(--gold);color:var(--gold);}
 
 /* ── WHY ── */
 .why-section{padding:100px 60px;background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
@@ -83,21 +89,33 @@
 .testi-author{font-size:13px;color:var(--white);font-weight:500;}
 .testi-car{font-size:11px;color:var(--gold);margin-top:2px;}
 
-/* ── FOOTER FULL ── */
-footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60px 40px;}
-.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:60px;margin-bottom:60px;}
-.footer-logo-text{font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:var(--gold);margin-bottom:16px;display:block;text-decoration:none;}
-.footer-logo-text span{color:var(--white);}
-.footer-desc{font-size:14px;color:var(--gray);line-height:1.7;max-width:280px;}
-.footer-col h4{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:20px;}
-.footer-col ul{list-style:none;display:grid;gap:10px;}
-.footer-col ul a{font-size:14px;color:var(--gray);text-decoration:none;transition:color .2s;}
-.footer-col ul a:hover{color:var(--white);}
-.footer-bottom{border-top:1px solid var(--border);padding-top:30px;display:flex;justify-content:space-between;align-items:center;}
-.footer-copy{font-size:12px;color:var(--gray);}
-.footer-phone-bottom{font-size:16px;color:var(--gold);font-family:'Playfair Display',serif;}
+/* footer styles → main.css */
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .hero { padding: 100px 20px 60px; }
+  .hero h1 { font-size: clamp(28px, 8vw, 44px); }
+  .hero-stats { flex-wrap: wrap; gap: 24px; margin-top: 32px; }
+  .search-section { padding: 0 20px; }
+  .search-box { padding: 20px; grid-template-columns: 1fr; gap: 16px; }
+  .section { padding: 60px 20px; }
+  .why-section { padding: 60px 20px; }
+  .categories-grid { grid-template-columns: repeat(2, 1fr); }
+  .cars-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .why-grid { grid-template-columns: 1fr; gap: 40px; }
+  .why-features { gap: 24px; }
+  .testimonials-grid { grid-template-columns: 1fr; gap: 16px; }
+  /* footer responsive → main.css */
+  .hero-actions { flex-wrap: wrap; gap: 12px; }
+}
+@media (max-width: 480px) {
+  .cars-grid { grid-template-columns: 1fr; gap: 12px; }
+  .categories-grid { grid-template-columns: repeat(2, 1fr); }
+  .car-img { height: 180px; }
+  .car-body { padding: 16px; }
+}
 </style>
 {% endblock %}
 
@@ -173,83 +191,55 @@ footer{background:var(--dark);border-top:1px solid var(--border);padding:80px 60
   </div>
   <div class="cars-grid">
     {% for car in featured %}
-    <div class="car-card">
+    <a href="{% url 'car_detail' car.pk %}" class="car-card">
       <div class="car-img">
-        {% if car.photos.first %}
-          <img src="{{ car.photos.first.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
-        {% elif car.image %}
-          <img src="{{ car.image.url }}" alt="{{ car.full_name }}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
-        {% else %}
-          <div style="font-size:48px;display:flex;align-items:center;justify-content:center;height:100%;">{{ car.emoji }}</div>
-        {% endif %}
-        <span class="car-badge">{{ car.get_car_class_display }}</span>
+        {% with ph=car.photos.all|first %}
+          {% if ph %}<img src="{{ ph.image.url }}" alt="{{ car.full_name }}">
+          {% elif car.image %}<img src="{{ car.image.url }}" alt="{{ car.full_name }}">
+          {% else %}<span style="font-size:60px;">{{ car.emoji }}</span>{% endif %}
+        {% endwith %}
+        <div class="car-badge-cls">{{ car.get_car_class_display }}</div>
+        <div class="car-badge-st {% if car.is_available %}st-free{% else %}st-busy{% endif %}">
+          {% if car.is_available %}Вільний{% else %}У прокаті{% endif %}
+        </div>
       </div>
       <div class="car-body">
-        <div class="car-class">{{ car.get_fuel_display }}</div>
         <div class="car-name">{{ car.full_name }}</div>
         <div class="car-specs">
-          <div class="car-spec">⚙️ {{ car.transmission }}</div>
-          <div class="car-spec">⛽ {{ car.get_fuel_display }}</div>
-          <div class="car-spec">👥 {{ car.seats }} місць</div>
+          <span>{{ car.year }}</span>
+          <span>{{ car.get_fuel_display }}</span>
+          <span>{{ car.transmission }}</span>
+          <span>{{ car.seats }} місць</span>
         </div>
-        <div class="car-footer">
-          <div class="car-price">
-            <strong>₴{{ car.price_base }}</strong>
-            <span> / доба</span>
+        <div class="car-ft">
+          <div>
+            <div class="car-price-val">від ₴{{ car.price_base|floatformat:0 }}</div>
+            <div class="car-price-per">/ доба</div>
           </div>
-          <a href="{% url 'order_car' car.pk %}" class="car-btn">Орендувати</a>
+          <div class="car-btns">
+            {% if car.is_available %}
+            <span class="btn-book">Забронювати</span>
+            {% endif %}
+            <span class="btn-det">Детальніше</span>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
     {% empty %}
-    <div class="car-card">
-      <div class="car-img">🚗<span class="car-badge">Комфорт</span></div>
+    <a href="{% url 'catalog' %}" class="car-card">
+      <div class="car-img"><span style="font-size:60px;">🚗</span>
+        <div class="car-badge-cls">Комфорт</div>
+        <div class="car-badge-st st-free">Вільний</div>
+      </div>
       <div class="car-body">
-        <div class="car-class">Sedan</div>
         <div class="car-name">Mazda 3</div>
-        <div class="car-specs">
-          <div class="car-spec">⚙️ Автомат</div>
-          <div class="car-spec">⛽ Бензин</div>
-          <div class="car-spec">👥 5 місць</div>
-        </div>
-        <div class="car-footer">
-          <div class="car-price"><strong>₴55</strong><span> / доба</span></div>
-          <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
+        <div class="car-specs"><span>2023</span><span>Бензин</span><span>Автомат</span><span>5 місць</span></div>
+        <div class="car-ft">
+          <div><div class="car-price-val">від ₴55</div><div class="car-price-per">/ доба</div></div>
+          <div class="car-btns"><span class="btn-book">Забронювати</span><span class="btn-det">Детальніше</span></div>
         </div>
       </div>
-    </div>
-    <div class="car-card">
-      <div class="car-img">🚙<span class="car-badge">Кросовер</span></div>
-      <div class="car-body">
-        <div class="car-class">SUV</div>
-        <div class="car-name">Volkswagen Tiguan</div>
-        <div class="car-specs">
-          <div class="car-spec">⚙️ Автомат</div>
-          <div class="car-spec">⛽ Дизель</div>
-          <div class="car-spec">👥 5 місць</div>
-        </div>
-        <div class="car-footer">
-          <div class="car-price"><strong>₴130</strong><span> / доба</span></div>
-          <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
-        </div>
-      </div>
-    </div>
-    <div class="car-card">
-      <div class="car-img">🏎️<span class="car-badge">VIP</span></div>
-      <div class="car-body">
-        <div class="car-class">Sedan</div>
-        <div class="car-name">BMW X5</div>
-        <div class="car-specs">
-          <div class="car-spec">⚙️ Автомат</div>
-          <div class="car-spec">⛽ Бензин</div>
-          <div class="car-spec">👥 5 місць</div>
-        </div>
-        <div class="car-footer">
-          <div class="car-price"><strong>₴200</strong><span> / доба</span></div>
-          <a href="{% url 'catalog' %}" class="car-btn">Орендувати</a>
-        </div>
-      </div>
-    </div>
+    </a>
     {% endfor %}
   </div>
 </section>
