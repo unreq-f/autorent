@@ -8,6 +8,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_POST
 from django.db.models import Q
 from .models import Car, CarPhoto, Booking, ClientProfile, Fine, Payment, Wishlist, PromoCode, ContactMessage
+import re
 
 
 def index(request):
@@ -286,35 +287,54 @@ def order(request, car_pk=None):
 @login_required
 def profile(request):
     profile, _ = ClientProfile.objects.get_or_create(user=request.user)
+    active_tab = 'bookings'
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'update_profile':
-            u = request.user
-            u.first_name = request.POST.get('first_name','')
-            u.last_name = request.POST.get('last_name','')
-            u.email = request.POST.get('email','')
-            u.save()
-            profile.phone = request.POST.get('phone','')
-            profile.city = request.POST.get('city','')
-            profile.driver_license = request.POST.get('driver_license','')
-            profile.passport_number = request.POST.get('passport_number','')
-            profile.tax_id = request.POST.get('tax_id','')
-            profile.experience_years = request.POST.get('experience_years', 0)
-            profile.save(update_fields=['phone','city','driver_license','passport_number','tax_id','experience_years'])
-            messages.success(request, '✅ Профіль оновлено!')
+            active_tab = 'settings'
+            passport_raw = request.POST.get('passport_number', '').strip()
+            tax_id_raw = request.POST.get('tax_id', '').strip()
+            driver_license_raw = request.POST.get('driver_license', '').strip()
+            errors = []
+            # 2. Перевірки (Валідація)
+            if passport_raw and not re.match(r'^([А-Яа-яІіЇїЄєҐґ]{2}\d{6}|\d{9})$', passport_raw):
+                errors.append('Невірний формат паспорта. Введіть 9 цифр (ID-картка) або 2 літери та 6 цифр (книжечка).')
+            if tax_id_raw and not re.match(r'^\d{10}$', tax_id_raw):
+                errors.append('Ідентифікаційний код має містити рівно 10 цифр.')
+            if driver_license_raw and not re.match(r'^[А-Яа-яІіЇїЄєҐґA-Za-z]{3}\d{6}$', driver_license_raw):
+                errors.append(
+                    'Невірний формат водійського посвідчення. Очікується 3 літери та 6 цифр (наприклад: ВХХ123456).')
+            if errors:
+                for error in errors:
+                    messages.error(request, error)
+            else:
+                u = request.user
+                u.first_name = request.POST.get('first_name', '')
+                u.last_name = request.POST.get('last_name', '')
+                u.email = request.POST.get('email', '')
+                u.save()
+                profile.phone = request.POST.get('phone', '')
+                profile.city = request.POST.get('city', '')
+                profile.driver_license = driver_license_raw
+                profile.passport_number = passport_raw
+                profile.tax_id = tax_id_raw
+                profile.experience_years = request.POST.get('experience_years', 0)
+                profile.save(
+                    update_fields=['phone', 'city', 'driver_license', 'passport_number', 'tax_id', 'experience_years'])
+                messages.success(request, '✅ Профіль оновлено!')
+                return redirect('profile')  # Робимо редирект тільки при успіху
         elif action == 'cancel_booking':
             b = get_object_or_404(Booking, pk=request.POST.get('booking_id'), user=request.user)
             b.status = 'cancelled'
             b.save()
             messages.success(request, 'Замовлення скасовано.')
-        return redirect('profile')
-
+            return redirect('profile')
     all_bookings = request.user.bookings.select_related('car').prefetch_related('car__photos').order_by('-pk')
-    active_bookings = all_bookings.filter(status__in=['active','pending','awaiting_payment','paid'])
-    past_bookings = all_bookings.filter(status__in=['completed','cancelled'])
+    active_bookings = all_bookings.filter(status__in=['active', 'pending', 'awaiting_payment', 'paid'])
+    past_bookings = all_bookings.filter(status__in=['completed', 'cancelled'])
     wishlist = Wishlist.objects.filter(user=request.user).select_related('car')
     fines = Fine.objects.filter(booking__user=request.user).exclude(status='waived')
-    # Auto-update segment: only upgrade based on booking history, never downgrade manager's choice
+
     SEGMENT_RANK = {'new': 0, 'regular': 1, 'vip': 2, 'blocked': 3}
     if profile.segment not in ('blocked', 'vip'):
         completed_count = request.user.bookings.filter(status='completed').count()
@@ -329,6 +349,7 @@ def profile(request):
         'all_bookings': all_bookings,
         'wishlist': wishlist,
         'fines': fines,
+        'active_tab': active_tab,
     })
 
 
