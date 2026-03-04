@@ -197,6 +197,23 @@
 .gallery-thumb img { width:100%; height:100%; object-fit:cover; }
 .gallery-thumb.active { border-color:var(--gold); }
 .gallery-thumb:hover { border-color:rgba(201,168,76,.5); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .car-detail-section { padding: 24px 20px 60px; }
+  .car-detail-grid { grid-template-columns: 1fr; gap: 24px; margin-bottom: 32px; }
+  .car-main-img { height: 260px; }
+  .spec-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .similar-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pricing-header { flex-direction: column; gap: 16px; }
+  .gallery-thumbs { gap: 6px; }
+  .gallery-thumb { width: 56px; height: 42px; }
+}
+@media (max-width: 480px) {
+  .car-detail-section { padding: 16px 12px 48px; }
+  .similar-grid { grid-template-columns: 1fr 1fr; }
+  .spec-grid { grid-template-columns: 1fr 1fr; }
+}
 </style>
 {% endblock %}
 

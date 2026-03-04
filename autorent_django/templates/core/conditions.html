@@ -118,8 +118,36 @@
 }
 .cta-card a:hover { background:#111; }
 
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .page-header { padding: 100px 20px 36px; }
+  .tabs-nav { padding: 0 16px; }
 
+  /* Розкладка: одна колонка, aside йде ПІСЛЯ тексту */
+  .content-layout {
+    display: block !important;
+    padding: 28px 20px !important;
+  }
+  .prose {
+    margin-bottom: 24px !important;
+  }
 
+  /* Aside: горизонтальний ряд (2 картки поруч) */
+  .sidebar-sticky {
+    position: static !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px !important;
+  }
+  .info-card, .cta-card { margin-bottom: 0 !important; }
+}
+@media (max-width: 560px) {
+  /* На дуже вузькому: картки одна під одною */
+  .sidebar-sticky {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
 </style>
 {% endblock %}
 
@@ -384,8 +412,7 @@
         <h3>Не знайшли відповідь?</h3>
         <div style="font-size:14px;color:var(--gray);line-height:1.7;margin-bottom:20px">Зв'яжіться з нашим менеджером — відповімо на будь-яке питання.</div>
         <div class="info-row"><span class="info-label">Телефон</span><span class="info-value gold">067 000 00 00</span></div>
-        <div class="info-row"><span class="info-label">Email</span><span class="info-value"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="bcd5d2dad3fcddc9c8d3ced9d2c892c9dd">[email&#160;protected]</a></span></div>
-        <div class="info-row"><span class="info-label">Telegram</span><span class="info-value">@autorent_kh</span></div>
+        <div class="info-row"><span class="info-label">Email</span><span class="info-value">info@autorent.ua</span></div>
       </div>
       <div class="cta-card">
         <h3>Готові їхати?</h3>

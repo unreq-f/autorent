@@ -119,7 +119,7 @@ nav { flex-wrap:nowrap; height:72px; padding:0 40px; gap:12px; position:relative
       <a href="{% url 'profile' %}" class="nav-user-btn">👤 {{ user.first_name|default:user.username }}</a>
       <a href="{% url 'logout' %}" class="nav-logout">Вийти</a>
     {% else %}
-      <a href="{% url 'auth' %}" class="nav-user-btn">Увійти</a>
+      <a href="{% url 'auth' %}" class="nav-user-btn">Увійти/Реєстрація</a>
     {% endif %}
   </div>
 </div>

@@ -48,11 +48,12 @@
         </div>
         <div class="field">
           <label>Пароль</label>
-          <input type="password" name="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
-          <button type="button" class="eye-btn" onclick="togglePass('loginPass',this)">👁</button>
+          <div class="pwd-row">
+            <input type="password" name="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
+            <button type="button" class="eye-btn" onclick="togglePass('loginPass',this)">👁</button>
+          </div>
         </div>
         <div class="form-options">
-          <label class="remember"><input type="checkbox"><span>Запам'ятати мене</span></label>
           <a href="#" class="forgot-link" onclick="openForgot(event)">Забули пароль?</a>
         </div>
         <button class="btn-auth" type="submit">Увійти</button>
@@ -76,8 +77,10 @@
         <div class="field"><label>Телефон</label><input type="tel" name="phone" placeholder="+38 067 000 00 00"></div>
         <div class="field">
           <label>Пароль</label>
-          <input type="password" name="password" id="regPass" placeholder="Мінімум 6 символів" required oninput="checkStrength(this.value)" autocomplete="new-password">
-          <button type="button" class="eye-btn" onclick="togglePass('regPass',this)">🔓</button>
+          <div class="pwd-row">
+            <input type="password" name="password" id="regPass" placeholder="Мінімум 6 символів" required oninput="checkStrength(this.value)" autocomplete="new-password">
+            <button type="button" class="eye-btn" onclick="togglePass('regPass',this)">👁</button>
+          </div>
           <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
           <div class="strength-label" id="strengthLabel"></div>
         </div>
@@ -108,7 +111,7 @@ function switchTabByName(id){
 function togglePass(id,btn){
   const inp=document.getElementById(id);
   inp.type=inp.type==='password'?'text':'password';
-  btn.textContent=inp.type==='password'?'🔓':'🔒';
+  btn.textContent=inp.type==='password'?'👁':'🙈';
 }
 function checkStrength(val){
   const fill=document.getElementById('strengthFill');

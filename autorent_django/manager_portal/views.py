@@ -248,8 +248,29 @@ def car_edit(request, pk=None):
     if request.method == 'POST':
         d = request.POST
         fields = ['brand','model','year','car_class','fuel','transmission','seats','engine','drive','color','plate','mileage','price_base','price_prime','deposit','status','description','features','emoji']
+        # Fields that cannot be empty strings — must be None or a valid number
+        decimal_fields = {'price_base', 'price_prime', 'deposit'}
+        integer_fields = {'year', 'seats', 'mileage'}
         if car:
-            for f in fields: setattr(car, f, d.get(f, getattr(car, f)))
+            for f in fields:
+                val = d.get(f, '')
+                if f in decimal_fields:
+                    # Convert empty string to None (or keep existing value)
+                    val = val.strip() if val else ''
+                    if val == '':
+                        val = getattr(car, f)  # keep old value if field is blank
+                elif f in integer_fields:
+                    val = val.strip() if val else ''
+                    if val == '':
+                        val = getattr(car, f)
+                    else:
+                        try:
+                            val = int(val)
+                        except (ValueError, TypeError):
+                            val = getattr(car, f)
+                else:
+                    val = d.get(f, getattr(car, f))
+                setattr(car, f, val)
             car.is_featured = 'is_featured' in d
             if request.FILES.get('image'): car.image = request.FILES['image']
             car.save()
@@ -627,9 +648,18 @@ def fines(request):
     bookings_for_form = Booking.objects.select_related('user','car').filter(
         status__in=['active','completed','paid']
     ).order_by('-created_at')[:100]
+    # Підрахунок по кожному статусу для вкладок
+    counts_all = Fine.objects.count()
+    fine_statuses_counts = [
+        (val, label, Fine.objects.filter(status=val).count())
+        for val, label in Fine.STATUSES
+    ]
     return render(request, 'manager/fines.html', {
         'fines': qs, 'stats': stats, 'sf': sf,
-        'fine_statuses': Fine.STATUSES, 'fine_types': Fine.TYPES,
+        'fine_statuses': Fine.STATUSES,
+        'fine_statuses_counts': fine_statuses_counts,
+        'fine_counts_all': counts_all,
+        'fine_types': Fine.TYPES,
         'severities': Fine.SEVERITIES,
         'bookings_for_form': bookings_for_form,
     })
@@ -664,15 +694,33 @@ def promos(request):
             code = p.code; p.delete()
             messages.success(request, f'Промокод {code} видалено.')
         return redirect('manager_promos')
+    from datetime import date as date_cls2
+    today = date_cls.today()
+    sf = request.GET.get('status', '')
     qs = PromoCode.objects.order_by('-created_at')
-    return render(request, 'manager/promos.html', {'promos': qs, 'today': date_cls.today()})
+    if sf == 'active':
+        qs = qs.filter(is_active=True)
+    elif sf == 'inactive':
+        qs = qs.filter(is_active=False)
+    elif sf == 'expired':
+        qs = [p for p in qs if p.valid_until and p.valid_until < today]
+    counts = {
+        'all':      PromoCode.objects.count(),
+        'active':   PromoCode.objects.filter(is_active=True).count(),
+        'inactive': PromoCode.objects.filter(is_active=False).count(),
+        'expired':  sum(1 for p in PromoCode.objects.all() if p.valid_until and p.valid_until < today),
+    }
+    return render(request, 'manager/promos.html', {
+        'promos': qs, 'today': today, 'sf': sf, 'counts': counts,
+    })
 
 
 @manager_req
 def fine_edit(request, pk=None):
     fine = get_object_or_404(Fine, pk=pk) if pk else None
     if request.method == 'POST':
-        booking = get_object_or_404(Booking, pk=request.POST.get('booking_id'))
+        bk_pk = request.POST.get('booking_pk') or request.POST.get('booking_id')
+        booking = get_object_or_404(Booking, pk=bk_pk)
         if fine:
             fine.status = request.POST.get('status', fine.status)
             fine.amount = request.POST.get('amount', fine.amount)

@@ -8,7 +8,7 @@
   <p>Заповніть форму нижче для бронювання автомобіля.</p>
 </div>
 
-<section style="padding:40px 60px 80px;">
+<section class="order-section">
 
   {% if docs_missing %}
   <div style="background:rgba(207,102,121,0.1);border:1px solid rgba(207,102,121,0.4);border-left:3px solid #cf6679;padding:16px 20px;margin-bottom:24px;display:flex;align-items:center;gap:14px;">
@@ -22,7 +22,7 @@
   </div>
   {% endif %}
 
-  <div style="display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start;">
+  <div class="order-main-grid">
 
     <!-- FORM -->
     <div>
@@ -259,6 +259,56 @@
 .sum-total span:last-child{color:var(--gold)!important;font-family:'Playfair Display',serif;font-size:20px!important;}
 .sum-divider{height:1px;background:var(--border);margin:8px 0;}
 .sum-note{margin-top:16px;font-size:12px;color:var(--gray);line-height:1.6;padding:12px;background:rgba(201,168,76,0.05);border:1px solid var(--border);}
+.order-section{padding:40px 60px 80px;}
+.order-main-grid{display:grid;grid-template-columns:1fr 380px;gap:40px;align-items:start;}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  /* Layout: flex колонка — summary зверху, форма знизу */
+  .order-section { padding: 0 !important; }
+  .order-main-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+  }
+
+  /* Summary: ЗВЕРХУ перед формою, повний вигляд як на десктопі */
+  .order-summary {
+    order: -1 !important;
+    position: static !important;   /* не катається */
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-bottom: 2px solid var(--border) !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding: 24px 20px !important;
+    background: var(--dark2) !important;
+    margin-bottom: 0 !important;
+  }
+  /* Повний вигляд summary — нічого не ховаємо */
+  .order-summary .sum-car { display: flex !important; }
+  .order-summary .sum-block { display: block !important; }
+  .order-summary .sum-row { display: flex !important; }
+  .order-summary .sum-divider { display: block !important; }
+  .order-summary .sum-note { display: block !important; }
+
+  /* Форма: отримує padding */
+  .order-main-grid > div:not(.order-summary) {
+    padding: 20px 20px 60px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .order-grid-2 { grid-template-columns: 1fr 1fr; }
+  .tariff-grid { grid-template-columns: 1fr 1fr; }
+  .extras-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 480px) {
+  .order-grid-2 { grid-template-columns: 1fr; }
+  .tariff-grid { grid-template-columns: 1fr; }
+  .extras-grid { grid-template-columns: 1fr; }
+}
 </style>
 {% endblock %}
 

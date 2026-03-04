@@ -95,6 +95,31 @@
 }
 .reply-body-row textarea:focus { border-color:var(--gold); }
 .reply-actions { display:flex; gap:10px; justify-content:flex-end; }
+
+/* ── MOBILE ── */
+
+/* ── MOBILE: вкладки з прокруткою ── */
+@media (max-width: 900px) {
+  .status-tabs {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    border-bottom: none !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 12px !important;
+  }
+  .stab, .seg-tab {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 7px 12px !important;
+    font-size: 11px !important;
+    border: 1px solid var(--border) !important;
+    border-bottom: 2px solid transparent !important;
+  }
+  .stab.active, .seg-tab.active {
+    border-bottom-color: var(--gold) !important;
+    color: var(--gold) !important;
+  }
+}
 </style>
 {% endblock %}
 

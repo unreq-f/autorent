@@ -116,6 +116,41 @@
 /* Block confirm */
 .block-confirm{display:none;background:rgba(207,102,121,.06);border:1px solid rgba(207,102,121,.2);padding:14px;margin:14px 0 0;}
 .block-confirm.show{display:block;}
+
+/* ── MOBILE ── */
+
+/* ── MOBILE: вкладки з прокруткою ── */
+@media (max-width: 900px) {
+  .cl-stats {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .cl-stat { padding: 12px 10px !important; }
+  .cl-stat-val { font-size: 20px !important; }
+  .cl-stat-lbl { font-size: 9px !important; }
+  .cl-wrap { overflow-x: auto !important; }
+  .cl-table { min-width: 820px !important; }
+
+  .status-tabs {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    border-bottom: none !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 12px !important;
+  }
+  .stab, .seg-tab {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 7px 12px !important;
+    font-size: 11px !important;
+    border: 1px solid var(--border) !important;
+    border-bottom: 2px solid transparent !important;
+  }
+  .stab.active, .seg-tab.active {
+    border-bottom-color: var(--gold) !important;
+    color: var(--gold) !important;
+  }
+}
 </style>
 {% endblock %}
 
