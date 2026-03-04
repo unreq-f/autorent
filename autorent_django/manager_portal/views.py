@@ -166,11 +166,38 @@ def bookings(request):
 def booking_edit(request, pk):
     b = get_object_or_404(Booking, pk=pk)
     if request.method == 'POST':
-        b.status = request.POST.get('status', b.status)
-        b.manager_note = request.POST.get('manager_note', b.manager_note)
+        from datetime import date, time as time_cls
+        b.status         = request.POST.get('status', b.status)
+        b.manager_note   = request.POST.get('manager_note', b.manager_note)
+        b.payment_method = request.POST.get('payment_method', b.payment_method)
+        b.tariff         = request.POST.get('tariff', b.tariff)
+        b.pickup_location  = request.POST.get('pickup_location', b.pickup_location)
+        b.delivery_address = request.POST.get('delivery_address', b.delivery_address)
+        b.return_location  = request.POST.get('return_location', b.return_location)
+        b.return_address   = request.POST.get('return_address', b.return_address)
+        promo = request.POST.get('promo_code', '').strip().upper()
+        b.promo_code = promo
+        try:
+            b.date_from = date.fromisoformat(request.POST['date_from'])
+            b.date_to   = date.fromisoformat(request.POST['date_to'])
+        except (KeyError, ValueError):
+            pass
+        try:
+            tf = request.POST.get('time_from','')
+            tt = request.POST.get('time_to','')
+            if tf: b.time_from = time_cls.fromisoformat(tf)
+            if tt: b.time_to   = time_cls.fromisoformat(tt)
+        except ValueError:
+            pass
+        # Recalculate price after changes
+        b.total_price = b.calculate_price()
+        if b.tariff == 'base':
+            b.deposit_amount = b.car.deposit
+        else:
+            b.deposit_amount = 0
         b.save()
         messages.success(request, f'Замовлення {b.number} оновлено.')
-        return redirect('manager_bookings')
+        return redirect('manager_booking_edit', pk=pk)
     return render(request, 'manager/booking_edit.html', {'b': b, 'statuses': Booking.STATUSES})
 
 
