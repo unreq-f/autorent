@@ -40,6 +40,10 @@
 .btn-danger:hover{background:rgba(207,102,121,.08);}
 .btn-cancel{flex:1;background:transparent;color:var(--gray);border:1px solid var(--border);padding:11px;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;}
 .btn-cancel:hover{border-color:var(--gold);color:var(--white);}
+/* ── Validation ── */
+.v-err{color:#cf6679;font-size:11px;margin-top:5px;line-height:1.4;display:none;}
+.v-err.show{display:block;}
+.v-invalid{border-color:#cf6679 !important;}
 
 /* ── MOBILE ── */
 @media (max-width: 900px) {
@@ -139,25 +143,25 @@
   <!-- Add form -->
   <div class="add-card">
     <div class="add-title">Новий <em>промокод</em></div>
-    <form method="post" action="{% url 'manager_promos' %}">
+    <form method="post" action="{% url 'manager_promos' %}" id="promoForm">
       {% csrf_token %}<input type="hidden" name="action" value="add">
       <div class="df">
         <label>Код промокоду</label>
-        <input type="text" name="code" placeholder="SUMMER25" maxlength="32" required style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase()">
+        <input type="text" name="code" id="prCode" placeholder="SUMMER25" maxlength="32" style="text-transform:uppercase;" oninput="this.value=this.value.toUpperCase();vClear('prCode','errPrCode')"><div class="v-err" id="errPrCode"></div>
       </div>
       <div class="dg2">
         <div class="df">
           <label>Знижка %</label>
-          <input type="number" name="discount_pct" value="10" min="1" max="99" required>
+          <input type="number" name="discount_pct" id="prDisc" value="10" min="1" max="99" oninput="vClear('prDisc','errPrDisc')"><div class="v-err" id="errPrDisc"></div>
         </div>
         <div class="df">
           <label>Макс. вик. (0=∞)</label>
-          <input type="number" name="max_uses" value="0" min="0">
+          <input type="number" name="max_uses" id="prUses" value="0" min="0" oninput="vClear('prUses','errPrUses')"><div class="v-err" id="errPrUses"></div>
         </div>
       </div>
       <div class="df">
         <label>Діє до (необов'язково)</label>
-        <input type="date" name="valid_until">
+        <input type="date" name="valid_until" id="prDate" onchange="vClear('prDate','errPrDate')"><div class="v-err" id="errPrDate"></div>
       </div>
       <div class="toggle-wrap">
         <input type="checkbox" name="is_active" id="isActive" checked>
@@ -194,4 +198,81 @@ function confirmDelete(pk, code) {
 }
 function closeConfirm(){ document.getElementById('confirmOverlay').classList.remove('open'); }
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeConfirm(); });
+
+/* ══════════════════════════════════════
+   ВАЛІДАЦІЯ
+══════════════════════════════════════ */
+function vClear(elId, errId) {
+  var el = document.getElementById(elId);
+  if (el) el.classList.remove('v-invalid');
+  var er = document.getElementById(errId);
+  if (er) { er.textContent = ''; er.classList.remove('show'); }
+}
+function vShowErr(elId, errId, msg) {
+  var el = document.getElementById(elId);
+  if (el) el.classList.add('v-invalid');
+  var er = document.getElementById(errId);
+  if (er) { er.textContent = msg; er.classList.add('show'); }
+}
+
+/* ── "Створити промокод" ── */
+(function() {
+  var form = document.getElementById('promoForm');
+  if (!form) return;
+  form.addEventListener('submit', function(e) {
+    var ok = true;
+
+    // Код промокоду
+    var codeEl = document.getElementById('prCode');
+    var code = codeEl ? codeEl.value.trim() : '';
+    if (!code) {
+      vShowErr('prCode', 'errPrCode', 'Введіть код промокоду.');
+      ok = false;
+    } else if (!/^[A-Z0-9_-]{2,32}$/.test(code)) {
+      vShowErr('prCode', 'errPrCode', 'Тільки латинські літери A–Z, цифри, _ та – (2–32 символи).');
+      ok = false;
+    }
+
+    // Знижка
+    var discEl = document.getElementById('prDisc');
+    var discRaw = discEl ? discEl.value.trim() : '';
+    if (!discRaw) {
+      vShowErr('prDisc', 'errPrDisc', 'Вкажіть розмір знижки.');
+      ok = false;
+    } else {
+      var d = parseInt(discRaw, 10);
+      if (isNaN(d) || d < 1 || d > 99) {
+        vShowErr('prDisc', 'errPrDisc', 'Знижка має бути від 1 до 99%.');
+        ok = false;
+      }
+    }
+
+    // Макс. використань
+    var usesEl = document.getElementById('prUses');
+    if (usesEl && usesEl.value.trim() !== '') {
+      var u = parseInt(usesEl.value, 10);
+      if (isNaN(u) || u < 0) {
+        vShowErr('prUses', 'errPrUses', 'Вкажіть ціле число ≥ 0 (0 = необмежено).');
+        ok = false;
+      }
+    }
+
+    // Дата "Діє до"
+    var dateEl = document.getElementById('prDate');
+    if (dateEl && dateEl.value) {
+      var chosen = new Date(dateEl.value);
+      var today  = new Date(); today.setHours(0, 0, 0, 0);
+      if (chosen <= today) {
+        vShowErr('prDate', 'errPrDate', 'Дата закінчення має бути в майбутньому.');
+        ok = false;
+      }
+    }
+
+    if (!ok) {
+      e.preventDefault();
+      var first = form.querySelector('.v-err.show');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+})();
 </script>{% endblock %}

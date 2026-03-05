@@ -192,41 +192,107 @@
         {% endif %}
       </div>
 
+<<<<<<< HEAD
+      <!-- SETTINGS TAB -->
+      <div class="p-tab {% if open_tab == 'settings' %}active{% endif %}" id="tab-settings">
+=======
       <div class="p-tab {% if active_tab == 'settings' %}active{% endif %}" id="tab-settings">
+>>>>>>> fbe0fb4197061e9b7ef768e6fc8759ad9d28d670
         <div class="tab-title">Налаштування профілю</div>
-        <form method="post">
+        <form method="post" id="profileForm" novalidate>
           {% csrf_token %}
           <input type="hidden" name="action" value="update_profile">
           <div style="background:var(--dark2);border:1px solid var(--border);padding:28px;">
+
             <div class="docs-grid">
-              <div class="s-field"><label>Ім'я</label><input type="text" name="first_name" value="{{ user.first_name }}"></div>
-              <div class="s-field"><label>Прізвище</label><input type="text" name="last_name" value="{{ user.last_name }}"></div>
+              <div class="s-field">
+                <label>Ім'я</label>
+                <input type="text" name="first_name"
+                  value="{{ form_data.first_name|default:user.first_name }}"
+                  class="{% if profile_errors.first_name %}s-field-error{% endif %}">
+                {% if profile_errors.first_name %}<span class="s-err-msg">{{ profile_errors.first_name }}</span>{% endif %}
+              </div>
+              <div class="s-field">
+                <label>Прізвище</label>
+                <input type="text" name="last_name"
+                  value="{{ form_data.last_name|default:user.last_name }}"
+                  class="{% if profile_errors.last_name %}s-field-error{% endif %}">
+                {% if profile_errors.last_name %}<span class="s-err-msg">{{ profile_errors.last_name }}</span>{% endif %}
+              </div>
             </div>
-            <div class="s-field"><label>Email</label><input type="email" name="email" value="{{ user.email }}"></div>
-            <div class="s-field"><label>Телефон</label><input type="tel" name="phone" value="{{ profile.phone }}" placeholder="+38 067 000 00 00"></div>
-            <div class="s-field"><label>Місто</label><input type="text" name="city" value="{{ profile.city }}" placeholder="Харків"></div>
+
+            <div class="s-field">
+              <label>Email</label>
+              <input type="email" name="email"
+                value="{{ form_data.email|default:user.email }}"
+                class="{% if profile_errors.email %}s-field-error{% endif %}">
+              {% if profile_errors.email %}<span class="s-err-msg">{{ profile_errors.email }}</span>{% endif %}
+            </div>
+
+            <div class="s-field">
+              <label>Телефон</label>
+              <input type="tel" name="phone" placeholder="+38 067 000 00 00"
+                value="{{ form_data.phone|default:profile.phone }}"
+                class="{% if profile_errors.phone %}s-field-error{% endif %}">
+              {% if profile_errors.phone %}<span class="s-err-msg">{{ profile_errors.phone }}</span>{% endif %}
+            </div>
+
+            <div class="docs-grid">
+              <div class="s-field">
+                <label>Місто</label>
+                <input type="text" name="city" placeholder="Харків"
+                  value="{{ form_data.city|default:profile.city }}">
+              </div>
+              <div class="s-field">
+                <label>Дата народження</label>
+                <input type="date" name="birth_date"
+                  value="{{ form_data.birth_date|default:profile.birth_date|date:'Y-m-d' }}"
+                  class="{% if profile_errors.birth_date %}s-field-error{% endif %}">
+                {% if profile_errors.birth_date %}<span class="s-err-msg">{{ profile_errors.birth_date }}</span>{% endif %}
+              </div>
+            </div>
+
+            <div class="s-field">
+              <label>Адреса</label>
+              <input type="text" name="address" placeholder="вул. Сумська, 45, кв. 12"
+                value="{{ form_data.address|default:profile.address }}">
+            </div>
 
             <div style="margin:4px 0 14px;padding:14px 16px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-left:3px solid var(--gold);">
               <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;">Документи (обов'язково для замовлення)</div>
               <div class="docs-grid">
                 <div class="s-field" style="margin-bottom:0;">
                   <label>Номер паспорту</label>
-                  <input type="text" name="passport_number" value="{{ profile.passport_number }}" placeholder="КА 123456">
+                  <input type="text" name="passport_number" placeholder="КА 123456 або 000123456"
+                    value="{{ form_data.passport_number|default:profile.passport_number }}"
+                    class="{% if profile_errors.passport_number %}s-field-error{% endif %}">
+                  {% if profile_errors.passport_number %}<span class="s-err-msg">{{ profile_errors.passport_number }}</span>{% endif %}
+                  <div style="font-size:11px;opacity:.5;margin-top:4px;">Старий зразок: КА 123456 · Новий (ID-картка): 9 цифр</div>
                 </div>
                 <div class="s-field" style="margin-bottom:0;">
                   <label>Ідентифікаційний код</label>
-                  <input type="text" name="tax_id" value="{{ profile.tax_id }}" placeholder="1234567890">
+                  <input type="text" name="tax_id" placeholder="1234567890"
+                    value="{{ form_data.tax_id|default:profile.tax_id }}"
+                    class="{% if profile_errors.tax_id %}s-field-error{% endif %}">
+                  {% if profile_errors.tax_id %}<span class="s-err-msg">{{ profile_errors.tax_id }}</span>{% endif %}
                 </div>
                 <div class="s-field" style="margin-bottom:0;">
                   <label>Водійське посвідчення</label>
-                  <input type="text" name="driver_license" value="{{ profile.driver_license }}" placeholder="КАА 123456">
+                  <input type="text" name="driver_license" placeholder="КАА 123456"
+                    value="{{ form_data.driver_license|default:profile.driver_license }}"
+                    class="{% if profile_errors.driver_license %}s-field-error{% endif %}">
+                  {% if profile_errors.driver_license %}<span class="s-err-msg">{{ profile_errors.driver_license }}</span>{% endif %}
                 </div>
                 <div class="s-field" style="margin-bottom:0;">
                   <label>Стаж (років)</label>
-                  <input type="number" name="experience_years" value="{{ profile.experience_years }}" min="0" max="60">
+                  <input type="number" name="experience_years" min="0" max="60"
+                    value="{{ form_data.experience_years|default:profile.experience_years }}"
+                    class="{% if profile_errors.experience_years %}s-field-error{% endif %}">
+                  {% if profile_errors.experience_years %}<span class="s-err-msg">{{ profile_errors.experience_years }}</span>{% endif %}
                 </div>
               </div>
             </div>
+
             <button type="submit" style="background:var(--gold);color:var(--black);padding:13px 32px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;margin-top:8px;">Зберегти зміни</button>
           </div>
         </form>
@@ -416,6 +482,10 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+.s-field-error { border-color: #cf6679 !important; }
+.s-err-msg { display:block; color:#cf6679; font-size:11px; margin-top:5px; letter-spacing:.3px; }
+</style>
 <script>
 var BOOKINGS = {
 {% for b in all_bookings %}
@@ -550,6 +620,105 @@ function openDetail(pk) {
 
 function closeDetail() {
   document.getElementById('detailOverlay').style.display = 'none';
+}
+</script>
+
+<script>
+// ── Auto-open settings tab if there were server-side errors ──
+{% if open_tab == 'settings' %}
+(function(){
+  document.querySelectorAll('.p-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.p-nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-settings').classList.add('active');
+  var navItems = document.querySelectorAll('.p-nav-item');
+  navItems.forEach(function(item) {
+    if (item.textContent.trim().startsWith('⚙️')) item.classList.add('active');
+  });
+})();
+{% endif %}
+
+// ── Client-side validation for profile form ──
+function sfShowErr(input, msg) {
+  input.classList.add('s-field-error');
+  var field = input.closest('.s-field');
+  var el = field ? field.querySelector('.s-err-msg') : null;
+  if (!el) {
+    el = document.createElement('span');
+    el.className = 's-err-msg';
+    input.insertAdjacentElement('afterend', el);
+  }
+  el.textContent = msg;
+}
+function sfClearErr(input) {
+  input.classList.remove('s-field-error');
+  var field = input.closest('.s-field');
+  if (field) field.querySelectorAll('.s-err-msg').forEach(function(e){ e.textContent = ''; });
+}
+
+var profileForm = document.getElementById('profileForm');
+if (profileForm) {
+  profileForm.addEventListener('submit', function(e) {
+    var ok = true;
+    var nameRe    = /^[А-ЯҐЄІЇа-яґєії\-'\sA-Za-z]{2,50}$/;
+    var emailRe   = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    var phoneRe   = /^\+?[\d\s\-()]{10,18}$/;
+    var taxRe     = /^\d{10}$/;
+    var licRe     = /^[А-ЯҐЄІЇа-яґєіїA-Z]{3}\s?\d{6}$/;
+
+    var fields = {
+      first_name:       { re: nameRe,  opt: true,  msg: "Ім'я: лише літери, мін. 2 символи." },
+      last_name:        { re: nameRe,  opt: true,  msg: 'Прізвище: лише літери, мін. 2 символи.' },
+      email:            { re: emailRe, opt: true,  msg: 'Невірний формат email.' },
+      phone:            { re: phoneRe, opt: true,  msg: 'Невірний формат. Приклад: +38 067 000 00 00' },
+      tax_id:           { re: taxRe,   opt: true,  msg: 'ІПН: рівно 10 цифр.' },
+      driver_license:   { re: licRe,   opt: true,  msg: 'Формат: КАА 123456 (3 літери + 6 цифр).' },
+    };
+
+    // Паспорт перевіряємо окремо — два допустимих формати
+    var passInp = profileForm.querySelector('[name="passport_number"]');
+    if (passInp) {
+      sfClearErr(passInp);
+      var passVal = passInp.value.trim();
+      if (passVal) {
+        var passOld = /^[А-ЯҐЄІЇа-яґєії]{2}\s?\d{6}$/u.test(passVal);
+        var passNew = /^\d{9}$/.test(passVal);
+        if (!passOld && !passNew) {
+          sfShowErr(passInp, 'Старий зразок: КА 123456 (2 літери + 6 цифр). Новий (ID-картка): 000123456 (9 цифр).');
+          ok = false;
+        }
+      }
+    }
+
+    Object.keys(fields).forEach(function(name) {
+      var inp = profileForm.querySelector('[name="' + name + '"]');
+      if (!inp) return;
+      sfClearErr(inp);
+      var val = inp.value.trim();
+      if (!val) return; // all fields are optional
+      if (!fields[name].re.test(val)) {
+        sfShowErr(inp, fields[name].msg);
+        ok = false;
+      }
+    });
+
+    // Experience years
+    var exp = profileForm.querySelector('[name="experience_years"]');
+    if (exp) {
+      sfClearErr(exp);
+      var ev = parseInt(exp.value, 10);
+      if (exp.value.trim() !== '' && (isNaN(ev) || ev < 0 || ev > 60)) {
+        sfShowErr(exp, 'Стаж від 0 до 60 років.');
+        ok = false;
+      }
+    }
+
+    if (!ok) e.preventDefault();
+  });
+
+  // Live clear on input
+  profileForm.querySelectorAll('input').forEach(function(inp) {
+    inp.addEventListener('input', function(){ sfClearErr(this); });
+  });
 }
 </script>
 {% endblock %}

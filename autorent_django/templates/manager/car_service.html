@@ -75,6 +75,9 @@
         </div>
       </div>
 
+      <div id="csServiceDateErr" style="color:#cf6679;font-size:11px;margin-bottom:8px;display:none;"></div>
+      <div id="csServiceEndErr"  style="color:#cf6679;font-size:11px;margin-bottom:8px;display:none;"></div>
+
       <div class="btn-row">
         <button type="submit" class="btn-save">&#128295; Призначити ТО</button>
         <a href="{% url 'manager_cars' %}" class="btn-secondary" style="flex:1;padding:13px;text-align:center;text-decoration:none;">Скасувати</a>
@@ -83,4 +86,64 @@
 
   </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.cs-err { border-color: #cf6679 !important; }
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var form = document.querySelector('form[method="post"]');
+  if (!form) return;
+
+  var dateStartInp = form.querySelector('[name="service_date"]');
+  var dateEndInp   = form.querySelector('[name="service_date_end"]');
+  var errStart     = document.getElementById('csServiceDateErr');
+  var errEnd       = document.getElementById('csServiceEndErr');
+
+  // Set min = today
+  var today = new Date().toISOString().split('T')[0];
+  if (dateStartInp) dateStartInp.min = today;
+  if (dateEndInp)   dateEndInp.min   = today;
+
+  function clearErr(inp, msgEl) {
+    if (inp)   inp.classList.remove('cs-err');
+    if (msgEl) { msgEl.textContent = ''; msgEl.style.display = 'none'; }
+  }
+  function showErr(inp, msgEl, msg) {
+    if (inp)   inp.classList.add('cs-err');
+    if (msgEl) { msgEl.textContent = msg; msgEl.style.display = 'block'; }
+  }
+
+  form.addEventListener('submit', function(e) {
+    var ok = true;
+    clearErr(dateStartInp, errStart);
+    clearErr(dateEndInp,   errEnd);
+
+    if (!dateStartInp || !dateStartInp.value) {
+      showErr(dateStartInp, errStart, 'Вкажіть дату початку ТО.'); ok = false;
+    }
+    if (dateEndInp && dateEndInp.value && dateStartInp && dateStartInp.value) {
+      if (new Date(dateEndInp.value) < new Date(dateStartInp.value)) {
+        showErr(dateEndInp, errEnd, 'Дата завершення не може бути раніше дати початку.'); ok = false;
+      }
+    }
+    if (!ok) {
+      e.preventDefault();
+      var el = form.querySelector('.cs-err');
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+
+  if (dateStartInp) dateStartInp.addEventListener('change', function() {
+    clearErr(dateStartInp, errStart);
+    if (dateEndInp) dateEndInp.min = this.value || today;
+  });
+  if (dateEndInp) dateEndInp.addEventListener('change', function() {
+    clearErr(dateEndInp, errEnd);
+  });
+});
+</script>
 {% endblock %}

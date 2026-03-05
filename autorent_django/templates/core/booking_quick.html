@@ -267,42 +267,18 @@ function onCarChange(sel) {
   onDateChange();
 }
 
-function onDateChange() {
-  var df = document.getElementById('dateFrom').value;
-  var dt = document.getElementById('dateTo').value;
-  var hf = document.getElementById('hintFrom');
-  var ht = document.getElementById('hintTo');
-  var today = new Date(); today.setHours(0,0,0,0);
-
-  var valid = true;
-  if (df) {
-    var d1 = new Date(df);
-    if (d1 < today) { hf.style.display='block'; valid=false; }
-    else { hf.style.display='none'; }
-  }
-  if (df && dt) {
-    var d1 = new Date(df), d2 = new Date(dt);
-    if (d2 <= d1) { ht.style.display='block'; valid=false; }
-    else { ht.style.display='none'; }
-    // Update calc
-    if (valid) {
-      var days = Math.round((d2-d1)/(1000*60*60*24));
-      var pk = parseInt(document.getElementById('carSelect').value);
-      var car = carsMap[pk];
-      if (car && days > 0) {
-        var calcRow = document.getElementById('previewCalc');
-        calcRow.style.display = 'flex';
-        document.getElementById('previewDays').textContent = days + ' діб';
-        var total = (car.price * days).toLocaleString('uk-UA', {minimumFractionDigits:0});
-        document.getElementById('previewTotal').textContent = '≈ ₴' + total;
-      }
-    }
-  }
-
-  // Disable submit if invalid
-  document.getElementById('btnSubmit').disabled = !valid;
-  document.getElementById('btnSubmit').style.opacity = valid ? '1' : '.5';
-}
+// Live clear on change
+document.getElementById('dateFrom').addEventListener('change', function() { clearFieldErr('dateFrom'); onDateChange(); });
+document.getElementById('dateTo').addEventListener('change',   function() { clearFieldErr('dateTo');   onDateChange(); });
+var bqAddr = document.getElementById('bqDeliveryAddr');
+if (bqAddr) bqAddr.addEventListener('input', function() {
+  this.style.borderColor = '';
+  var h = document.getElementById('bqDeliveryAddrHint');
+  if (h) { h.textContent = ''; h.style.display = 'none'; }
+});
+document.getElementById('carSelect').addEventListener('change', function() {
+  this.style.borderColor = '';
+});
 
 // Pickup → show/hide delivery address
 function onPickupChange(sel) {
@@ -314,16 +290,117 @@ function onPickupChange(sel) {
   if (!isDelivery) addr.value = '';
 }
 
-// Form validation before submit
-document.getElementById('bqForm').addEventListener('submit', function(e) {
+function showFieldErr(id, msg) {
+  var inp = document.getElementById(id);
+  if (!inp) return;
+  inp.style.borderColor = '#cf6679';
+  var hint = document.getElementById(id + 'Hint');
+  if (!hint) {
+    hint = document.createElement('div');
+    hint.id = id + 'Hint';
+    hint.className = 'date-hint';
+    hint.style.display = 'block';
+    inp.insertAdjacentElement('afterend', hint);
+  }
+  hint.textContent = msg;
+  hint.style.display = 'block';
+}
+function clearFieldErr(id) {
+  var inp = document.getElementById(id);
+  if (inp) inp.style.borderColor = '';
+  var hint = document.getElementById(id + 'Hint');
+  if (hint) { hint.textContent = ''; hint.style.display = 'none'; }
+}
+
+function onDateChange() {
   var df = document.getElementById('dateFrom').value;
   var dt = document.getElementById('dateTo').value;
   var today = new Date(); today.setHours(0,0,0,0);
-  if (!df || !dt) { e.preventDefault(); return; }
-  var d1 = new Date(df), d2 = new Date(dt);
-  if (d1 < today || d2 <= d1) {
+  var valid = true;
+
+  if (df) {
+    var d1 = new Date(df);
+    if (d1 < today) { showFieldErr('dateFrom', 'Дата не може бути в минулому.'); valid = false; }
+    else clearFieldErr('dateFrom');
+  }
+  if (df && dt) {
+    var d1 = new Date(df), d2 = new Date(dt);
+    if (d2 <= d1) { showFieldErr('dateTo', 'Має бути пізніше дати отримання.'); valid = false; }
+    else clearFieldErr('dateTo');
+
+    if (valid) {
+      var days = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+      var pk = parseInt(document.getElementById('carSelect').value);
+      var car = carsMap[pk];
+      if (car && days > 0) {
+        var calcRow = document.getElementById('previewCalc');
+        calcRow.style.display = 'flex';
+        document.getElementById('previewDays').textContent = days + ' діб';
+        var total = (car.price * days).toLocaleString('uk-UA', {minimumFractionDigits: 0});
+        document.getElementById('previewTotal').textContent = '≈ ₴' + total;
+      }
+    }
+  }
+
+  document.getElementById('btnSubmit').disabled = !valid;
+  document.getElementById('btnSubmit').style.opacity = valid ? '1' : '.5';
+}
+
+// Form validation before submit
+document.getElementById('bqForm').addEventListener('submit', function(e) {
+  var ok = true;
+  var today = new Date(); today.setHours(0,0,0,0);
+
+  // Car
+  var carSel = document.getElementById('carSelect');
+  if (!carSel.value) {
+    carSel.style.borderColor = '#cf6679';
+    ok = false;
+  } else {
+    carSel.style.borderColor = '';
+  }
+
+  // Dates
+  var df = document.getElementById('dateFrom').value;
+  var dt = document.getElementById('dateTo').value;
+
+  if (!df) { showFieldErr('dateFrom', 'Вкажіть дату отримання.'); ok = false; }
+  else {
+    var d1 = new Date(df);
+    if (d1 < today) { showFieldErr('dateFrom', 'Дата не може бути в минулому.'); ok = false; }
+    else clearFieldErr('dateFrom');
+  }
+
+  if (!dt) { showFieldErr('dateTo', 'Вкажіть дату повернення.'); ok = false; }
+  else if (df) {
+    var d1 = new Date(df), d2 = new Date(dt);
+    if (d2 <= d1) { showFieldErr('dateTo', 'Має бути пізніше дати отримання.'); ok = false; }
+    else clearFieldErr('dateTo');
+  }
+
+  // Delivery address
+  var pickup = document.getElementById('bqPickup');
+  if (pickup && (pickup.value === 'delivery' || pickup.value === 'delivery_out')) {
+    var addr = document.getElementById('bqDeliveryAddr');
+    if (addr && !addr.value.trim()) {
+      addr.style.borderColor = '#cf6679';
+      var ah = document.getElementById('bqDeliveryAddrHint');
+      if (!ah) {
+        ah = document.createElement('div');
+        ah.id = 'bqDeliveryAddrHint';
+        ah.className = 'date-hint';
+        addr.insertAdjacentElement('afterend', ah);
+      }
+      ah.textContent = 'Вкажіть адресу доставки.';
+      ah.style.display = 'block';
+      ok = false;
+    }
+  }
+
+  if (!ok) {
     e.preventDefault();
-    onDateChange();
+    var first = document.querySelector('.of input[style*="rgb(207"], .of select[style*="rgb(207"], .of input[style*="#cf6"]');
+    if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 });
 </script>

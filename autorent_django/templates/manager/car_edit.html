@@ -12,6 +12,8 @@
 .ba-rented{background:rgba(201,168,76,.12);color:var(--gold);border-color:rgba(201,168,76,.3);}
 .ba-service{background:rgba(224,146,76,.12);color:var(--orange);border-color:rgba(224,146,76,.3);}
 .ba-broken{background:rgba(207,102,121,.12);color:var(--red);border-color:rgba(207,102,121,.3);}
+.ce-err     { border-color: #cf6679 !important; }
+.ce-err-msg { display:block; color:#cf6679; font-size:11px; margin-top:5px; letter-spacing:.3px; }
 </style>
 {% endblock %}
 
@@ -40,7 +42,7 @@
   </div>
   {% endif %}
 
-  <form method="post" enctype="multipart/form-data">
+  <form method="post" enctype="multipart/form-data" id="carEditForm">
     {% csrf_token %}
     <div class="edit-grid">
 
@@ -104,9 +106,9 @@
         <div class="edit-card">
           <div class="edit-card-title">Ціни та застава</div>
           <div class="form-grid-2">
-            <div class="field"><label>Ціна Base (₴/доба)</label><input type="number" name="price_base" value="{{ car.price_base|default:'' }}" placeholder="0" step="0.01"></div>
-            <div class="field"><label>Ціна Prime (₴/доба)</label><input type="number" name="price_prime" value="{{ car.price_prime|default:'' }}" placeholder="0" step="0.01"></div>
-            <div class="field" style="grid-column:span 2;"><label>Застава Base (₴)</label><input type="number" name="deposit" value="{{ car.deposit|default:'' }}" placeholder="0" step="0.01"></div>
+            <div class="field"><label>Ціна Base (₴/доба)</label><input type="number" name="price_base" value="{{ price_base_val }}" placeholder="0" step="0.01"></div>
+            <div class="field"><label>Ціна Prime (₴/доба)</label><input type="number" name="price_prime" value="{{ price_prime_val }}" placeholder="0" step="0.01"></div>
+            <div class="field" style="grid-column:span 2;"><label>Застава Base (₴)</label><input type="number" name="deposit" value="{{ deposit_val }}" placeholder="0" step="0.01"></div>
           </div>
         </div>
 
@@ -133,19 +135,6 @@
           <div class="field"><label>Особливості (через кому)</label><input type="text" name="features" value="{{ car.features|default:'' }}" placeholder="Клімат-контроль, Підігрів сидінь, Камера заднього виду"></div>
         </div>
 
-        <!-- Photo section — shown for both new and existing car -->
-        <div class="edit-card">
-          <div class="edit-card-title">Головне фото</div>
-          {% if car and car.image %}
-          <div style="margin-bottom:14px;position:relative;">
-            <img src="{{ car.image.url }}" style="width:100%;max-height:160px;object-fit:cover;border:1px solid var(--border);">
-          </div>
-          {% endif %}
-          <div class="field"><label>{% if car and car.image %}Замінити головне фото{% else %}Завантажити головне фото{% endif %}</label>
-            <input type="file" name="image" accept="image/*" style="color:var(--gray);font-size:12px;">
-          </div>
-        </div>
-
       </div>
     </div>
 
@@ -156,64 +145,44 @@
   </form>
 
   {% if car %}
-  <!-- Gallery section — separate from main form -->
-  <div style="margin-top:24px;">
-    <div class="edit-card" style="background:var(--dark2);border:1px solid var(--border);padding:28px;">
-      <div class="edit-card-title" style="display:flex;align-items:center;justify-content:space-between;">
-        <span>Галерея фото</span>
-        <span style="font-size:11px;color:var(--gray);font-weight:400;letter-spacing:0;text-transform:none;">{{ car.photos.count }} фото</span>
-      </div>
-
-      <!-- Existing gallery photos -->
-      {% if car.photos.exists %}
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
-        {% for photo in car.photos.all %}
-        <div style="position:relative;aspect-ratio:4/3;background:var(--dark3);border:1px solid var(--border);overflow:hidden;">
-          <img src="{{ photo.image.url }}" style="width:100%;height:100%;object-fit:cover;">
-          <div style="position:absolute;inset:0;background:rgba(0,0,0,0);transition:.2s;" onmouseover="this.style.background='rgba(0,0,0,.5)';this.querySelector('.photo-actions').style.opacity='1'" onmouseout="this.style.background='rgba(0,0,0,0)';this.querySelector('.photo-actions').style.opacity='0'">
-            <div class="photo-actions" style="opacity:0;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;transition:.2s;">
-              <form method="post" action="{% url 'manager_car_photo_delete' photo.pk %}" style="display:inline;" onsubmit="return confirm('Видалити фото?')">
-                {% csrf_token %}
-                <button type="submit" style="background:rgba(207,102,121,.9);border:none;color:#fff;padding:6px 10px;cursor:pointer;font-size:11px;">🗑 Видалити</button>
-              </form>
-              {% if not photo.is_main %}
-              <form method="post" action="{% url 'manager_car_photo_main' photo.pk %}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" style="background:rgba(201,168,76,.9);border:none;color:#000;padding:6px 10px;cursor:pointer;font-size:11px;">⭐ Головне</button>
-              </form>
-              {% else %}
-              <span style="background:rgba(201,168,76,.9);color:#000;padding:6px 10px;font-size:11px;">⭐ Головне</span>
-              {% endif %}
-            </div>
-          </div>
-          {% if photo.is_main %}
-          <div style="position:absolute;top:6px;left:6px;background:var(--gold);color:#000;font-size:9px;padding:2px 6px;letter-spacing:1px;text-transform:uppercase;">Головне</div>
-          {% endif %}
-          {% if photo.caption %}
-          <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.7);color:#fff;font-size:11px;padding:4px 7px;text-overflow:ellipsis;overflow:hidden;white-space:nowrap;">{{ photo.caption }}</div>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <!-- Upload new photos -->
-      <form method="post" action="{% url 'manager_car_photo_upload' car.pk %}" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div style="border:2px dashed var(--border);padding:20px;text-align:center;cursor:pointer;" onclick="document.getElementById('galleryInput').click();" id="dropZone">
-          <div style="font-size:28px;margin-bottom:8px;">📷</div>
-          <div style="font-size:13px;color:var(--gray);">Натисніть або перетягніть фото для завантаження</div>
-          <div style="font-size:11px;color:var(--gray);opacity:.6;margin-top:4px;">JPG, PNG, WebP — до 10 МБ кожне</div>
-          <input type="file" id="galleryInput" name="photos" multiple accept="image/*" style="display:none;" onchange="previewFiles(this)">
-        </div>
-        <div id="previewGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:12px;"></div>
-        <div id="captionFields" style="margin-top:12px;"></div>
-        <div id="uploadActions" style="display:none;margin-top:12px;gap:10px;display:none;">
-          <button type="submit" style="background:var(--gold);color:#000;border:none;padding:11px 24px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">Завантажити фото</button>
-          <button type="button" onclick="clearPreview()" style="background:transparent;color:var(--gray);border:1px solid var(--border);padding:11px 18px;font-size:12px;cursor:pointer;">Скасувати</button>
-        </div>
-      </form>
+  <!-- Галерея фото — окрема форма -->
+  <div class="edit-card" style="margin-top:24px;">
+    <div class="edit-card-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>Галерея фото</span>
+      <span style="font-size:11px;color:var(--gray);font-weight:400;letter-spacing:0;text-transform:none;">{{ car.photos.count }} фото</span>
     </div>
+    {% if car.photos.exists %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:20px;">
+      {% for photo in car.photos.all %}
+      <div style="position:relative;aspect-ratio:4/3;background:var(--dark3);border:1px solid var(--border);overflow:hidden;">
+        <img src="{{ photo.image.url }}" style="width:100%;height:100%;object-fit:cover;">
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,0);transition:.2s;"
+             onmouseover="this.style.background='rgba(0,0,0,.5)';this.querySelector('.photo-actions').style.opacity='1'"
+             onmouseout="this.style.background='rgba(0,0,0,0)';this.querySelector('.photo-actions').style.opacity='0'">
+          <div class="photo-actions" style="opacity:0;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:.2s;">
+            <form method="post" action="{% url 'manager_car_photo_delete' photo.pk %}" onsubmit="return confirm('Видалити фото?')">
+              {% csrf_token %}
+              <button type="submit" style="background:rgba(207,102,121,.9);border:none;color:#fff;padding:6px 12px;cursor:pointer;font-size:11px;">🗑 Видалити</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    <!-- Завантаження нових фото -->
+    <form method="post" action="{% url 'manager_car_photo_upload' car.pk %}" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;opacity:.8;">Додати фото (до 5 шт.)</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+        <input type="file" name="gallery_photos" accept="image/*" style="color:var(--gray);font-size:12px;">
+        <input type="file" name="gallery_photos" accept="image/*" style="color:var(--gray);font-size:12px;">
+        <input type="file" name="gallery_photos" accept="image/*" style="color:var(--gray);font-size:12px;">
+        <input type="file" name="gallery_photos" accept="image/*" style="color:var(--gray);font-size:12px;">
+        <input type="file" name="gallery_photos" accept="image/*" style="color:var(--gray);font-size:12px;">
+      </div>
+      <button type="submit" style="background:var(--gold);color:#000;border:none;padding:10px 24px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;letter-spacing:1px;text-transform:uppercase;cursor:pointer;">Завантажити фото</button>
+    </form>
   </div>
   {% endif %}
 
@@ -222,48 +191,79 @@
 
 {% block extra_js %}
 <script>
-function previewFiles(input) {
-  var grid = document.getElementById('previewGrid');
-  var actions = document.getElementById('uploadActions');
-  var captions = document.getElementById('captionFields');
-  grid.innerHTML = ''; captions.innerHTML = '';
-  var files = Array.from(input.files);
-  if (!files.length) { actions.style.display='none'; return; }
-  files.forEach(function(f, idx) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      var div = document.createElement('div');
-      div.style = 'position:relative;aspect-ratio:1;background:var(--dark3);border:1px solid var(--border);overflow:hidden;';
-      div.innerHTML = '<img src="'+e.target.result+'" style="width:100%;height:100%;object-fit:cover;">' +
-        '<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:3px 5px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;">'+f.name+'</div>';
-      grid.appendChild(div);
-    };
-    reader.readAsDataURL(f);
-    var ci = document.createElement('div');
-    ci.style = 'margin-bottom:8px;';
-    ci.innerHTML = '<div style="font-size:11px;color:var(--gray);margin-bottom:4px;">Підпис фото '+(idx+1)+' (необов\'язково)</div>' +
-      '<input type="text" name="caption_'+idx+'" placeholder="Підпис..." style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:8px 10px;font-size:12px;box-sizing:border-box;">';
-    captions.appendChild(ci);
+// ── Validation helpers ──────────────────────────────────────────────
+function ceShowErr(inp, msg) {
+  if (!inp) return;
+  inp.classList.add('ce-err');
+  var hint = inp.parentElement.querySelector('.ce-err-msg');
+  if (!hint) {
+    hint = document.createElement('span');
+    hint.className = 'ce-err-msg';
+    inp.insertAdjacentElement('afterend', hint);
+  }
+  hint.textContent = msg;
+}
+function ceClearErr(inp) {
+  if (!inp) return;
+  inp.classList.remove('ce-err');
+  var hint = inp.parentElement && inp.parentElement.querySelector('.ce-err-msg');
+  if (hint) hint.textContent = '';
+}
+function ceScrollFirst() {
+  var el = document.querySelector('.ce-err');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  var form = document.getElementById('carEditForm');
+  if (!form) return;
+
+  form.addEventListener('submit', function(e) {
+    var ok = true;
+
+    function req(name, msg) {
+      var inp = form.querySelector('[name="' + name + '"]');
+      ceClearErr(inp);
+      if (!inp || !inp.value.trim()) { ceShowErr(inp, msg); ok = false; }
+    }
+
+    function numField(name, errMsg, minVal, maxVal, required) {
+      var inp = form.querySelector('[name="' + name + '"]');
+      ceClearErr(inp);
+      if (!inp) return;
+      var v = inp.value.trim();
+      if (!v) {
+        if (required) { ceShowErr(inp, errMsg); ok = false; }
+        return;
+      }
+      var n = parseFloat(v);
+      if (isNaN(n)) { ceShowErr(inp, errMsg); ok = false; return; }
+      if (minVal !== undefined && n < minVal) { ceShowErr(inp, errMsg); ok = false; return; }
+      if (maxVal !== undefined && n > maxVal) { ceShowErr(inp, errMsg); ok = false; return; }
+    }
+
+    req('brand', 'Вкажіть марку автомобіля.');
+    req('model', 'Вкажіть модель автомобіля.');
+    numField('year',        'Рік: число від 1990 до 2030.',    1990, 2030,      true);
+    numField('seats',       'Кількість місць: від 2 до 9.',    2,    9,         false);
+    numField('mileage',     'Пробіг не може бути негативним.', 0,    undefined, false);
+    numField('price_base',  'Ціна Base має бути більше 0.',    0.01, undefined, true);
+    numField('price_prime', 'Ціна Prime має бути більше 0.',   0.01, undefined, true);
+    numField('deposit',     'Застава не може бути негативною.',0,    undefined, false);
+
+    var plateInp = form.querySelector('[name="plate"]');
+    ceClearErr(plateInp);
+    if (plateInp && plateInp.value.trim()) {
+      var plateOk = /^[А-ЯҐЄІЇа-яґєіїA-Z]{2}\s?\d{4}\s?[А-ЯҐЄІЇа-яґєіїA-Z]{2}$/.test(plateInp.value.trim());
+      if (!plateOk) { ceShowErr(plateInp, 'Формат: КА 1234 АА'); ok = false; }
+    }
+
+    if (!ok) { e.preventDefault(); ceScrollFirst(); }
   });
-  actions.style.display = 'flex';
-}
-function clearPreview() {
-  document.getElementById('galleryInput').value = '';
-  document.getElementById('previewGrid').innerHTML = '';
-  document.getElementById('captionFields').innerHTML = '';
-  document.getElementById('uploadActions').style.display = 'none';
-}
-// Drag and drop
-var dz = document.getElementById('dropZone');
-if (dz) {
-  dz.addEventListener('dragover', function(e){ e.preventDefault(); dz.style.borderColor='var(--gold)'; });
-  dz.addEventListener('dragleave', function(){ dz.style.borderColor='var(--border)'; });
-  dz.addEventListener('drop', function(e){
-    e.preventDefault(); dz.style.borderColor='var(--border)';
-    var inp = document.getElementById('galleryInput');
-    inp.files = e.dataTransfer.files;
-    previewFiles(inp);
+
+  form.querySelectorAll('input[type="text"], input[type="number"]').forEach(function(inp) {
+    inp.addEventListener('input', function() { ceClearErr(this); });
   });
-}
+});
 </script>
 {% endblock %}

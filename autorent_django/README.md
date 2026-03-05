@@ -12,15 +12,19 @@ python manage.py runserver 8080
 
 ## Облікові дані
 
-### Менеджер-портал (is_staff=True)
+### Адмін (is_superuser=True)
 - Логін: `admin`
-- Пароль: `admin123`
-- Менеджер-портал: http://localhost:8080/manager/
-- Адмін: http://localhost:8080/admin/
+- Пароль: `Admin2026!`
+- Адмін-панель: http://localhost:8080/admin/
 
-### Тестовий клієнт
-- Логін: `test`
-- Пароль: `test123`
+### Менеджер-портал (is_staff=True)
+- Логін: `manager`
+- Пароль: `Manager2026!`
+- Менеджер-портал: http://localhost:8080/manager/
+
+### Тестові клієнти
+- Логін: `client_kovalenko` / Пароль: `Client2026!`
+- Логін: `client_bondarenko` / Пароль: `Client2026!`
 - Профіль: http://localhost:8080/profile/
 
 ## Структура
@@ -65,3 +69,5 @@ autorent_django/
 - `/manager/payments/` — Платежі
 - `/manager/fines/` — Штрафи
 - `/manager/reports/` — Звіти
+- `/manager/promos/` — Промокоди
+- `/manager/inquiries/` — Запити

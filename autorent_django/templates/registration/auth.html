@@ -39,19 +39,24 @@
     <div class="auth-form {% if mode == 'login' %}active{% endif %}" id="form-login">
       <h1 class="auth-heading">З поверненням, <em>друже</em></h1>
       <p class="auth-sub">Увійдіть, щоб переглянути свої бронювання та керувати профілем.</p>
-      <form method="post">
+      <form method="post" id="loginForm" novalidate>
         {% csrf_token %}
         <input type="hidden" name="mode" value="login">
         <div class="field">
           <label>Логін</label>
-          <input type="text" name="username" placeholder="ivan_example" required autocomplete="username">
+          <input type="text" name="username" placeholder="ivan_example" required autocomplete="username"
+            value="{{ form_data.username|default:'' }}"
+            class="{% if form_errors.username or form_errors.general %}field-error{% endif %}">
+          {% if form_errors.username %}<span class="field-err-msg">{{ form_errors.username }}</span>{% endif %}
         </div>
         <div class="field">
           <label>Пароль</label>
           <div class="pwd-row">
-            <input type="password" name="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password">
+            <input type="password" name="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password"
+              class="{% if form_errors.password or form_errors.general %}field-error{% endif %}">
             <button type="button" class="eye-btn" onclick="togglePass('loginPass',this)">👁</button>
           </div>
+          {% if form_errors.password %}<span class="field-err-msg">{{ form_errors.password }}</span>{% endif %}
         </div>
         <div class="form-options">
           <a href="#" class="forgot-link" onclick="openForgot(event)">Забули пароль?</a>
@@ -65,22 +70,55 @@
     <div class="auth-form {% if mode == 'register' %}active{% endif %}" id="form-register">
       <h1 class="auth-heading">Створити <em>акаунт</em></h1>
       <p class="auth-sub">Зареєструйтесь для швидкого бронювання та збереження улюблених авто.</p>
-      <form method="post">
+      <form method="post" id="registerForm" novalidate>
         {% csrf_token %}
         <input type="hidden" name="mode" value="register">
         <div class="form-row">
-          <div class="field"><label>Ім'я</label><input type="text" name="first_name" placeholder="Іван"></div>
-          <div class="field"><label>Прізвище</label><input type="text" name="last_name" placeholder="Іваненко"></div>
+          <div class="field">
+            <label>Ім'я</label>
+            <input type="text" name="first_name" placeholder="Іван"
+              value="{{ form_data.first_name|default:'' }}"
+              class="{% if form_errors.first_name %}field-error{% endif %}">
+            {% if form_errors.first_name %}<span class="field-err-msg">{{ form_errors.first_name }}</span>{% endif %}
+          </div>
+          <div class="field">
+            <label>Прізвище</label>
+            <input type="text" name="last_name" placeholder="Іваненко"
+              value="{{ form_data.last_name|default:'' }}"
+              class="{% if form_errors.last_name %}field-error{% endif %}">
+            {% if form_errors.last_name %}<span class="field-err-msg">{{ form_errors.last_name }}</span>{% endif %}
+          </div>
         </div>
-        <div class="field"><label>Логін</label><input type="text" name="username" placeholder="ivan_2025" required autocomplete="username"></div>
-        <div class="field"><label>Email</label><input type="email" name="email" placeholder="ivan@email.com"></div>
-        <div class="field"><label>Телефон</label><input type="tel" name="phone" placeholder="+38 067 000 00 00"></div>
         <div class="field">
-          <label>Пароль</label>
+          <label>Логін <span style="color:var(--gold)">*</span></label>
+          <input type="text" name="username" placeholder="ivan_2025" required autocomplete="username"
+            value="{{ form_data.username|default:'' }}"
+            class="{% if form_errors.username %}field-error{% endif %}">
+          {% if form_errors.username %}<span class="field-err-msg">{{ form_errors.username }}</span>{% endif %}
+        </div>
+        <div class="field">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="ivan@email.com"
+            value="{{ form_data.email|default:'' }}"
+            class="{% if form_errors.email %}field-error{% endif %}">
+          {% if form_errors.email %}<span class="field-err-msg">{{ form_errors.email }}</span>{% endif %}
+        </div>
+        <div class="field">
+          <label>Телефон</label>
+          <input type="tel" name="phone" placeholder="+38 067 000 00 00"
+            value="{{ form_data.phone|default:'' }}"
+            class="{% if form_errors.phone %}field-error{% endif %}">
+          {% if form_errors.phone %}<span class="field-err-msg">{{ form_errors.phone }}</span>{% endif %}
+        </div>
+        <div class="field">
+          <label>Пароль <span style="color:var(--gold)">*</span></label>
           <div class="pwd-row">
-            <input type="password" name="password" id="regPass" placeholder="Мінімум 6 символів" required oninput="checkStrength(this.value)" autocomplete="new-password">
+            <input type="password" name="password" id="regPass" placeholder="Мінімум 6 символів" required
+              oninput="checkStrength(this.value)" autocomplete="new-password"
+              class="{% if form_errors.password %}field-error{% endif %}">
             <button type="button" class="eye-btn" onclick="togglePass('regPass',this)">👁</button>
           </div>
+          {% if form_errors.password %}<span class="field-err-msg">{{ form_errors.password }}</span>{% endif %}
           <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
           <div class="strength-label" id="strengthLabel"></div>
         </div>
@@ -97,6 +135,16 @@
 </div>
 
 <script src="{% static 'js/main.js' %}"></script>
+<style>
+.field-error { border-color: #cf6679 !important; }
+.field-err-msg {
+  display: block;
+  color: #cf6679;
+  font-size: 11px;
+  margin-top: 5px;
+  letter-spacing: 0.3px;
+}
+</style>
 <script>
 function switchTab(id, btn){
   document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('active'));
@@ -126,6 +174,88 @@ function checkStrength(val){
   fill.style.width=l.w;fill.style.background=l.c;
   label.textContent=l.t;label.style.color=l.c;
 }
+
+// ── Client-side validation ──────────────────────────────────────────
+function showErr(input, msg) {
+  input.classList.add('field-error');
+  let el = input.parentElement.querySelector('.field-err-msg');
+  if (!el) {
+    // for pwd-row, go up one more level
+    el = input.closest('.field').querySelector('.field-err-msg');
+  }
+  if (!el) {
+    el = document.createElement('span');
+    el.className = 'field-err-msg';
+    (input.closest('.pwd-row') || input).insertAdjacentElement('afterend', el);
+  }
+  el.textContent = msg;
+}
+function clearErr(input) {
+  input.classList.remove('field-error');
+  const field = input.closest('.field');
+  if (field) field.querySelectorAll('.field-err-msg').forEach(e => e.textContent = '');
+}
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+  let ok = true;
+  const nameRe = /^[А-ЯҐЄІЇа-яґєії\-'A-Za-z]{2,50}$/;
+  const loginRe = /^[a-zA-Z0-9_]{3,30}$/;
+  const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+  const phoneRe = /^\+?[\d\s\-()]{10,18}$/;
+
+  const firstName = this.querySelector('[name="first_name"]');
+  const lastName  = this.querySelector('[name="last_name"]');
+  const username  = this.querySelector('[name="username"]');
+  const email     = this.querySelector('[name="email"]');
+  const phone     = this.querySelector('[name="phone"]');
+  const password  = this.querySelector('[name="password"]');
+  const terms     = this.querySelector('#terms');
+
+  [firstName, lastName, username, email, phone, password].forEach(clearErr);
+
+  if (firstName.value.trim() && !nameRe.test(firstName.value.trim())) {
+    showErr(firstName, "Ім'я: лише літери, мін. 2 символи."); ok = false;
+  }
+  if (lastName.value.trim() && !nameRe.test(lastName.value.trim())) {
+    showErr(lastName, "Прізвище: лише літери, мін. 2 символи."); ok = false;
+  }
+  if (!username.value.trim()) {
+    showErr(username, 'Логін обовʼязковий.'); ok = false;
+  } else if (!loginRe.test(username.value.trim())) {
+    showErr(username, 'Логін: 3–30 символів, лише a-z, 0-9, _'); ok = false;
+  }
+  if (email.value.trim() && !emailRe.test(email.value.trim())) {
+    showErr(email, 'Невірний формат email.'); ok = false;
+  }
+  if (phone.value.trim() && !phoneRe.test(phone.value.trim())) {
+    showErr(phone, 'Невірний формат. Приклад: +38 067 000 00 00'); ok = false;
+  }
+  if (!password.value) {
+    showErr(password, 'Пароль обовʼязковий.'); ok = false;
+  } else if (password.value.length < 6) {
+    showErr(password, 'Мінімум 6 символів.'); ok = false;
+  }
+  if (!terms.checked) {
+    terms.closest('.terms-check').style.color = '#cf6679'; ok = false;
+  }
+
+  if (!ok) e.preventDefault();
+});
+
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  let ok = true;
+  const username = this.querySelector('[name="username"]');
+  const password = this.querySelector('[name="password"]');
+  [username, password].forEach(clearErr);
+  if (!username.value.trim()) { showErr(username, 'Введіть логін.'); ok = false; }
+  if (!password.value)        { showErr(password, 'Введіть пароль.'); ok = false; }
+  if (!ok) e.preventDefault();
+});
+
+// Live validation — clear error on input
+document.querySelectorAll('.field input').forEach(function(inp) {
+  inp.addEventListener('input', function() { clearErr(this); });
+});
 </script>
 </body>
 </html>

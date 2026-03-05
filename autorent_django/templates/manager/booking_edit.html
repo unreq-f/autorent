@@ -354,9 +354,41 @@
 {% endblock %}
 
 {% block extra_js %}
+<style>
+.f-err       { border-color: #cf6679 !important; }
+.f-err-msg   { display:block; color:#cf6679; font-size:11px; margin-top:5px; letter-spacing:.3px; }
+</style>
 <script>
+// ── helpers ──────────────────────────────────────────────────────────
+function showErr(el, msg) {
+  if (!el) return;
+  el.classList.add('f-err');
+  var hint = el.parentElement.querySelector('.f-err-msg');
+  if (!hint) {
+    hint = document.createElement('span');
+    hint.className = 'f-err-msg';
+    el.insertAdjacentElement('afterend', hint);
+  }
+  hint.textContent = msg;
+}
+function clearErr(el) {
+  if (!el) return;
+  el.classList.remove('f-err');
+  var hint = el.parentElement && el.parentElement.querySelector('.f-err-msg');
+  if (hint) hint.textContent = '';
+}
+function scrollToFirst() {
+  var el = document.querySelector('.f-err');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── UI helpers ───────────────────────────────────────────────────────
 function onFineType(sel) {
   document.getElementById('fineDetails').style.display = sel.value ? 'block' : 'none';
+  var amtEl = document.getElementById('fineAmount');
+  var descEl = document.getElementById('fineDesc');
+  if (amtEl) clearErr(amtEl);
+  if (descEl) clearErr(descEl);
 }
 function confirmCancel() {
   document.getElementById('cancelConfirm').classList.toggle('show');
@@ -365,6 +397,118 @@ function toggleAddr(type, val) {
   var isDelivery = val === 'delivery' || val === 'delivery_out';
   var rowId = type === 'pickup' ? 'pickupAddrRow' : 'returnAddrRow';
   document.getElementById(rowId).style.display = isDelivery ? 'block' : 'none';
+  if (!isDelivery) {
+    var inp = document.getElementById(type === 'pickup' ? 'deliveryAddrInp' : 'returnAddrInp');
+    if (inp) clearErr(inp);
+  }
 }
+
+// ── Init ─────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+
+  // Assign stable IDs to inputs we need to target
+  var editForm = document.querySelector('.edit-card form[method="post"]:not([action])');
+  if (editForm) {
+    var nameMap = {
+      date_from:        'dateFromInp',
+      date_to:          'dateToInp',
+      delivery_address: 'deliveryAddrInp',
+      return_address:   'returnAddrInp',
+    };
+    Object.keys(nameMap).forEach(function(n) {
+      var el = editForm.querySelector('[name="' + n + '"]');
+      if (el && !el.id) el.id = nameMap[n];
+    });
+
+    // ── Booking edit validation ───────────────────────────────────────
+    editForm.addEventListener('submit', function(e) {
+      var ok  = true;
+      var dfEl = document.getElementById('dateFromInp');
+      var dtEl = document.getElementById('dateToInp');
+      var pAddrEl = document.getElementById('deliveryAddrInp');
+      var rAddrEl = document.getElementById('returnAddrInp');
+      var pickupSel = editForm.querySelector('[name="pickup_location"]');
+      var returnSel = editForm.querySelector('[name="return_location"]');
+
+      [dfEl, dtEl, pAddrEl, rAddrEl].forEach(function(el) { if (el) clearErr(el); });
+
+      // dates
+      if (!dfEl || !dfEl.value) {
+        showErr(dfEl, 'Вкажіть дату отримання.'); ok = false;
+      }
+      if (!dtEl || !dtEl.value) {
+        showErr(dtEl, 'Вкажіть дату повернення.'); ok = false;
+      }
+      if (dfEl && dfEl.value && dtEl && dtEl.value) {
+        var d1 = new Date(dfEl.value), d2 = new Date(dtEl.value);
+        if (d2 <= d1) {
+          showErr(dtEl, 'Дата повернення має бути пізніше дати отримання.'); ok = false;
+        } else if ((d2 - d1) / 86400000 > 365) {
+          showErr(dtEl, 'Максимальний термін оренди — 365 днів.'); ok = false;
+        }
+      }
+
+      // delivery addresses
+      if (pickupSel && (pickupSel.value === 'delivery' || pickupSel.value === 'delivery_out')) {
+        if (pAddrEl && !pAddrEl.value.trim()) {
+          showErr(pAddrEl, 'Вкажіть адресу доставки.'); ok = false;
+        }
+      }
+      if (returnSel && (returnSel.value === 'delivery' || returnSel.value === 'delivery_out')) {
+        if (rAddrEl && !rAddrEl.value.trim()) {
+          showErr(rAddrEl, 'Вкажіть адресу повернення.'); ok = false;
+        }
+      }
+
+      if (!ok) { e.preventDefault(); scrollToFirst(); }
+    });
+
+    // live clear
+    ['dateFromInp','dateToInp','deliveryAddrInp','returnAddrInp'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('input', function() { clearErr(this); });
+    });
+  }
+
+  // ── Fine form validation ──────────────────────────────────────────
+  var fineForm = document.querySelector('form[action]');
+  if (fineForm) {
+    var amtEl  = fineForm.querySelector('[name="amount"]');
+    var descEl = fineForm.querySelector('[name="description"]');
+    if (amtEl  && !amtEl.id)  amtEl.id  = 'fineAmount';
+    if (descEl && !descEl.id) descEl.id  = 'fineDesc';
+
+    fineForm.addEventListener('submit', function(e) {
+      var fineTypeSel = document.getElementById('fineType');
+      // If no fine type selected — block submit silently (no-op)
+      if (!fineTypeSel || !fineTypeSel.value) {
+        e.preventDefault();
+        showErr(fineTypeSel, 'Оберіть тип штрафу.');
+        return;
+      }
+
+      var ok = true;
+      [amtEl, descEl].forEach(function(el) { if (el) clearErr(el); });
+
+      var amt = amtEl ? parseFloat(amtEl.value) : NaN;
+      if (!amtEl || !amtEl.value.trim()) {
+        showErr(amtEl, 'Вкажіть суму штрафу.'); ok = false;
+      } else if (isNaN(amt) || amt <= 0) {
+        showErr(amtEl, 'Сума має бути більше 0.'); ok = false;
+      } else if (amt > 999999) {
+        showErr(amtEl, 'Сума занадто велика.'); ok = false;
+      }
+
+      if (descEl && !descEl.value.trim()) {
+        showErr(descEl, 'Додайте опис порушення.'); ok = false;
+      }
+
+      if (!ok) { e.preventDefault(); scrollToFirst(); }
+    });
+
+    if (amtEl)  amtEl.addEventListener('input',  function() { clearErr(this); });
+    if (descEl) descEl.addEventListener('input',  function() { clearErr(this); });
+  }
+});
 </script>
 {% endblock %}

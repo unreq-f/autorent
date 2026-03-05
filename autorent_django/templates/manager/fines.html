@@ -55,6 +55,10 @@
 .ds-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);opacity:.8;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border);}
 .modal-center{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:1000;align-items:center;justify-content:center;}
 .modal-center.open{display:flex;}
+/* ── Validation ── */
+.v-err{color:#cf6679;font-size:11px;margin-top:5px;line-height:1.4;display:none;}
+.v-err.show{display:block;}
+.v-invalid{border-color:#cf6679 !important;}
 .mbox{background:var(--dark2);border:1px solid var(--border);width:100%;max-width:540px;max-height:92vh;overflow-y:auto;}
 
 /* ── MOBILE (глобальний mobile CSS в manager.css) ── */
@@ -172,13 +176,16 @@
 
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
 <!-- Edit drawer -->
 <div class="modal-overlay" id="editOverlay" onclick="if(event.target===this)closeEdit()">
   <div class="drawer">
     <div class="dh"><h2 class="dt">Штраф <em id="drNum">—</em></h2><button class="cbtn" onclick="closeEdit()">✕</button></div>
     <div class="dbody">
       <div class="ds" id="drInfo"></div>
-      <form method="post" id="editForm">
+      <form method="post" id="editFineForm">
         {% csrf_token %}
         <input type="hidden" name="action" value="update_status">
         <input type="hidden" name="fine_pk" id="drPk">
@@ -189,13 +196,13 @@
             </select>
           </div>
           <div class="df"><label>Сплачено ₴</label>
-            <input type="number" name="paid_amount" id="drPaid" step="0.01" min="0" placeholder="0.00">
+            <input type="number" name="paid_amount" id="drPaid" step="0.01" min="0" placeholder="0.00" oninput="vClear('drPaid','errEditPaid')"><div class="v-err" id="errEditPaid"></div>
           </div>
         </div>
       </form>
     </div>
     <div class="dact">
-      <button type="submit" form="editForm" class="btn-save">Зберегти</button>
+      <button type="submit" form="editFineForm" class="btn-save">Зберегти</button>
       <button class="btn-sec" onclick="closeEdit()">Скасувати</button>
     </div>
   </div>
@@ -205,16 +212,17 @@
 <div class="modal-center" id="addModal" onclick="if(event.target===this)closeAdd()">
   <div class="mbox">
     <div class="dh"><h2 class="dt">Новий <em>штраф</em></h2><button class="cbtn" onclick="closeAdd()">✕</button></div>
-    <form method="post" action="{% url 'manager_fines' %}">
+    <form method="post" action="{% url 'manager_fines' %}" id="addFineForm">
       {% csrf_token %}<input type="hidden" name="action" value="add">
       <div class="dbody">
         <div class="df"><label>Замовлення</label>
-          <select name="booking_pk" required style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-size:13px;outline:none;box-sizing:border-box;">
+          <select name="booking_pk" id="afBooking" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-size:13px;outline:none;box-sizing:border-box;" onchange="vClear('afBooking','errAfBk')">
             <option value="">— Оберіть замовлення —</option>
             {% for b in bookings_for_form %}
             <option value="{{ b.pk }}">{{ b.number }} — {{ b.user.get_full_name|default:b.user.username }} / {{ b.car.brand }} {{ b.car.model }}</option>
             {% endfor %}
           </select>
+          <div class="v-err" id="errAfBk"></div>
         </div>
         <div class="dg2">
           <div class="df"><label>Тип штрафу</label>
@@ -224,16 +232,15 @@
             <select name="severity">{% for val,label in severities %}<option value="{{ val }}" {% if val == 'medium' %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
           </div>
         </div>
-        <div class="df"><label>Сума ₴</label><input type="number" name="amount" step="0.01" min="0" required placeholder="0.00"></div>
+        <div class="df"><label>Сума ₴</label><input type="number" name="amount" id="afAmount" step="0.01" min="0" placeholder="0.00" oninput="vClear('afAmount','errAfAmt')"><div class="v-err" id="errAfAmt"></div></div>
         <div class="df"><label>Опис</label><textarea name="description" rows="3" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical;" placeholder="Деталі штрафу..."></textarea></div>
       </div>
       <div class="dact"><button type="submit" class="btn-save">Виставити штраф</button><button type="button" class="btn-sec" onclick="closeAdd()">Скасувати</button></div>
     </form>
   </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}<script>
+<script>
 var FD = {
 {% for f in fines %}
   {{ f.pk }}: {
@@ -274,7 +281,93 @@ function openFine(pk) {
   document.getElementById('editOverlay').classList.add('open');
 }
 function closeEdit(){ document.getElementById('editOverlay').classList.remove('open'); }
-function openAdd(){ document.getElementById('addModal').classList.add('open'); }
+/* ══════════════════════════════════════
+   ВАЛІДАЦІЯ
+══════════════════════════════════════ */
+function vClear(elId, errId) {
+  var el = document.getElementById(elId);
+  if (el) el.classList.remove('v-invalid');
+  var er = document.getElementById(errId);
+  if (er) { er.textContent = ''; er.classList.remove('show'); }
+}
+function vShowErr(elId, errId, msg) {
+  var el = document.getElementById(elId);
+  if (el) el.classList.add('v-invalid');
+  var er = document.getElementById(errId);
+  if (er) { er.textContent = msg; er.classList.add('show'); }
+}
+
+/* ── "Виставити штраф" ── */
+function openAdd() {
+  // Скидаємо помилки при відкритті
+  ['afBooking','afAmount'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.classList.remove('v-invalid'); if (el.tagName === 'SELECT') el.selectedIndex = 0; else el.value = ''; }
+  });
+  ['errAfBk','errAfAmt'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = ''; el.classList.remove('show'); }
+  });
+  document.getElementById('addModal').classList.add('open');
+}
 function closeAdd(){ document.getElementById('addModal').classList.remove('open'); }
+
+(function() {
+  var form = document.getElementById('addFineForm');
+  if (!form) return;
+  form.addEventListener('submit', function(e) {
+    var ok = true;
+
+    // Замовлення
+    var bk = document.getElementById('afBooking');
+    if (!bk || !bk.value) {
+      vShowErr('afBooking', 'errAfBk', 'Оберіть замовлення зі списку.');
+      ok = false;
+    }
+
+    // Сума
+    var amt = document.getElementById('afAmount');
+    var raw = amt ? amt.value.trim() : '';
+    if (!raw) {
+      vShowErr('afAmount', 'errAfAmt', 'Вкажіть суму штрафу.');
+      ok = false;
+    } else {
+      var n = parseFloat(raw);
+      if (isNaN(n) || n <= 0) {
+        vShowErr('afAmount', 'errAfAmt', 'Сума має бути числом більше 0.');
+        ok = false;
+      } else if (n > 500000) {
+        vShowErr('afAmount', 'errAfAmt', 'Сума штрафу не може перевищувати 500 000 ₴.');
+        ok = false;
+      }
+    }
+
+    if (!ok) {
+      e.preventDefault();
+      var first = form.querySelector('.v-err.show');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+})();
+
+/* ── "Оновити статус штрафу" ── */
+(function() {
+  var form = document.getElementById('editFineForm');
+  if (!form) return;
+  form.addEventListener('submit', function(e) {
+    var ok = true;
+    var paid = document.getElementById('drPaid');
+    var raw = paid ? paid.value.trim() : '';
+    if (raw !== '') {
+      var n = parseFloat(raw);
+      if (isNaN(n) || n < 0) {
+        vShowErr('drPaid', 'errEditPaid', 'Сума сплачено не може бути від\u2019ємною.');
+        ok = false;
+      }
+    }
+    if (!ok) e.preventDefault();
+  });
+})();
+
 document.addEventListener('keydown', e => { if(e.key==='Escape'){closeEdit();closeAdd();} });
 </script>{% endblock %}
