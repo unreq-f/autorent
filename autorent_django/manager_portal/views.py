@@ -246,19 +246,111 @@ def cars(request):
 def car_edit(request, pk=None):
     car = get_object_or_404(Car, pk=pk) if pk else None
     if request.method == 'POST':
+        import re as _re
         d = request.POST
+        errors = []
+
+        # -- Обов'язкові текстові поля --
+        brand = d.get('brand', '').strip()
+        model = d.get('model', '').strip()
+        if not brand:
+            errors.append("Вкажіть марку автомобіля.")
+        if not model:
+            errors.append("Вкажіть модель автомобіля.")
+
+        # -- Числові поля --
+        year_raw     = d.get('year', '').strip()
+        seats_raw    = d.get('seats', '').strip()
+        mileage_raw  = d.get('mileage', '').strip()
+        price_base_raw  = d.get('price_base', '').strip()
+        price_prime_raw = d.get('price_prime', '').strip()
+        deposit_raw     = d.get('deposit', '').strip()
+
+        year = seats = mileage = None
+        price_base = price_prime = deposit = None
+
+        if year_raw:
+            try:
+                year = int(year_raw)
+                if year < 1990 or year > 2030:
+                    errors.append("Рік випуску має бути між 1990 та 2030.")
+            except ValueError:
+                errors.append("Рік випуску має бути числом.")
+        else:
+            errors.append("Вкажіть рік випуску.")
+
+        if seats_raw:
+            try:
+                seats = int(seats_raw)
+                if seats < 2 or seats > 9:
+                    errors.append("Кількість місць — від 2 до 9.")
+            except ValueError:
+                errors.append("Кількість місць має бути числом.")
+
+        if mileage_raw:
+            try:
+                mileage = int(mileage_raw)
+                if mileage < 0:
+                    errors.append("Пробіг не може бути від'ємним.")
+            except ValueError:
+                errors.append("Пробіг має бути цілим числом.")
+
+        if price_base_raw:
+            try:
+                price_base = float(price_base_raw)
+                if price_base <= 0:
+                    errors.append("Ціна Base має бути більше 0.")
+            except ValueError:
+                errors.append("Ціна Base — невірний формат.")
+        else:
+            errors.append("Вкажіть ціну тарифу Base.")
+
+        if price_prime_raw:
+            try:
+                price_prime = float(price_prime_raw)
+                if price_prime <= 0:
+                    errors.append("Ціна Prime має бути більше 0.")
+            except ValueError:
+                errors.append("Ціна Prime — невірний формат.")
+        else:
+            errors.append("Вкажіть ціну тарифу Prime.")
+
+        if deposit_raw:
+            try:
+                deposit = float(deposit_raw)
+                if deposit < 0:
+                    errors.append("Застава не може бути від'ємною.")
+            except ValueError:
+                errors.append("Застава — невірний формат числа.")
+
+        # -- Держ. номер --
+        plate = d.get('plate', '').strip()
+        if plate and not _re.match(r'^[А-ЯҐЄІЇа-яґєіїA-Z]{2}\s?\d{4}\s?[А-ЯҐЄІЇа-яґєіїA-Z]{2}$', plate):
+            errors.append("Формат номерного знаку: КА 1234 АА.")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return render(request, 'manager/car_edit.html', {
+                'car': car,
+                'car_classes': Car.CAR_CLASSES,
+                'fuels': Car.FUELS,
+                'statuses': Car.STATUSES,
+                'post_data': d,
+            })
+
+        # -- Зберігаємо --
         fields = ['brand','model','year','car_class','fuel','transmission','seats','engine','drive','color','plate','mileage','price_base','price_prime','deposit','status','description','features','emoji']
-        # Fields that cannot be empty strings — must be None or a valid number
         decimal_fields = {'price_base', 'price_prime', 'deposit'}
         integer_fields = {'year', 'seats', 'mileage'}
+
         if car:
             for f in fields:
                 val = d.get(f, '')
                 if f in decimal_fields:
-                    # Convert empty string to None (or keep existing value)
                     val = val.strip() if val else ''
                     if val == '':
-                        val = getattr(car, f)  # keep old value if field is blank
+                        val = getattr(car, f)
                 elif f in integer_fields:
                     val = val.strip() if val else ''
                     if val == '':
@@ -272,14 +364,27 @@ def car_edit(request, pk=None):
                     val = d.get(f, getattr(car, f))
                 setattr(car, f, val)
             car.is_featured = 'is_featured' in d
-            if request.FILES.get('image'): car.image = request.FILES['image']
+            if request.FILES.get('image'):
+                car.image = request.FILES['image']
             car.save()
             messages.success(request, f'{car} оновлено.')
         else:
-            car = Car.objects.create(**{f: d.get(f,'') for f in fields if d.get(f)}, is_featured='is_featured' in d)
+            car = Car.objects.create(
+                **{f: d.get(f, '') for f in fields if d.get(f)},
+                is_featured='is_featured' in d
+            )
             messages.success(request, f'{car} додано.')
         return redirect('manager_cars')
-    return render(request, 'manager/car_edit.html', {'car': car, 'car_classes': Car.CAR_CLASSES, 'fuels': Car.FUELS, 'statuses': Car.STATUSES})
+    ctx = {
+        'car': car,
+        'car_classes': Car.CAR_CLASSES,
+        'fuels': Car.FUELS,
+        'statuses': Car.STATUSES,
+        'price_base_val':  str(car.price_base)  if car and car.price_base  is not None else '',
+        'price_prime_val': str(car.price_prime) if car and car.price_prime is not None else '',
+        'deposit_val':     str(car.deposit)     if car and car.deposit     is not None else '',
+    }
+    return render(request, 'manager/car_edit.html', ctx)
 
 
 @manager_req
@@ -287,13 +392,37 @@ def car_service(request, pk):
     from django.utils import timezone
     car = get_object_or_404(Car, pk=pk)
     if request.method == 'POST':
-        service_date = request.POST.get('service_date','')
-        service_note = request.POST.get('service_note','')
-        set_status   = request.POST.get('set_status','service')
+        from datetime import date as date_cls
+        service_date_raw     = request.POST.get('service_date', '').strip()
+        service_date_end_raw = request.POST.get('service_date_end', '').strip()
+        service_note = request.POST.get('service_note', '').strip()
+        set_status   = request.POST.get('set_status', 'service')
+        errors = []
+
+        service_date = service_date_end = None
+        if not service_date_raw:
+            errors.append('Вкажіть дату початку ТО.')
+        else:
+            try:
+                service_date = date_cls.fromisoformat(service_date_raw)
+            except ValueError:
+                errors.append('Невірний формат дати початку ТО.')
+
+        if service_date_end_raw:
+            try:
+                service_date_end = date_cls.fromisoformat(service_date_end_raw)
+                if service_date and service_date_end < service_date:
+                    errors.append('Дата завершення ТО має бути не раніше дати початку.')
+            except ValueError:
+                errors.append('Невірний формат дати завершення ТО.')
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return redirect('manager_car_service', pk=pk)
+
         car.status = set_status
-        if service_date:
-            from datetime import date
-            car.next_service = service_date
+        car.next_service = service_date_end or service_date
         if service_note and hasattr(car, 'description'):
             car.description = (car.description or '') + f'\n[ТО {timezone.now().strftime("%d.%m.%Y")}] {service_note}'
         car.save()
@@ -379,26 +508,110 @@ def clients(request):
 
 @manager_req
 def client_edit(request, pk):
+    import re as _re
     u = get_object_or_404(User, pk=pk)
     profile, _ = ClientProfile.objects.get_or_create(user=u)
     if request.method == 'POST':
-        # User (auth) fields
-        u.first_name = request.POST.get('first_name', u.first_name).strip()
-        u.last_name  = request.POST.get('last_name',  u.last_name).strip()
-        u.email      = request.POST.get('email',      u.email).strip()
+        d = request.POST
+        errors = []
+
+        # --- Обов'язкові поля ---
+        first_name = d.get('first_name', '').strip()
+        last_name  = d.get('last_name',  '').strip()
+        email      = d.get('email',      '').strip()
+
+        if not first_name:
+            errors.append("Вкажіть ім'я клієнта.")
+        if not last_name:
+            errors.append("Вкажіть прізвище клієнта.")
+        if not email:
+            errors.append("Вкажіть email клієнта.")
+        elif not _re.match(r'^[^@\s]+@[^@\s]+\.[^@\s]+$', email):
+            errors.append("Введіть коректний email (наприклад, user@example.com).")
+        elif User.objects.filter(email=email).exclude(pk=pk).exists():
+            errors.append("Клієнт з таким email вже існує.")
+
+        # --- Телефон ---
+        phone = d.get('phone', '').strip()
+        if phone and not _re.match(r'^\+?[\d\s\-\(\)]{7,20}$', phone):
+            errors.append("Невірний формат телефону. Приклад: +380XX XXX XX XX.")
+
+        # --- ІПН ---
+        tax_id = d.get('tax_id', '').strip()
+        if tax_id and not _re.match(r'^\d{10}$', tax_id):
+            errors.append("ІПН має містити рівно 10 цифр.")
+
+        # --- Дата народження ---
+        birth_date_raw = d.get('birth_date', '').strip()
+        birth_date = None
+        if birth_date_raw:
+            from datetime import date as date_cls
+            try:
+                birth_date = date_cls.fromisoformat(birth_date_raw)
+                today = date_cls.today()
+                age = (today - birth_date).days // 365
+                if age < 18:
+                    errors.append("Клієнт має бути старше 18 років.")
+                elif age > 120:
+                    errors.append("Введіть коректну дату народження.")
+            except ValueError:
+                errors.append("Невірний формат дати народження.")
+
+        # --- Стаж ---
+        exp_raw = d.get('experience_years', '0').strip()
+        experience_years = 0
+        try:
+            experience_years = int(exp_raw or 0)
+            if experience_years < 0 or experience_years > 60:
+                errors.append("Стаж водіння має бути від 0 до 60 років.")
+        except ValueError:
+            errors.append("Стаж водіння має бути числом.")
+
+        # --- Знижка ---
+        disc_raw = d.get('discount_pct', '0').strip()
+        discount_pct = 0
+        try:
+            discount_pct = int(disc_raw or 0)
+            if discount_pct < 0 or discount_pct > 50:
+                errors.append("Знижка має бути від 0 до 50%.")
+        except ValueError:
+            errors.append("Знижка має бути числом.")
+
+        # --- Паспорт (старий зразок: КА 123456 / новий ID-картка: 9 цифр) ---
+        passport_number = d.get('passport_number', '').strip()
+        if passport_number:
+            old_fmt = _re.match(r'^[А-ЯҐЄІЇа-яґєії]{2}\s?\d{6}$', passport_number)
+            new_fmt = _re.match(r'^\d{9}$', passport_number)
+            if not old_fmt and not new_fmt:
+                errors.append("Невірний формат паспорту. Старий зразок: КА 123456 (2 літери + 6 цифр). Новий зразок (ID-картка): 000123456 (9 цифр).")
+
+        # --- Водійське посвідчення ---
+        driver_license = d.get('driver_license', '').strip()
+        if driver_license and not _re.match(r'^[А-ЯҐЄІЇа-яґєіїA-Za-z]{3}\s?\d{6}$', driver_license):
+            errors.append("Формат водійського посвідчення: КАА 123456.")
+
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return redirect('manager_client_edit', pk=pk)
+
+        # --- Зберігаємо ---
+        u.first_name = first_name
+        u.last_name  = last_name
+        u.email      = email
         u.save()
-        # Profile fields
-        profile.phone            = request.POST.get('phone', '').strip()
-        profile.city             = request.POST.get('city', '').strip()
-        profile.address          = request.POST.get('address', '').strip()
-        profile.birth_date       = request.POST.get('birth_date', '') or None
-        profile.driver_license   = request.POST.get('driver_license', '').strip()
-        profile.passport_number  = request.POST.get('passport_number', '').strip()
-        profile.tax_id           = request.POST.get('tax_id', '').strip()
-        profile.experience_years = int(request.POST.get('experience_years', 0) or 0)
-        profile.segment          = request.POST.get('segment', profile.segment)
-        profile.discount_pct     = int(request.POST.get('discount_pct', 0) or 0)
-        profile.manager_note     = request.POST.get('manager_note', '')
+
+        profile.phone            = phone
+        profile.city             = d.get('city', '').strip()
+        profile.address          = d.get('address', '').strip()
+        profile.birth_date       = birth_date
+        profile.driver_license   = driver_license
+        profile.passport_number  = passport_number
+        profile.tax_id           = tax_id
+        profile.experience_years = experience_years
+        profile.segment          = d.get('segment', profile.segment)
+        profile.discount_pct     = discount_pct
+        profile.manager_note     = d.get('manager_note', '')
         profile.save()
         messages.success(request, 'Профіль {} оновлено.'.format(u.get_full_name() or u.username))
         return redirect('manager_clients')
@@ -479,21 +692,69 @@ def payments(request):
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "add_payment":
+            pay_errors = []
+
+            # --- Замовлення ---
             bk_num = request.POST.get("booking_number", "").strip()
             bk = Booking.objects.filter(number__iexact=bk_num).first() if bk_num else None
             if not bk:
-                bk_pk = request.POST.get("booking_pk")
+                bk_pk = request.POST.get("booking_pk", "").strip()
                 bk = Booking.objects.filter(pk=bk_pk).first() if bk_pk else None
-            Payment.objects.create(
-                booking=bk,
-                payment_type=request.POST.get("payment_type", "rental"),
-                method=request.POST.get("method", "card"),
-                amount=request.POST.get("amount", 0),
-                status=request.POST.get("status", "success"),
-                bank_ref=request.POST.get("bank_ref", ""),
-                note=request.POST.get("note", ""),
-            )
-            messages.success(request, "Платіж додано.")
+            if not bk:
+                pay_errors.append("Вкажіть замовлення — введіть номер або оберіть зі списку.")
+
+            # --- Тип платежу ---
+            payment_type = request.POST.get("payment_type", "").strip()
+            valid_types = {v for v, _ in Payment.TYPES}
+            if not payment_type or payment_type not in valid_types:
+                pay_errors.append("Оберіть тип платежу.")
+
+            # --- Метод оплати ---
+            method = request.POST.get("method", "").strip()
+            valid_methods = {v for v, _ in Payment.METHODS}
+            if not method or method not in valid_methods:
+                pay_errors.append("Оберіть метод оплати.")
+
+            # --- Статус ---
+            pay_status = request.POST.get("status", "").strip()
+            valid_statuses = {v for v, _ in Payment.STATUSES}
+            if not pay_status or pay_status not in valid_statuses:
+                pay_errors.append("Оберіть статус платежу.")
+
+            # --- Сума ---
+            amount_raw = request.POST.get("amount", "").strip()
+            amount = None
+            if not amount_raw:
+                pay_errors.append("Вкажіть суму платежу.")
+            else:
+                try:
+                    amount = float(amount_raw)
+                    if amount <= 0:
+                        pay_errors.append("Сума платежу має бути більше 0.")
+                    elif amount > 1_000_000:
+                        pay_errors.append("Сума платежу не може перевищувати 1 000 000 ₴.")
+                except ValueError:
+                    pay_errors.append("Сума платежу — невірний формат числа.")
+
+            # --- Bank ref (опційно, але якщо вказано — не більше 100 символів) ---
+            bank_ref = request.POST.get("bank_ref", "").strip()
+            if len(bank_ref) > 100:
+                pay_errors.append("Bank ID не може перевищувати 100 символів.")
+
+            if pay_errors:
+                for err in pay_errors:
+                    messages.error(request, err)
+            else:
+                Payment.objects.create(
+                    booking=bk,
+                    payment_type=payment_type,
+                    method=method,
+                    amount=amount,
+                    status=pay_status,
+                    bank_ref=bank_ref,
+                    note=request.POST.get("note", ""),
+                )
+                messages.success(request, "Платіж додано.")
         elif action == "change_status":
             p = get_object_or_404(Payment, pk=request.POST.get("payment_pk"))
             p.status = request.POST.get("new_status", p.status)
@@ -621,23 +882,72 @@ def fines(request):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'update_status':
+            import re as _re
             f = get_object_or_404(Fine, pk=request.POST.get('fine_pk'))
             f.status = request.POST.get('status', f.status)
             paid_raw = request.POST.get('paid_amount', '').strip()
-            f.paid_amount = paid_raw if paid_raw else f.paid_amount
+            if paid_raw:
+                try:
+                    paid_val = float(paid_raw)
+                    if paid_val < 0:
+                        messages.error(request, "Сума сплачено не може бути від'ємною.")
+                        return redirect(request.get_full_path())
+                    f.paid_amount = paid_val
+                except ValueError:
+                    messages.error(request, 'Сума сплачено — невірний формат числа.')
+                    return redirect(request.get_full_path())
             f.save()
             messages.success(request, f'{f.number} оновлено.')
+
         elif action == 'add':
-            bk = get_object_or_404(Booking, pk=request.POST.get('booking_pk'))
-            Fine.objects.create(
-                booking=bk,
-                fine_type=request.POST.get('fine_type','other'),
-                severity=request.POST.get('severity','medium'),
-                amount=request.POST.get('amount',0),
-                description=request.POST.get('description',''),
-                manager=request.user,
-            )
-            messages.success(request, 'Штраф виставлено.')
+            fine_errors = []
+
+            # Замовлення
+            bk_pk = request.POST.get('booking_pk', '').strip()
+            bk = Booking.objects.filter(pk=bk_pk).first() if bk_pk else None
+            if not bk:
+                fine_errors.append('Оберіть замовлення зі списку.')
+
+            # Тип і серйозність
+            fine_type = request.POST.get('fine_type', '').strip()
+            valid_types = {v for v, _ in Fine.TYPES}
+            if not fine_type or fine_type not in valid_types:
+                fine_errors.append('Оберіть тип штрафу.')
+
+            severity = request.POST.get('severity', '').strip()
+            valid_sevs = {v for v, _ in Fine.SEVERITIES}
+            if not severity or severity not in valid_sevs:
+                fine_errors.append('Оберіть рівень серйозності.')
+
+            # Сума
+            amount_raw = request.POST.get('amount', '').strip()
+            amount = None
+            if not amount_raw:
+                fine_errors.append('Вкажіть суму штрафу.')
+            else:
+                try:
+                    amount = float(amount_raw)
+                    if amount <= 0:
+                        fine_errors.append('Сума штрафу має бути більше 0.')
+                    elif amount > 500_000:
+                        fine_errors.append('Сума штрафу не може перевищувати 500 000 ₴.')
+                except ValueError:
+                    fine_errors.append('Сума штрафу — невірний формат числа.')
+
+            if fine_errors:
+                for err in fine_errors:
+                    messages.error(request, err)
+            else:
+                Fine.objects.create(
+                    booking=bk,
+                    fine_type=fine_type,
+                    severity=severity,
+                    amount=amount,
+                    description=request.POST.get('description', ''),
+                    manager=request.user,
+                )
+                messages.success(request, 'Штраф виставлено.')
+
         return redirect(request.get_full_path())
     stats = {
         'unpaid_count':  Fine.objects.filter(status='unpaid').count(),
@@ -671,19 +981,66 @@ def promos(request):
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'add':
-            code = request.POST.get('code','').strip().upper()
-            if code:
+            from datetime import date as _date_cls
+            import re as _re
+            promo_errors = []
+
+            # Код
+            code = request.POST.get('code', '').strip().upper()
+            if not code:
+                promo_errors.append('Введіть код промокоду.')
+            elif not _re.match(r'^[A-Z0-9_-]{2,32}$', code):
+                promo_errors.append('Код промокоду: тільки латинські літери A–Z, цифри, _ та - (2–32 символи).')
+            elif PromoCode.objects.filter(code__iexact=code).exists():
+                promo_errors.append(f'Промокод «{code}» вже існує.')
+
+            # Знижка
+            disc_raw = request.POST.get('discount_pct', '').strip()
+            discount_pct = None
+            if not disc_raw:
+                promo_errors.append('Вкажіть розмір знижки.')
+            else:
                 try:
-                    PromoCode.objects.create(
-                        code=code,
-                        discount_pct=int(request.POST.get('discount_pct') or 10),
-                        is_active=request.POST.get('is_active') == 'on',
-                        valid_until=request.POST.get('valid_until') or None,
-                        max_uses=int(request.POST.get('max_uses') or 0),
-                    )
-                    messages.success(request, f'Промокод {code} створено.')
-                except Exception as e:
-                    messages.error(request, f'Помилка: {e}')
+                    discount_pct = int(disc_raw)
+                    if discount_pct < 1 or discount_pct > 99:
+                        promo_errors.append('Знижка має бути від 1 до 99%.')
+                except ValueError:
+                    promo_errors.append('Знижка — невірний формат числа.')
+
+            # Макс. використань
+            uses_raw = request.POST.get('max_uses', '0').strip()
+            max_uses = 0
+            try:
+                max_uses = int(uses_raw or 0)
+                if max_uses < 0:
+                    promo_errors.append("Макс. використань не може бути від'ємним.")
+            except ValueError:
+                promo_errors.append('Макс. використань — введіть ціле число.')
+
+            # Дата "Діє до"
+            valid_until_raw = request.POST.get('valid_until', '').strip()
+            valid_until = None
+            if valid_until_raw:
+                try:
+                    from datetime import date as _d
+                    valid_until = _d.fromisoformat(valid_until_raw)
+                    if valid_until <= _d.today():
+                        promo_errors.append('Дата закінчення має бути в майбутньому.')
+                except ValueError:
+                    promo_errors.append('Невірний формат дати закінчення.')
+
+            if promo_errors:
+                for err in promo_errors:
+                    messages.error(request, err)
+            else:
+                PromoCode.objects.create(
+                    code=code,
+                    discount_pct=discount_pct,
+                    is_active=request.POST.get('is_active') == 'on',
+                    valid_until=valid_until,
+                    max_uses=max_uses,
+                )
+                messages.success(request, f'Промокод {code} створено.')
         elif action == 'toggle':
             p = get_object_or_404(PromoCode, pk=request.POST.get('pk'))
             p.is_active = not p.is_active
@@ -763,7 +1120,7 @@ def car_photo_upload(request, pk):
     from core.models import CarPhoto
     car = get_object_or_404(Car, pk=pk)
     if request.method == 'POST':
-        files = request.FILES.getlist('photos')
+        files = [f for f in request.FILES.getlist('gallery_photos') + request.FILES.getlist('photos') if f and f.name]
         for idx, f in enumerate(files):
             caption = request.POST.get(f'caption_{idx}', '').strip()
             is_main = not car.photos.exists() and idx == 0
@@ -785,14 +1142,20 @@ def car_photo_delete(request, photo_pk):
 
 
 @manager_req
+@manager_req
 def car_photo_set_main(request, photo_pk):
     from core.models import CarPhoto
     photo = get_object_or_404(CarPhoto, pk=photo_pk)
     car_pk = photo.car.pk
     if request.method == 'POST':
-        CarPhoto.objects.filter(car=photo.car).update(is_main=False)
+        car = photo.car
+        CarPhoto.objects.filter(car=car).update(is_main=False)
+        photo.refresh_from_db()
         photo.is_main = True
         photo.save()
+        # Sync car.image so the thumbnail stays up to date
+        car.image = photo.image
+        car.save(update_fields=['image'])
         messages.success(request, 'Головне фото оновлено.')
     return redirect('manager_car_edit', pk=car_pk)
 

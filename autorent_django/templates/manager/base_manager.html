@@ -59,7 +59,7 @@
 
     <a class="nav-item {% if request.resolver_match.url_name == 'manager_inquiries' %}active{% endif %}" href="{% url 'manager_inquiries' %}">
       <span class="nav-icon">💬</span> Питання
-      {% with new_count=0 %}{% endwith %}
+      {% if new_inquiries %}<span class="nav-badge">{{ new_inquiries }}</span>{% endif %}
     </a>
     <div class="nav-section-label">Система</div>
     <a class="nav-item" href="{% url 'index' %}">

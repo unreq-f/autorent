@@ -110,6 +110,11 @@
     color: var(--gold) !important;
   }
 }
+
+/* ── New booking form validation ── */
+.nb-f-err     { border-color: #cf6679 !important; }
+.nb-f-err-msg { display:block; color:#cf6679; font-size:11px; margin-top:5px; letter-spacing:.3px; }
+.nb-car-err   { color:#cf6679; font-size:11px; margin-top:6px; display:none; }
 </style>
 {% endblock %}
 
@@ -322,6 +327,7 @@
               onfocus="if(this.value.length>=1)carSearchInput(this.value)">
             <input type="hidden" name="car_pk" id="nbCarPkHidden">
             <div id="carDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:9999;background:var(--dark);border:1px solid var(--gold);max-height:240px;overflow-y:auto;"></div>
+            <span class="nb-car-err" id="nbCarErr">Оберіть автомобіль зі списку.</span>
           </div>
           <div class="field">
             <label>Тариф</label>
@@ -338,10 +344,12 @@
           <div class="field">
             <label>Дата отримання</label>
             <input type="date" name="date_from" id="nbDateFrom" required style="color-scheme:dark;" onchange="nbCalc()">
+            <span class="nb-f-err-msg" id="nbDateFromErr"></span>
           </div>
           <div class="field">
             <label>Дата повернення</label>
             <input type="date" name="date_to" id="nbDateTo" required style="color-scheme:dark;" onchange="nbCalc()">
+            <span class="nb-f-err-msg" id="nbDateToErr"></span>
           </div>
           <div class="field">
             <label>Час отримання</label>
@@ -370,14 +378,17 @@
           <div class="field">
             <label>Ім'я клієнта</label>
             <input type="text" name="client_name" id="nbClientName" placeholder="Прізвище та ім'я...">
+            <span class="nb-f-err-msg" id="nbClientNameErr"></span>
           </div>
           <div class="field">
             <label>Email</label>
             <input type="email" name="client_email" id="nbClientEmail" placeholder="email@example.com">
+            <span class="nb-f-err-msg" id="nbClientEmailErr"></span>
           </div>
           <div class="field">
             <label>Телефон</label>
             <input type="tel" name="client_phone" id="nbClientPhone" placeholder="+38 0XX XXX XX XX">
+            <span class="nb-f-err-msg" id="nbClientPhoneErr"></span>
           </div>
           <div class="field">
             <label>Спосіб оплати</label>
@@ -407,10 +418,12 @@
         <div class="field" id="nbDeliveryRow" style="display:none;">
           <label>Адреса доставки (отримання)</label>
           <input type="text" name="delivery_address" id="nbDeliveryAddr" placeholder="Вул. Назва, буд. №">
+          <span class="nb-f-err-msg" id="nbDeliveryAddrErr"></span>
         </div>
         <div class="field" id="nbReturnAddrRow" style="display:none;">
           <label>Адреса повернення</label>
           <input type="text" name="return_address" id="nbReturnAddr" placeholder="Вул. Назва, буд. №">
+          <span class="nb-f-err-msg" id="nbReturnAddrErr"></span>
         </div>
       </div>
 
@@ -822,5 +835,133 @@ function daysWord(n) {
   if(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)) return 'дні';
   return 'днів';
 }
+
+/* ══ New booking form validation ══════════════════════════════════════ */
+function nbShowErr(elId, msgId, msg) {
+  var el  = document.getElementById(elId);
+  var msg_el = document.getElementById(msgId);
+  if (el)     el.classList.add('nb-f-err');
+  if (msg_el) { msg_el.textContent = msg; msg_el.style.display = 'block'; }
+}
+function nbClearErr(elId, msgId) {
+  var el  = document.getElementById(elId);
+  var msg_el = msgId ? document.getElementById(msgId) : null;
+  if (el)     el.classList.remove('nb-f-err');
+  if (msg_el) { msg_el.textContent = ''; msg_el.style.display = 'none'; }
+}
+function nbScrollToErr() {
+  var el = document.querySelector('#nbForm .nb-f-err, #nbForm .nb-car-err[style*="block"]');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+document.getElementById('nbForm').addEventListener('submit', function(e) {
+  var ok = true;
+
+  // ── Авто ──────────────────────────────────────────────────────────
+  var carPk    = document.getElementById('nbCarPkHidden').value;
+  var carSearch = document.getElementById('nbCarSearch');
+  var carErr   = document.getElementById('nbCarErr');
+  if (!carPk) {
+    if (carSearch) carSearch.classList.add('nb-f-err');
+    if (carErr)    carErr.style.display = 'block';
+    ok = false;
+  } else {
+    if (carSearch) carSearch.classList.remove('nb-f-err');
+    if (carErr)    carErr.style.display = 'none';
+  }
+
+  // ── Дати ──────────────────────────────────────────────────────────
+  var df = document.getElementById('nbDateFrom').value;
+  var dt = document.getElementById('nbDateTo').value;
+  nbClearErr('nbDateFrom', 'nbDateFromErr');
+  nbClearErr('nbDateTo',   'nbDateToErr');
+
+  if (!df) {
+    nbShowErr('nbDateFrom', 'nbDateFromErr', 'Вкажіть дату отримання.'); ok = false;
+  }
+  if (!dt) {
+    nbShowErr('nbDateTo', 'nbDateToErr', 'Вкажіть дату повернення.'); ok = false;
+  }
+  if (df && dt) {
+    var d1 = new Date(df), d2 = new Date(dt);
+    if (d2 <= d1) {
+      nbShowErr('nbDateTo', 'nbDateToErr', 'Має бути пізніше дати отримання.'); ok = false;
+    } else if ((d2 - d1) / 86400000 > 365) {
+      nbShowErr('nbDateTo', 'nbDateToErr', 'Максимальний термін — 365 днів.'); ok = false;
+    }
+  }
+
+  // ── Клієнт ────────────────────────────────────────────────────────
+  var clientPk    = document.getElementById('nbClientPk').value;
+  var clientName  = document.getElementById('nbClientName').value.trim();
+  var clientEmail = document.getElementById('nbClientEmail').value.trim();
+  var clientPhone = document.getElementById('nbClientPhone').value.trim();
+  nbClearErr('nbClientName',  'nbClientNameErr');
+  nbClearErr('nbClientEmail', 'nbClientEmailErr');
+  nbClearErr('nbClientPhone', 'nbClientPhoneErr');
+
+  if (!clientPk && !clientEmail && !clientName) {
+    nbShowErr('nbClientName', 'nbClientNameErr', "Оберіть клієнта або введіть ім'я / email."); ok = false;
+  }
+  if (clientEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(clientEmail)) {
+    nbShowErr('nbClientEmail', 'nbClientEmailErr', 'Невірний формат email.'); ok = false;
+  }
+  if (clientPhone) {
+    var ph = clientPhone.replace(/[\s\-()]/g, '');
+    if (!/^\+?380\d{9}$|^\+?\d{10,15}$/.test(ph)) {
+      nbShowErr('nbClientPhone', 'nbClientPhoneErr', 'Формат: +38 067 000 00 00'); ok = false;
+    }
+  }
+
+  // ── Адреси доставки ───────────────────────────────────────────────
+  var pickupVal = document.getElementById('nbPickup').value;
+  var returnVal = document.getElementById('nbReturn').value;
+  var pAddr = document.getElementById('nbDeliveryAddr').value.trim();
+  var rAddr = document.getElementById('nbReturnAddr').value.trim();
+  nbClearErr('nbDeliveryAddr', 'nbDeliveryAddrErr');
+  nbClearErr('nbReturnAddr',   'nbReturnAddrErr');
+
+  if ((pickupVal === 'delivery' || pickupVal === 'delivery_out') && !pAddr) {
+    nbShowErr('nbDeliveryAddr', 'nbDeliveryAddrErr', 'Вкажіть адресу доставки.'); ok = false;
+  }
+  if ((returnVal === 'delivery' || returnVal === 'delivery_out') && !rAddr) {
+    nbShowErr('nbReturnAddr', 'nbReturnAddrErr', 'Вкажіть адресу повернення.'); ok = false;
+  }
+
+  if (!ok) { e.preventDefault(); nbScrollToErr(); }
+});
+
+/* Live clear on user input */
+['nbDateFrom','nbDateTo'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('change', function() { nbClearErr(id, id + 'Err'); });
+});
+['nbClientName','nbClientEmail','nbClientPhone'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('input', function() { nbClearErr(id, id + 'Err'); });
+});
+['nbDeliveryAddr','nbReturnAddr'].forEach(function(id) {
+  var el = document.getElementById(id);
+  if (el) el.addEventListener('input', function() { nbClearErr(id, id + 'Err'); });
+});
+
+/* Clear car error when user selects from dropdown */
+var _origSelectCar = selectCar;
+selectCar = function(pk, label, priceBase, pricePrime, deposit) {
+  _origSelectCar(pk, label, priceBase, pricePrime, deposit);
+  var cs = document.getElementById('nbCarSearch');
+  var ce = document.getElementById('nbCarErr');
+  if (cs) cs.classList.remove('nb-f-err');
+  if (ce) ce.style.display = 'none';
+};
+
+/* Clear client errors when client is selected from dropdown */
+var _origSelectClient = selectClient;
+selectClient = function(pk, name, email, phone, discount) {
+  _origSelectClient(pk, name, email, phone, discount);
+  ['nbClientName','nbClientEmail','nbClientPhone'].forEach(function(id) {
+    nbClearErr(id, id + 'Err');
+  });
+};
 </script>
 {% endblock %}

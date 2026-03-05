@@ -67,6 +67,10 @@
 .bk-opt:hover{background:rgba(201,168,76,.06);}
 .bk-selected{background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.3);padding:10px 12px;margin-top:6px;font-size:12px;display:none;}
 .bk-selected.show{display:block;}
+/* ── Validation errors ── */
+.pay-err{color:#cf6679;font-size:11px;margin-top:5px;line-height:1.4;display:none;}
+.pay-err.show{display:block;}
+.pay-field-invalid{border-color:#cf6679 !important;}
 
 /* ── MOBILE ── */
 
@@ -234,9 +238,10 @@
       <div class="drawer-body">
         <div class="d-field"><label>Замовлення</label>
           <div class="bk-search-wrap">
-            <input type="text" id="bkSearchInput" name="booking_number" autocomplete="off" placeholder="Номер або ім'я клієнта..." oninput="bkSearch(this.value)">
+            <input type="text" id="bkSearchInput" name="booking_number" autocomplete="off" placeholder="Номер або ім'я клієнта..." oninput="bkSearch(this.value);payClearErr('bkSearchInput','errBk')">
             <div class="bk-dropdown" id="bkDropdown"></div>
           </div>
+          <div class="pay-err" id="errBk"></div>
           <div class="bk-selected" id="bkSelected"><span id="bkSelNum" style="color:var(--gold);font-family:monospace;"></span><div id="bkSelInfo" style="font-size:11px;color:var(--gray);margin-top:2px;"></div></div>
         </div>
         <div class="d-grid-2">
@@ -244,10 +249,10 @@
           <div class="d-field"><label>Метод</label><select name="method">{% for val,label in methods %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div>
         </div>
         <div class="d-grid-2">
-          <div class="d-field"><label>Сума ₴</label><input type="number" name="amount" id="nbAmount" step="0.01" min="0" required></div>
+          <div class="d-field"><label>Сума ₴</label><input type="number" name="amount" id="nbAmount" step="0.01" min="0" oninput="payClearErr('nbAmount','errAmt')"><div class="pay-err" id="errAmt"></div></div>
           <div class="d-field"><label>Статус</label><select name="status">{% for val,label in statuses_filtered %}<option value="{{ val }}" {% if val == "success" %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
         </div>
-        <div class="d-field"><label>Банківський ID</label><input type="text" name="bank_ref" placeholder="REF-..."></div>
+        <div class="d-field"><label>Банківський ID</label><input type="text" name="bank_ref" id="nbBankRef" placeholder="REF-..." oninput="payClearErr('nbBankRef','errBank')"><div class="pay-err" id="errBank"></div></div>
         <div class="d-field"><label>Примітка</label><textarea name="note" rows="2" style="width:100%;background:var(--dark3);border:1px solid rgba(255,255,255,.08);color:var(--white);padding:11px 13px;font-size:13px;outline:none;box-sizing:border-box;resize:vertical;"></textarea></div>
       </div>
       <div class="d-actions"><button type="submit" class="btn-save">Додати платіж</button><button type="button" class="btn-secondary" onclick="closeNewPayment()">Скасувати</button></div>
@@ -267,11 +272,94 @@ function closeStatus(){document.getElementById('statusModal').classList.remove('
 function openNewPayment(){resetNP();document.getElementById('newModal').classList.add('open');}
 function openNewPaymentFor(num,client,car,amount,pk,type){resetNP();document.getElementById('bkSearchInput').value=num;document.getElementById('nbBkPk').value=pk||'';document.getElementById('nbAmount').value=amount||'';if(type){var s=document.getElementById('nbType');for(var i=0;i<s.options.length;i++)if(s.options[i].value===type){s.selectedIndex=i;break;}}document.getElementById('bkSelNum').textContent=num;document.getElementById('bkSelInfo').textContent=client+' · '+car;document.getElementById('bkSelected').classList.add('show');document.getElementById('newModal').classList.add('open');}
 function closeNewPayment(){document.getElementById('newModal').classList.remove('open');}
-function resetNP(){document.getElementById('bkSearchInput').value='';document.getElementById('nbBkPk').value='';document.getElementById('nbAmount').value='';document.getElementById('bkDropdown').classList.remove('show');document.getElementById('bkSelected').classList.remove('show');}
+function resetNP(){document.getElementById('bkSearchInput').value='';document.getElementById('nbBkPk').value='';document.getElementById('nbAmount').value='';document.getElementById('bkDropdown').classList.remove('show');document.getElementById('bkSelected').classList.remove('show');payResetErrors();}
 var bkT=null;
 function bkSearch(v){clearTimeout(bkT);if(v.length<2){document.getElementById('bkDropdown').classList.remove('show');return;}bkT=setTimeout(function(){fetch('/manager/api/booking-search/?q='+encodeURIComponent(v)).then(r=>r.json()).then(function(d){var dd=document.getElementById('bkDropdown');dd.innerHTML=d.results&&d.results.length?d.results.map(b=>'<div class="bk-opt" onclick="selBk('+b.pk+',\''+esc(b.number)+'\',\''+esc(b.client)+'\',\''+esc(b.car)+'\',\''+b.amount+'\')"><span style="color:var(--gold);font-family:monospace;font-size:12px;">'+b.number+'</span><span style="float:right;font-size:12px;">₴'+parseFloat(b.amount).toFixed(0)+'</span><div style="font-size:11px;color:var(--gray);margin-top:2px;">'+b.client+' · '+b.car+'</div></div>').join(''):'<div style="padding:12px;font-size:12px;color:var(--gray);">Нічого не знайдено</div>';dd.classList.add('show');});},250);}
 function selBk(pk,num,client,car,amount){document.getElementById('bkSearchInput').value=num;document.getElementById('nbBkPk').value=pk;document.getElementById('nbAmount').value=parseFloat(amount).toFixed(0);document.getElementById('bkDropdown').classList.remove('show');document.getElementById('bkSelNum').textContent=num;document.getElementById('bkSelInfo').textContent=client+' · '+car;document.getElementById('bkSelected').classList.add('show');}
 function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
 document.addEventListener('click',e=>{if(!e.target.closest('.bk-search-wrap'))document.getElementById('bkDropdown').classList.remove('show');});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDetail();closeStatus();closeNewPayment();}});
+
+/* ══════════════════════════════════════
+   ВАЛІДАЦІЯ ФОРМИ "ДОДАТИ ПЛАТІЖ"
+══════════════════════════════════════ */
+function payClearErr(inputId, errId) {
+  var inp = document.getElementById(inputId);
+  var err = document.getElementById(errId);
+  if (inp) inp.classList.remove('pay-field-invalid');
+  if (err) { err.textContent = ''; err.classList.remove('show'); }
+}
+
+function payShowErr(inputId, errId, msg) {
+  var inp = document.getElementById(inputId);
+  var err = document.getElementById(errId);
+  if (inp) inp.classList.add('pay-field-invalid');
+  if (err) { err.textContent = msg; err.classList.add('show'); }
+}
+
+function payResetErrors() {
+  ['bkSearchInput','nbAmount','nbBankRef'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('pay-field-invalid');
+  });
+  ['errBk','errAmt','errBank'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) { el.textContent = ''; el.classList.remove('show'); }
+  });
+}
+
+function validateNewPayment(form) {
+  payResetErrors();
+  var ok = true;
+
+  // --- Замовлення ---
+  var bkPk  = document.getElementById('nbBkPk').value.trim();
+  var bkNum = document.getElementById('bkSearchInput').value.trim();
+  if (!bkPk && !bkNum) {
+    payShowErr('bkSearchInput', 'errBk', 'Вкажіть замовлення — введіть номер або оберіть зі списку.');
+    ok = false;
+  }
+
+  // --- Сума ---
+  var amtEl  = document.getElementById('nbAmount');
+  var amtRaw = amtEl ? amtEl.value.trim() : '';
+  if (!amtRaw) {
+    payShowErr('nbAmount', 'errAmt', 'Вкажіть суму платежу.');
+    ok = false;
+  } else {
+    var amt = parseFloat(amtRaw);
+    if (isNaN(amt) || amt <= 0) {
+      payShowErr('nbAmount', 'errAmt', 'Сума має бути числом більше 0.');
+      ok = false;
+    } else if (amt > 1000000) {
+      payShowErr('nbAmount', 'errAmt', 'Сума не може перевищувати 1 000 000 ₴.');
+      ok = false;
+    }
+  }
+
+  // --- Bank ref (необов'язково, але ≤ 100 символів) ---
+  var brEl = document.getElementById('nbBankRef');
+  if (brEl && brEl.value.trim().length > 100) {
+    payShowErr('nbBankRef', 'errBank', 'Bank ID не може перевищувати 100 символів.');
+    ok = false;
+  }
+
+  return ok;
+}
+
+// Підключаємо до форми новго платежу
+(function() {
+  var newModal = document.getElementById('newModal');
+  if (!newModal) return;
+  var form = newModal.querySelector('form');
+  if (!form) return;
+  form.addEventListener('submit', function(e) {
+    if (!validateNewPayment(this)) {
+      e.preventDefault();
+      // Прокручуємо до першої помилки всередині модалки
+      var first = newModal.querySelector('.pay-err.show');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  });
+})();
 </script>{% endblock %}

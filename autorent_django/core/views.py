@@ -123,12 +123,10 @@ def booking_quick(request):
     from datetime import date as date_cls
     import json
 
-    # Mark popular: if bookings >= 50 or admin flag
     from django.db.models import Count as DbCount
     cars = Car.objects.filter(status='free', is_popular=True).annotate(
         bcount=DbCount('bookings')
     ).order_by('car_class', 'brand')
-    # Auto-mark popular
     for c in cars:
         if c.bcount >= 50 and not c.is_popular:
             c.is_popular = True
@@ -138,22 +136,49 @@ def booking_quick(request):
         if not request.user.is_authenticated:
             messages.warning(request, 'Для бронювання потрібно увійти в систему.')
             return redirect('auth')
-        try:
-            date_from = date_cls.fromisoformat(request.POST.get('date_from', ''))
-            date_to   = date_cls.fromisoformat(request.POST.get('date_to', ''))
-        except ValueError:
-            messages.error(request, 'Вкажіть коректні дати оренди.')
-            return redirect('booking_quick')
-        today = date_cls.today()
-        if date_from < today:
-            messages.error(request, 'Дата отримання не може бути в минулому.')
-            return redirect('booking_quick')
-        if date_to <= date_from:
-            messages.error(request, 'Дата повернення має бути пізніше дати отримання.')
-            return redirect('booking_quick')
-        car = get_object_or_404(Car, pk=request.POST.get('car'))
-        pickup_loc = request.POST.get('pickup_location', 'office')
+
+        car_pk_raw       = request.POST.get('car', '').strip()
+        date_from_raw    = request.POST.get('date_from', '').strip()
+        date_to_raw      = request.POST.get('date_to', '').strip()
+        pickup_loc       = request.POST.get('pickup_location', 'office')
         delivery_address = request.POST.get('delivery_address', '').strip()
+        errors = []
+
+        if not car_pk_raw:
+            errors.append('Оберіть автомобіль.')
+
+        today = date_cls.today()
+        date_from = date_to = None
+        if not date_from_raw:
+            errors.append('Вкажіть дату отримання.')
+        else:
+            try:
+                date_from = date_cls.fromisoformat(date_from_raw)
+                if date_from < today:
+                    errors.append('Дата отримання не може бути в минулому.')
+            except ValueError:
+                errors.append('Невірний формат дати отримання.')
+
+        if not date_to_raw:
+            errors.append('Вкажіть дату повернення.')
+        else:
+            try:
+                date_to = date_cls.fromisoformat(date_to_raw)
+            except ValueError:
+                errors.append('Невірний формат дати повернення.')
+
+        if date_from and date_to and date_to <= date_from:
+            errors.append('Дата повернення має бути пізніше дати отримання.')
+
+        if pickup_loc in ('delivery', 'delivery_out') and not delivery_address:
+            errors.append('Вкажіть адресу доставки.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
+            return redirect('booking_quick')
+
+        car = get_object_or_404(Car, pk=car_pk_raw)
         if pickup_loc not in ('delivery', 'delivery_out'):
             delivery_address = ''
         booking = Booking.objects.create(
@@ -168,7 +193,6 @@ def booking_quick(request):
         messages.success(request, f'🎉 Бронювання {booking.number} успішно створено!')
         return redirect('profile')
 
-    # Build JSON for car preview
     def _car_main_photo(c):
         ph = c.photos.filter(is_main=True).first() or c.photos.first()
         if ph: return ph.image.url
@@ -196,7 +220,6 @@ def booking_quick(request):
 def order(request, car_pk=None):
     car = get_object_or_404(Car, pk=car_pk) if car_pk else None
 
-    # Check if user has required documents
     docs_missing = False
     if request.user.is_authenticated:
         try:
@@ -211,33 +234,63 @@ def order(request, car_pk=None):
         car_id  = request.POST.get('car') or car_pk
         car_obj = get_object_or_404(Car, pk=car_id)
 
-        try:
-            date_from = date.fromisoformat(request.POST['date_from'])
-            date_to   = date.fromisoformat(request.POST['date_to'])
-        except (KeyError, ValueError):
-            messages.error(request, 'Будь ласка, вкажіть коректні дати оренди.')
-            return redirect(request.path)
+        date_from_raw    = request.POST.get('date_from', '').strip()
+        date_to_raw      = request.POST.get('date_to', '').strip()
+        pickup_loc       = request.POST.get('pickup_location', 'office')
+        return_loc       = request.POST.get('return_location', 'office')
+        delivery_address = request.POST.get('delivery_address', '').strip()
+        return_address   = request.POST.get('return_address', '').strip()
+        time_from_str    = request.POST.get('time_from', '10:00')
+        time_to_str      = request.POST.get('time_to', '10:00')
+        errors = []
 
         today = date.today()
-        if date_from < today:
-            messages.error(request, 'Дата отримання не може бути в минулому.')
-            return redirect(request.path)
-        if date_to <= date_from:
-            messages.error(request, 'Дата повернення має бути пізніше дати отримання.')
+        date_from = date_to = None
+
+        if not date_from_raw:
+            errors.append('Вкажіть дату отримання.')
+        else:
+            try:
+                date_from = date.fromisoformat(date_from_raw)
+                if date_from < today:
+                    errors.append('Дата отримання не може бути в минулому.')
+            except ValueError:
+                errors.append('Невірний формат дати отримання.')
+
+        if not date_to_raw:
+            errors.append('Вкажіть дату повернення.')
+        else:
+            try:
+                date_to = date.fromisoformat(date_to_raw)
+            except ValueError:
+                errors.append('Невірний формат дати повернення.')
+
+        if date_from and date_to:
+            if date_to <= date_from:
+                errors.append('Дата повернення має бути пізніше дати отримання.')
+            elif (date_to - date_from).days > 365:
+                errors.append('Максимальний термін оренди — 365 днів.')
+
+        if pickup_loc in ('delivery', 'delivery_out') and not delivery_address:
+            errors.append('Вкажіть адресу доставки.')
+        if return_loc in ('delivery', 'delivery_out') and not return_address:
+            errors.append('Вкажіть адресу повернення.')
+
+        valid_pickups = {v for v, _ in Booking.PICKUPS}
+        if pickup_loc not in valid_pickups:
+            errors.append('Оберіть коректне місце отримання.')
+        if return_loc not in valid_pickups:
+            errors.append('Оберіть коректне місце повернення.')
+
+        if errors:
+            for e in errors:
+                messages.error(request, e)
             return redirect(request.path)
 
-        pickup_loc = request.POST.get('pickup_location', 'office')
-        delivery_address = request.POST.get('delivery_address', '').strip()
         if pickup_loc not in ('delivery', 'delivery_out'):
             delivery_address = ''
-
-        return_loc = request.POST.get('return_location', 'office')
-        return_address = request.POST.get('return_address', '').strip()
         if return_loc not in ('delivery', 'delivery_out'):
             return_address = ''
-
-        time_from_str = request.POST.get('time_from', '10:00')
-        time_to_str   = request.POST.get('time_to', '10:00')
 
         booking = Booking.objects.create(
             user=request.user, car=car_obj,
@@ -283,38 +336,131 @@ def order(request, car_pk=None):
     })
 
 
+# ── Допоміжна функція валідації паспорту (використовується у profile та manager) ──
+def _validate_passport(value):
+    """
+    Повертає None якщо коректно, або рядок з помилкою.
+    Формати:
+      • Старий зразок:    КА 123456   (2 кириличні літери + пробіл (опційно) + 6 цифр)
+      • Новий (ID-картка): 000123456  (рівно 9 цифр)
+    """
+    import re
+    if not value:
+        return None  # поле необов'язкове
+    if re.match(r'^[А-ЯҐЄІЇа-яґєії]{2}\s?\d{6}$', value):
+        return None
+    if re.match(r'^\d{9}$', value):
+        return None
+    return (
+        'Невірний формат паспорту. '
+        'Старий зразок: КА 123456 (2 літери + 6 цифр). '
+        'Новий (ID-картка): 000123456 (9 цифр).'
+    )
+
+
 @login_required
 def profile(request):
     profile, _ = ClientProfile.objects.get_or_create(user=request.user)
+
     if request.method == 'POST':
         action = request.POST.get('action')
+
         if action == 'update_profile':
-            u = request.user
-            u.first_name = request.POST.get('first_name','')
-            u.last_name = request.POST.get('last_name','')
-            u.email = request.POST.get('email','')
+            import re as _re
+            u         = request.user
+            form_data = request.POST
+            profile_errors = {}
+
+            # --- Збираємо значення ---
+            first_name  = request.POST.get('first_name', '').strip()
+            last_name   = request.POST.get('last_name',  '').strip()
+            email       = request.POST.get('email',      '').strip()
+            phone       = request.POST.get('phone',      '').strip()
+            city        = request.POST.get('city',       '').strip()
+            address     = request.POST.get('address',    '').strip()
+            birth_date_raw = request.POST.get('birth_date', '').strip()
+            passport    = request.POST.get('passport_number', '').strip()
+            tax_id      = request.POST.get('tax_id',     '').strip()
+            drv_license = request.POST.get('driver_license', '').strip()
+            exp_raw     = request.POST.get('experience_years', '0').strip()
+
+            # --- Валідація ---
+            from datetime import date as _date
+            birth_date = None
+            if birth_date_raw:
+                try:
+                    birth_date = _date.fromisoformat(birth_date_raw)
+                    if birth_date >= _date.today():
+                        profile_errors['birth_date'] = 'Дата народження має бути в минулому.'
+                    elif birth_date.year < 1920:
+                        profile_errors['birth_date'] = 'Введіть коректну дату народження.'
+                except ValueError:
+                    profile_errors['birth_date'] = 'Невірний формат дати.'
+
+            passport_err = _validate_passport(passport)
+            if passport_err:
+                profile_errors['passport_number'] = passport_err
+
+            if tax_id and not _re.match(r'^\d{10}$', tax_id):
+                profile_errors['tax_id'] = 'ІПН має містити рівно 10 цифр.'
+
+            if drv_license and not _re.match(r'^[А-ЯҐЄІЇа-яґєіїA-Za-z]{3}\s?\d{6}$', drv_license):
+                profile_errors['driver_license'] = 'Формат: КАА 123456 (3 літери + 6 цифр).'
+
+            experience_years = 0
+            try:
+                experience_years = int(exp_raw or 0)
+                if experience_years < 0 or experience_years > 60:
+                    profile_errors['experience_years'] = 'Стаж від 0 до 60 років.'
+            except ValueError:
+                profile_errors['experience_years'] = 'Стаж має бути числом.'
+
+            # --- Якщо є помилки — повертаємо форму зі збереженими значеннями ---
+            if profile_errors:
+                all_bookings = request.user.bookings.select_related('car').prefetch_related('car__photos').order_by('-pk')
+                return render(request, 'core/profile.html', {
+                    'profile':        profile,
+                    'profile_errors': profile_errors,
+                    'form_data':      form_data,
+                    'active_bookings': all_bookings.filter(status__in=['active','pending','awaiting_payment','paid']),
+                    'past_bookings':   all_bookings.filter(status__in=['completed','cancelled']),
+                    'all_bookings':    all_bookings,
+                    'wishlist':        Wishlist.objects.filter(user=request.user).select_related('car'),
+                    'fines':           Fine.objects.filter(booking__user=request.user).exclude(status='waived'),
+                })
+
+            # --- Зберігаємо ---
+            u.first_name = first_name
+            u.last_name  = last_name
+            u.email      = email
             u.save()
-            profile.phone = request.POST.get('phone','')
-            profile.city = request.POST.get('city','')
-            profile.driver_license = request.POST.get('driver_license','')
-            profile.passport_number = request.POST.get('passport_number','')
-            profile.tax_id = request.POST.get('tax_id','')
-            profile.experience_years = request.POST.get('experience_years', 0)
-            profile.save(update_fields=['phone','city','driver_license','passport_number','tax_id','experience_years'])
+            profile.phone            = phone
+            profile.city             = city
+            profile.address          = address
+            if birth_date is not None:
+                profile.birth_date = birth_date
+            profile.driver_license   = drv_license
+            profile.passport_number  = passport
+            profile.tax_id           = tax_id
+            profile.experience_years = experience_years
+            profile.save(update_fields=['phone','city','address','birth_date','driver_license','passport_number','tax_id','experience_years'])
             messages.success(request, '✅ Профіль оновлено!')
+
         elif action == 'cancel_booking':
             b = get_object_or_404(Booking, pk=request.POST.get('booking_id'), user=request.user)
             b.status = 'cancelled'
             b.save()
             messages.success(request, 'Замовлення скасовано.')
+
         return redirect('profile')
 
-    all_bookings = request.user.bookings.select_related('car').prefetch_related('car__photos').order_by('-pk')
+    all_bookings    = request.user.bookings.select_related('car').prefetch_related('car__photos').order_by('-pk')
     active_bookings = all_bookings.filter(status__in=['active','pending','awaiting_payment','paid'])
-    past_bookings = all_bookings.filter(status__in=['completed','cancelled'])
-    wishlist = Wishlist.objects.filter(user=request.user).select_related('car')
-    fines = Fine.objects.filter(booking__user=request.user).exclude(status='waived')
-    # Auto-update segment: only upgrade based on booking history, never downgrade manager's choice
+    past_bookings   = all_bookings.filter(status__in=['completed','cancelled'])
+    wishlist        = Wishlist.objects.filter(user=request.user).select_related('car')
+    fines           = Fine.objects.filter(booking__user=request.user).exclude(status='waived')
+
+    # Auto-update segment: тільки підвищуємо, ніколи не знижуємо вибір менеджера
     SEGMENT_RANK = {'new': 0, 'regular': 1, 'vip': 2, 'blocked': 3}
     if profile.segment not in ('blocked', 'vip'):
         completed_count = request.user.bookings.filter(status='completed').count()
@@ -322,13 +468,14 @@ def profile(request):
         if SEGMENT_RANK.get(auto_seg, 0) > SEGMENT_RANK.get(profile.segment, 0):
             profile.segment = auto_seg
             profile.save(update_fields=['segment'])
+
     return render(request, 'core/profile.html', {
-        'profile': profile,
+        'profile':        profile,
         'active_bookings': active_bookings,
-        'past_bookings': past_bookings,
-        'all_bookings': all_bookings,
-        'wishlist': wishlist,
-        'fines': fines,
+        'past_bookings':   past_bookings,
+        'all_bookings':    all_bookings,
+        'wishlist':        wishlist,
+        'fines':           fines,
     })
 
 
@@ -339,19 +486,22 @@ def auth_view(request):
     if request.method == 'POST':
         mode = request.POST.get('mode', 'login')
         if mode == 'register':
-            username = request.POST.get('username','').strip()
-            email = request.POST.get('email','').strip()
-            password = request.POST.get('password','')
+            username   = request.POST.get('username','').strip()
+            email      = request.POST.get('email','').strip()
+            password   = request.POST.get('password','')
             first_name = request.POST.get('first_name','')
-            last_name = request.POST.get('last_name','')
-            phone = request.POST.get('phone','')
+            last_name  = request.POST.get('last_name','')
+            phone      = request.POST.get('phone','')
             if not username or not password:
                 messages.error(request, 'Логін та пароль обовʼязкові.')
                 return render(request, 'registration/auth.html', {'mode': 'register'})
             if User.objects.filter(username=username).exists():
                 messages.error(request, 'Такий логін вже зайнятий.')
                 return render(request, 'registration/auth.html', {'mode': 'register'})
-            user = User.objects.create_user(username=username, email=email, password=password, first_name=first_name, last_name=last_name)
+            user = User.objects.create_user(
+                username=username, email=email, password=password,
+                first_name=first_name, last_name=last_name
+            )
             ClientProfile.objects.create(user=user, phone=phone)
             login(request, user)
             messages.success(request, f'🎉 Ласкаво просимо, {first_name or username}!')

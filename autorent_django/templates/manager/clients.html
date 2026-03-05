@@ -354,7 +354,8 @@
         <div class="d-section">
           <div class="d-section-title">Документи</div>
           <div class="d-field"><label>Номер паспорту</label>
-            <input type="text" name="passport_number" id="ePassport" placeholder="КА 123456">
+            <input type="text" name="passport_number" id="ePassport" placeholder="КА 123456 або 000123456">
+            <div style="font-size:10px;color:var(--gray);margin-top:4px;">Старий зразок: КА 123456 · Новий (ID-картка): 9 цифр</div>
           </div>
           <div class="d-grid-2">
             <div class="d-field"><label>ІПН</label>
@@ -522,7 +523,108 @@ function openEdit(pk) {
   document.getElementById('eNote').value       = c.note;
   document.getElementById('editForm').action   = c.editUrl;
   document.getElementById('blockConfirm').classList.remove('show');
+  clearEditErrors();
   document.getElementById('editOverlay').classList.add('open');
+}
+
+/* ── CLIENT-SIDE VALIDATION ── */
+function clearEditErrors() {
+  document.querySelectorAll('.d-field-error').forEach(function(el){ el.remove(); });
+  document.querySelectorAll('.d-field input, .d-field select, .d-field textarea').forEach(function(el){
+    el.style.borderColor = '';
+  });
+}
+
+function showFieldError(inputId, msg) {
+  var inp = document.getElementById(inputId);
+  if (!inp) return;
+  inp.style.borderColor = '#cf6679';
+  var err = document.createElement('div');
+  err.className = 'd-field-error';
+  err.style.cssText = 'color:#cf6679;font-size:11px;margin-top:4px;';
+  err.textContent = msg;
+  inp.parentNode.appendChild(err);
+}
+
+function validateEditForm() {
+  clearEditErrors();
+  var ok = true;
+
+  var firstName = document.getElementById('eFirstName').value.trim();
+  var lastName  = document.getElementById('eLastName').value.trim();
+  var email     = document.getElementById('eEmail').value.trim();
+  var phone     = document.getElementById('ePhone').value.trim();
+  var taxId     = document.getElementById('eTaxId').value.trim();
+  var birthDate = document.getElementById('eBirthDate').value.trim();
+  var exp       = document.getElementById('eExp').value.trim();
+  var discount  = document.getElementById('eDiscount').value.trim();
+  var license   = document.getElementById('eLicense').value.trim();
+
+  var passport  = document.getElementById('ePassport').value.trim();
+
+  if (!firstName) {
+    showFieldError('eFirstName', "Вкажіть ім'я клієнта.");
+    ok = false;
+  }
+  if (!lastName) {
+    showFieldError('eLastName', 'Вкажіть прізвище клієнта.');
+    ok = false;
+  }
+  if (!email) {
+    showFieldError('eEmail', 'Вкажіть email клієнта.');
+    ok = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showFieldError('eEmail', 'Введіть коректний email (наприклад, user@example.com).');
+    ok = false;
+  }
+  if (phone && !/^\+?[\d\s\-()\u0028\u0029]{7,20}$/.test(phone)) {
+    showFieldError('ePhone', 'Невірний формат телефону. Приклад: +380XX XXX XX XX.');
+    ok = false;
+  }
+  if (taxId && !/^\d{10}$/.test(taxId)) {
+    showFieldError('eTaxId', 'ІПН має містити рівно 10 цифр.');
+    ok = false;
+  }
+  if (birthDate) {
+    var bd = new Date(birthDate);
+    var today = new Date();
+    var age = (today - bd) / (365.25 * 24 * 3600 * 1000);
+    if (age < 18) {
+      showFieldError('eBirthDate', 'Клієнт має бути старше 18 років.');
+      ok = false;
+    } else if (age > 120) {
+      showFieldError('eBirthDate', 'Введіть коректну дату народження.');
+      ok = false;
+    }
+  }
+  if (exp !== '') {
+    var expN = parseInt(exp, 10);
+    if (isNaN(expN) || expN < 0 || expN > 60) {
+      showFieldError('eExp', 'Стаж водіння має бути від 0 до 60 років.');
+      ok = false;
+    }
+  }
+  if (discount !== '') {
+    var discN = parseInt(discount, 10);
+    if (isNaN(discN) || discN < 0 || discN > 50) {
+      showFieldError('eDiscount', 'Знижка має бути від 0 до 50%.');
+      ok = false;
+    }
+  }
+  if (license && !/^[A-ZА-ЯҐЄІЇa-zа-яґєії]{3}\s?\d{6}$/u.test(license)) {
+    showFieldError('eLicense', 'Формат водійського посвідчення: КАА 123456.');
+    ok = false;
+  }
+  if (passport) {
+    var oldFmt = /^[А-ЯҐЄІЇа-яґєії]{2}\s?\d{6}$/u.test(passport);
+    var newFmt = /^\d{9}$/.test(passport);
+    if (!oldFmt && !newFmt) {
+      showFieldError('ePassport', 'Старий зразок: КА 123456 (2 літери + 6 цифр). Новий (ID-картка): 000123456 (9 цифр).');
+      ok = false;
+    }
+  }
+
+  return ok;
 }
 
 function closeEdit() { document.getElementById('editOverlay').classList.remove('open'); }
@@ -564,6 +666,16 @@ function submitQuick(url, fields) {
   document.body.appendChild(form);
   form.submit();
 }
+
+/* ── Form submit with validation ── */
+document.getElementById('editForm').addEventListener('submit', function(e) {
+  if (!validateEditForm()) {
+    e.preventDefault();
+    // Scroll to first error
+    var first = document.querySelector('.d-field-error');
+    if (first) first.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+});
 
 /* ── Keyboard ── */
 document.addEventListener('keydown', function(e) {

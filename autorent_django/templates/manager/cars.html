@@ -308,8 +308,8 @@
       <input type="hidden" name="action" value="new">
       <input type="hidden" name="car_pk" id="nbCarPk">
       <div class="form-grid-2">
-        <div class="field"><label>Дата отримання</label><input type="date" name="date_from" required style="color-scheme:dark;"></div>
-        <div class="field"><label>Дата повернення</label><input type="date" name="date_to" required style="color-scheme:dark;"></div>
+        <div class="field"><label>Дата отримання</label><input type="date" name="date_from" id="nbcDateFrom" required style="color-scheme:dark;"><span id="nbcDateFromErr" style="display:none;color:#cf6679;font-size:11px;margin-top:4px;"></span></div>
+        <div class="field"><label>Дата повернення</label><input type="date" name="date_to" id="nbcDateTo" required style="color-scheme:dark;"><span id="nbcDateToErr" style="display:none;color:#cf6679;font-size:11px;margin-top:4px;"></span></div>
         <div class="field"><label>Тариф</label>
           <select name="tariff">
             <option value="base">Base (зі заставою)</option>
@@ -324,7 +324,7 @@
           </select>
         </div>
       </div>
-      <div class="field"><label>Клієнт (ім'я або email)</label><input type="text" name="client_name" placeholder="Пошук клієнта..."></div>
+      <div class="field"><label>Клієнт (ім'я або email)</label><input type="text" name="client_name" id="nbcClientName" placeholder="Пошук клієнта..."><span id="nbcClientNameErr" style="display:none;color:#cf6679;font-size:11px;margin-top:4px;"></span></div>
       <div class="btn-row" style="margin-top:20px;">
         <button type="submit" class="btn-save">Створити замовлення</button>
         <button type="button" class="btn-secondary" onclick="closeNbCar()">Скасувати</button>
@@ -416,10 +416,69 @@ function closeDrawer() {
 function openNewBooking(pk, name) {
   document.getElementById('nbCarPk').value = pk;
   document.getElementById('nbCarName').textContent = name;
+  // clear errors on open
+  ['nbcDateFrom','nbcDateTo','nbcClientName'].forEach(function(id) {
+    var inp = document.getElementById(id);
+    var err = document.getElementById(id + 'Err');
+    if (inp) inp.style.borderColor = '';
+    if (err) { err.textContent = ''; err.style.display = 'none'; }
+  });
   document.getElementById('nbCarModal').classList.add('open');
 }
 function closeNbCar() {
   document.getElementById('nbCarModal').classList.remove('open');
 }
+
+/* ── nbCarModal form validation ── */
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('#nbCarModal form');
+    if (!form) return;
+
+    function showErr(id, msg) {
+      var inp = document.getElementById(id);
+      var err = document.getElementById(id + 'Err');
+      if (inp) inp.style.borderColor = '#cf6679';
+      if (err) { err.textContent = msg; err.style.display = 'block'; }
+    }
+    function clearErr(id) {
+      var inp = document.getElementById(id);
+      var err = document.getElementById(id + 'Err');
+      if (inp) inp.style.borderColor = '';
+      if (err) { err.textContent = ''; err.style.display = 'none'; }
+    }
+
+    form.addEventListener('submit', function(e) {
+      var ok = true;
+      var df = document.getElementById('nbcDateFrom');
+      var dt = document.getElementById('nbcDateTo');
+      var cl = document.getElementById('nbcClientName');
+      clearErr('nbcDateFrom'); clearErr('nbcDateTo'); clearErr('nbcClientName');
+
+      if (!df || !df.value) {
+        showErr('nbcDateFrom', 'Вкажіть дату отримання.'); ok = false;
+      }
+      if (!dt || !dt.value) {
+        showErr('nbcDateTo', 'Вкажіть дату повернення.'); ok = false;
+      }
+      if (df && df.value && dt && dt.value) {
+        var d1 = new Date(df.value), d2 = new Date(dt.value);
+        if (d2 <= d1) { showErr('nbcDateTo', 'Має бути пізніше дати отримання.'); ok = false; }
+        else if ((d2 - d1) / 86400000 > 365) { showErr('nbcDateTo', 'Максимум 365 днів.'); ok = false; }
+      }
+      if (!cl || !cl.value.trim()) {
+        showErr('nbcClientName', "Вкажіть ім'я або email клієнта."); ok = false;
+      }
+      if (!ok) e.preventDefault();
+    });
+
+    // live clear
+    ['nbcDateFrom','nbcDateTo','nbcClientName'].forEach(function(id) {
+      var inp = document.getElementById(id);
+      if (inp) inp.addEventListener('input', function() { clearErr(id); });
+      if (inp) inp.addEventListener('change', function() { clearErr(id); });
+    });
+  });
+})();
 </script>
 {% endblock %}
