@@ -36,17 +36,13 @@
 .section-title em{font-style:italic;color:var(--gold);}
 
 /* ── CATEGORIES ── */
-.categories-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;}
+.categories-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:2px;}
 .cat-card{position:relative;background:var(--dark2);padding:40px 32px;border:1px solid var(--border);cursor:pointer;overflow:hidden;transition:background .3s;text-decoration:none;display:block;}
 .cat-card::before{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--gold);transform:scaleX(0);transition:transform .3s;}
 .cat-card:hover{background:var(--dark3);}
 .cat-card:hover::before{transform:scaleX(1);}
-.cat-icon{font-size:32px;margin-bottom:20px;display:block;}
 .cat-name{font-family:'Playfair Display',serif;font-size:20px;color:var(--white);margin-bottom:8px;}
 .cat-count{font-size:12px;color:var(--gray);}
-.cat-price{margin-top:20px;}
-.cat-price span{font-size:11px;color:var(--gray);}
-.cat-price strong{display:block;font-size:18px;color:var(--gold);font-family:'Playfair Display',serif;}
 
 /* ── CARS ── */
 .cars-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;}
@@ -56,8 +52,8 @@
 .car-img img{width:100%;height:100%;object-fit:cover;}
 .car-badge-cls{position:absolute;top:10px;left:10px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold);border:1px solid rgba(201,168,76,.4);padding:3px 8px;background:rgba(10,10,10,.85);}
 .car-badge-st{position:absolute;top:10px;right:10px;font-size:9px;padding:3px 8px;}
-.st-free{background:rgba(76,175,125,.35);color:#6dd9a0;}
-.st-busy{background:rgba(201,168,76,.30);color:var(--gold);}
+.st-free{background:rgba(76,175,125,.10);color:#3a9e6a;border:1px solid rgba(76,175,125,.25);}
+.st-busy{background:rgba(201,168,76,.10);color:#b8922e;border:1px solid rgba(201,168,76,.25);}
 .car-body{padding:18px;}
 .car-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--white);margin-bottom:8px;line-height:1.25;}
 .car-specs{display:flex;gap:8px;flex-wrap:wrap;font-size:11px;color:var(--gray);margin-bottom:14px;}
@@ -90,6 +86,109 @@
 .testi-car{font-size:11px;color:var(--gold);margin-top:2px;}
 
 /* footer styles → main.css */
+
+/* ── LIGHT THEME — index ── */
+body.light-theme .hero::before {
+  background: radial-gradient(ellipse at 70% 50%,rgba(160,120,40,0.06) 0%,transparent 60%),
+              linear-gradient(135deg, #f0ebe0 0%, #e8e3d8 100%);
+}
+body.light-theme .hero-grid { opacity: 0.06; }
+body.light-theme .hero h1 { color: #1a1710; }
+body.light-theme .hero-sub { color: #5a5650; }
+body.light-theme .hero-tag { color: #a07828; border-color: rgba(160,120,40,.3); }
+body.light-theme .stat-num { color: #a07828; }
+body.light-theme .stat-label { color: #5a5650; }
+body.light-theme .btn-outline {
+  color: #1a1710;
+  border-color: rgba(26,23,16,0.25);
+}
+body.light-theme .btn-outline:hover { border-color: #a07828; color: #a07828; }
+
+/* Search box */
+body.light-theme .search-box {
+  background: #e4dfd4;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .search-box .field select,
+body.light-theme .search-box .field input {
+  background: #ede9e0 !important;
+  color: #1a1710 !important;
+  border-color: rgba(160,120,40,0.15) !important;
+  color-scheme: light;
+}
+
+/* Section titles */
+body.light-theme .section-tag { color: #a07828; }
+body.light-theme .section-title { color: #1a1710; }
+body.light-theme .section-title em { color: #a07828; }
+
+/* Category cards */
+body.light-theme .cat-card {
+  background: #ede9e0;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .cat-card:hover { background: #e4dfd4; }
+body.light-theme .cat-card::before { background: #a07828; }
+body.light-theme .cat-name { color: #1a1710; }
+body.light-theme .cat-count { color: #5a5650; }
+
+/* Car cards (головна) */
+body.light-theme .car-card {
+  background: #ede9e0 !important;
+  border-color: rgba(160,120,40,0.2) !important;
+}
+body.light-theme .car-card:hover { border-color: rgba(160,120,40,0.5) !important; }
+body.light-theme .car-img {
+  background: linear-gradient(135deg, #ddd8cc, #ccc7bb) !important;
+}
+body.light-theme .car-badge-cls {
+  background: rgba(245,242,236,.9);
+  color: #a07828;
+  border-color: rgba(160,120,40,.4);
+}
+body.light-theme .car-name { color: #1a1710; }
+body.light-theme .car-specs { color: #5a5650; }
+body.light-theme .car-price-val { color: #a07828; }
+body.light-theme .car-price-per { color: #5a5650; }
+body.light-theme .btn-det {
+  border-color: rgba(160,120,40,0.25);
+  color: #5a5650;
+}
+body.light-theme .btn-det:hover { border-color: #a07828; color: #a07828; }
+
+/* Статуси */
+body.light-theme .st-free {
+  background: rgba(76,175,125,.08) !important;
+  color: #1f7a4a !important;
+  border-color: rgba(76,175,125,.3) !important;
+}
+body.light-theme .st-busy {
+  background: rgba(160,120,40,.08) !important;
+  color: #7a5a10 !important;
+  border-color: rgba(160,120,40,.3) !important;
+}
+
+/* Why section */
+body.light-theme .why-section {
+  background: #e4dfd4;
+  border-top-color: rgba(160,120,40,0.2);
+  border-bottom-color: rgba(160,120,40,0.2);
+}
+body.light-theme .why-feature h3 { color: #1a1710; }
+body.light-theme .why-feature p { color: #5a5650; }
+body.light-theme .why-icon {
+  background: rgba(160,120,40,0.08);
+  border-color: rgba(160,120,40,0.2);
+}
+
+/* Testimonials */
+body.light-theme .testi-card {
+  background: #ede9e0;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .testi-text { color: #5a5650; }
+body.light-theme .testi-author { color: #1a1710; }
+body.light-theme .testi-car { color: #a07828; }
 
 @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
 
@@ -156,30 +255,12 @@
     <h2 class="section-title">Оберіть свій <em>клас</em></h2>
   </div>
   <div class="categories-grid">
-    <a href="{% url 'catalog' %}?class=economy" class="cat-card">
-      <span class="cat-icon">🚗</span>
-      <div class="cat-name">Економ</div>
-      <div class="cat-count">12 автомобілів</div>
-      <div class="cat-price"><span>від</span><strong>₴18/доба</strong></div>
+    {% for slug, label, count in class_counts_list %}
+    <a href="{% url 'catalog' %}?class_multi={{ slug }}" class="cat-card">
+      <div class="cat-name">{{ label }}</div>
+      <div class="cat-count">{{ count }} автомобілів</div>
     </a>
-    <a href="{% url 'catalog' %}?class=comfort" class="cat-card">
-      <span class="cat-icon">🚙</span>
-      <div class="cat-name">Комфорт</div>
-      <div class="cat-count">24 автомобілі</div>
-      <div class="cat-price"><span>від</span><strong>₴45/доба</strong></div>
-    </a>
-    <a href="{% url 'catalog' %}?class=business" class="cat-card">
-      <span class="cat-icon">🏎️</span>
-      <div class="cat-name">Бізнес</div>
-      <div class="cat-count">18 автомобілів</div>
-      <div class="cat-price"><span>від</span><strong>₴90/доба</strong></div>
-    </a>
-    <a href="{% url 'catalog' %}?class=vip" class="cat-card">
-      <span class="cat-icon">👑</span>
-      <div class="cat-name">VIP</div>
-      <div class="cat-count">8 автомобілів</div>
-      <div class="cat-price"><span>від</span><strong>₴180/доба</strong></div>
-    </a>
+    {% endfor %}
   </div>
 </section>
 
@@ -191,7 +272,7 @@
   </div>
   <div class="cars-grid">
     {% for car in featured %}
-    <a href="{% url 'car_detail' car.pk %}" class="car-card">
+    <div class="car-card" onclick="location.href='{% url 'car_detail' car.pk %}'" style="cursor:pointer;">
       <div class="car-img">
         {% with ph=car.photos.all|first %}
           {% if ph %}<img src="{{ ph.image.url }}" alt="{{ car.full_name }}">
@@ -211,20 +292,16 @@
           <span>{{ car.transmission }}</span>
           <span>{{ car.seats }} місць</span>
         </div>
-        <div class="car-ft">
-          <div>
-            <div class="car-price-val">від ₴{{ car.price_base|floatformat:0 }}</div>
-            <div class="car-price-per">/ доба</div>
-          </div>
+        <div class="car-ft" style="justify-content:flex-end;">
           <div class="car-btns">
             {% if car.is_available %}
-            <span class="btn-book">Забронювати</span>
+            <a href="{% url 'order_car' car.pk %}" class="btn-book" onclick="event.stopPropagation()">Забронювати</a>
             {% endif %}
-            <span class="btn-det">Детальніше</span>
+            <a href="{% url 'car_detail' car.pk %}" class="btn-det" onclick="event.stopPropagation()">Детальніше</a>
           </div>
         </div>
       </div>
-    </a>
+    </div>
     {% empty %}
     <a href="{% url 'catalog' %}" class="car-card">
       <div class="car-img"><span style="font-size:60px;">🚗</span>
@@ -234,9 +311,10 @@
       <div class="car-body">
         <div class="car-name">Mazda 3</div>
         <div class="car-specs"><span>2023</span><span>Бензин</span><span>Автомат</span><span>5 місць</span></div>
-        <div class="car-ft">
-          <div><div class="car-price-val">від ₴55</div><div class="car-price-per">/ доба</div></div>
-          <div class="car-btns"><span class="btn-book">Забронювати</span><span class="btn-det">Детальніше</span></div>
+        <div class="car-ft" style="justify-content:flex-end;">
+          <div class="car-btns">
+            <a href="{% url 'catalog' %}" class="btn-book">Переглянути каталог</a>
+          </div>
         </div>
       </div>
     </a>
@@ -342,10 +420,10 @@ document.querySelectorAll('input[type=date]').forEach(inp => inp.min = today);
     <div class="footer-col">
       <h4>Класи авто</h4>
       <ul>
-        <li><a href="{% url 'catalog' %}?class=economy">Економ</a></li>
-        <li><a href="{% url 'catalog' %}?class=comfort">Комфорт</a></li>
-        <li><a href="{% url 'catalog' %}?class=business">Бізнес</a></li>
-        <li><a href="{% url 'catalog' %}?class=vip">VIP</a></li>
+        <li><a href="{% url 'catalog' %}?class_multi=economy">Економ</a></li>
+        <li><a href="{% url 'catalog' %}?class_multi=comfort">Комфорт</a></li>
+        <li><a href="{% url 'catalog' %}?class_multi=business">Бізнес</a></li>
+        <li><a href="{% url 'catalog' %}?class_multi=vip">VIP</a></li>
       </ul>
     </div>
     <div class="footer-col">

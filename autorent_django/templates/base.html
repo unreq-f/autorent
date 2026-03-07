@@ -78,6 +78,23 @@ nav { flex-wrap:nowrap; height:72px; padding:0 40px; gap:12px; position:relative
 .django-msg.warning { border-left:3px solid #e0924c; }
 .django-msg.info { border-left:3px solid #5b9bd5; }
 @keyframes msgIn { from{opacity:0;transform:translateX(16px)} to{opacity:1;transform:translateX(0)} }
+/* Theme toggle button */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--gray);
+  padding: 8px 10px;
+  cursor: pointer;
+  line-height: 1;
+  transition: border-color .2s, background .2s;
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+.theme-toggle:hover { border-color: var(--gold); background: rgba(201,168,76,0.06); }
+body.light-theme .theme-toggle { color: var(--gray); }
 </style>
 {% block extra_css %}{% endblock %}
 </head>
@@ -92,6 +109,9 @@ nav { flex-wrap:nowrap; height:72px; padding:0 40px; gap:12px; position:relative
     <li><a href="{% url 'booking_quick' %}" class="nav-cta">Забронювати</a></li>
   </ul>
   <div class="nav-auth">
+    <button class="theme-toggle" id="themeToggle" aria-label="Перемкнути тему" title="Світла/темна тема">
+      <span class="theme-icon">☀️</span>
+    </button>
     {% if user.is_authenticated %}
       {% if user.is_staff %}<a href="{% url 'manager_dashboard' %}" class="nav-manager-btn">⚙ Менеджер</a>{% endif %}
       <a href="{% url 'profile' %}" class="nav-user-btn">👤 {{ user.first_name|default:user.username }}</a>
@@ -114,6 +134,9 @@ nav { flex-wrap:nowrap; height:72px; padding:0 40px; gap:12px; position:relative
   <a href="{% url 'contacts' %}" {% if request.resolver_match.url_name == 'contacts' %}class="active"{% endif %}>Контакти</a>
   <a href="{% url 'booking_quick' %}" class="nav-cta">Забронювати</a>
   <div class="nav-mobile-auth">
+    <button class="theme-toggle" onclick="toggleTheme()" style="width:100%;margin-bottom:4px;">
+      <span class="theme-icon">☀️</span> Світла / Темна тема
+    </button>
     {% if user.is_authenticated %}
       {% if user.is_staff %}<a href="{% url 'manager_dashboard' %}" class="nav-manager-btn">⚙ Менеджер</a>{% endif %}
       <a href="{% url 'profile' %}" class="nav-user-btn">👤 {{ user.first_name|default:user.username }}</a>
@@ -206,6 +229,26 @@ nav { flex-wrap:nowrap; height:72px; padding:0 40px; gap:12px; position:relative
       setTimeout(function() { m.remove(); }, 400);
     });
   }, 5000);
+
+  // Theme toggle
+  function toggleTheme() {
+    var isLight = document.body.classList.toggle('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    document.querySelectorAll('.theme-icon').forEach(function(el) {
+      el.textContent = isLight ? '🌙' : '☀️';
+    });
+  }
+  // Apply saved theme on load
+  (function() {
+    if (localStorage.getItem('theme') === 'light') {
+      document.body.classList.add('light-theme');
+      document.querySelectorAll('.theme-icon').forEach(function(el) {
+        el.textContent = '🌙';
+      });
+    }
+  })();
+  document.getElementById('themeToggle') && document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
 </script>
 </body>
 </html>
