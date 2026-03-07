@@ -363,7 +363,8 @@ def car_edit(request, pk=None):
                 else:
                     val = d.get(f, getattr(car, f))
                 setattr(car, f, val)
-            car.is_featured = 'is_featured' in d
+            car.is_popular = 'is_popular' in d
+            car.is_featured = 'is_popular' in d
             if request.FILES.get('image'):
                 car.image = request.FILES['image']
             car.save()
@@ -371,7 +372,8 @@ def car_edit(request, pk=None):
         else:
             car = Car.objects.create(
                 **{f: d.get(f, '') for f in fields if d.get(f)},
-                is_featured='is_featured' in d
+                is_popular='is_popular' in d,
+                is_featured='is_popular' in d,
             )
             messages.success(request, f'{car} додано.')
         return redirect('manager_cars')
