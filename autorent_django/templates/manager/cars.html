@@ -69,6 +69,98 @@
 .log-text{font-size:13px;color:var(--white);}
 .log-date{font-size:11px;color:var(--gray);margin-top:2px;}
 
+/* ── LIGHT THEME — manager cars ── */
+body.light-theme .kpi-card {
+  background: #e4dfd4;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .kpi-val { color: #1a1710; }
+body.light-theme .kpi-label { color: #5a5650; }
+
+body.light-theme .car-card {
+  background: #ede9e0 !important;
+  border-color: rgba(160,120,40,0.2) !important;
+}
+body.light-theme .car-card:hover { border-color: rgba(160,120,40,0.5) !important; }
+body.light-theme .car-card-img {
+  background: linear-gradient(135deg, #ddd8cc, #ccc7bb) !important;
+}
+body.light-theme .car-card-class { color: #a07828; }
+body.light-theme .car-card-name { color: #1a1710; }
+body.light-theme .car-card-specs { color: #5a5650; }
+body.light-theme .car-card-footer { border-top-color: rgba(26,23,16,0.08); }
+body.light-theme .car-plate {
+  background: #d8d2c6;
+  color: #5a5650;
+}
+body.light-theme .car-ico-btn {
+  background: #d8d2c6;
+  border-color: rgba(160,120,40,0.2);
+  color: #5a5650;
+}
+body.light-theme .car-ico-btn:hover { border-color: #a07828; color: #1a1710; }
+
+/* Статус бейджи */
+body.light-theme .ba-free,
+body.light-theme .car-avail-badge.ba-free {
+  background: rgba(76,175,125,.08) !important;
+  color: #1f7a4a !important;
+  border: 1px solid rgba(76,175,125,.3);
+}
+body.light-theme .ba-rented,
+body.light-theme .car-avail-badge.ba-rented {
+  background: rgba(160,120,40,.08) !important;
+  color: #7a5a10 !important;
+  border: 1px solid rgba(160,120,40,.3);
+}
+body.light-theme .ba-service,
+body.light-theme .car-avail-badge.ba-service {
+  background: rgba(200,100,40,.08) !important;
+  color: #8a4010 !important;
+  border: 1px solid rgba(200,100,40,.3);
+}
+body.light-theme .ba-broken,
+body.light-theme .car-avail-badge.ba-broken {
+  background: rgba(207,102,121,.08) !important;
+  color: #9a3040 !important;
+  border: 1px solid rgba(207,102,121,.3);
+}
+
+/* Таблиця список */
+body.light-theme .cars-table-wrap {
+  background: #ede9e0;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .ct th {
+  background: #e4dfd4;
+  color: #5a5650;
+  border-bottom-color: rgba(160,120,40,0.15);
+}
+body.light-theme .ct td { color: #5a5650; border-bottom-color: rgba(26,23,16,0.05); }
+body.light-theme .ct tr:hover td { background: rgba(160,120,40,0.04); color: #1a1710; }
+body.light-theme .ct .hl { color: #1a1710; }
+
+/* avail-pill у таблиці */
+body.light-theme .avail-pill.ba-free  { background:rgba(76,175,125,.08)!important; color:#1f7a4a!important; border:1px solid rgba(76,175,125,.3); }
+body.light-theme .avail-pill.ba-rented{ background:rgba(160,120,40,.08)!important; color:#7a5a10!important; border:1px solid rgba(160,120,40,.3); }
+body.light-theme .avail-pill.ba-service{background:rgba(200,100,40,.08)!important; color:#8a4010!important; border:1px solid rgba(200,100,40,.3); }
+body.light-theme .avail-pill.ba-broken{ background:rgba(207,102,121,.08)!important;color:#9a3040!important; border:1px solid rgba(207,102,121,.3); }
+
+/* Фільтри */
+body.light-theme .vc-filters input[type=text],
+body.light-theme .vc-filters select {
+  background: #e4dfd4 !important;
+  color: #1a1710 !important;
+  border-color: rgba(160,120,40,0.25) !important;
+}
+body.light-theme .view-btn {
+  background: #e4dfd4;
+  border-color: rgba(160,120,40,0.2);
+  color: #5a5650;
+}
+body.light-theme .view-btn.active,
+body.light-theme .view-btn:hover { border-color: #a07828; color: #a07828; }
+
 </style>
 {% endblock %}
 

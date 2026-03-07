@@ -1,4 +1,25 @@
 from django.shortcuts import render, get_object_or_404, redirect
+
+
+def _multi_word_q(q_str, *field_lists):
+    """
+    Розбиває рядок пошуку на слова і будує Q-об'єкт:
+    кожне слово має зустрічатися хоча б в одному з полів.
+    Підтримує пошук типу 'Іван Коваленко' або 'BMW 5'.
+    """
+    from django.db.models import Q
+    words = q_str.strip().split()
+    if not words:
+        return Q()
+    result = Q()
+    for word in words:
+        word_q = Q()
+        for field in field_lists:
+            word_q |= Q(**{f"{field}__icontains": word})
+        result &= word_q
+    return result
+
+
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 from django.db.models import Q, Sum, Count
@@ -121,9 +142,10 @@ def bookings(request):
     if date_f:   qs = qs.filter(date_from__gte=date_f)
     if date_t:   qs = qs.filter(date_to__lte=date_t)
     if q:        qs = qs.filter(
-        Q(number__icontains=q)|Q(user__first_name__icontains=q)|
-        Q(user__last_name__icontains=q)|Q(car__brand__icontains=q)|
-        Q(car__model__icontains=q))
+        _multi_word_q(q,
+            'number', 'user__first_name', 'user__last_name',
+            'user__email', 'car__brand', 'car__model'
+        ))
 
     # CSV export
     if request.GET.get('export') == 'csv':
@@ -213,7 +235,10 @@ def cars(request):
     if sf_status: qs = qs.filter(status=sf_status)
     if sf_class:  qs = qs.filter(car_class=sf_class)
     if sf_fuel:   qs = qs.filter(fuel=sf_fuel)
-    if q: qs = qs.filter(Q(brand__icontains=q)|Q(model__icontains=q)|Q(plate__icontains=q))
+    if q:
+        qs = qs.filter(
+            _multi_word_q(q, 'brand', 'model', 'plate')
+        )
     total = Car.objects.count()
     stats = {
         'free':    Car.objects.filter(status='free').count(),
@@ -437,7 +462,7 @@ def car_service(request, pk):
 def car_search_json(request):
     q = request.GET.get('q','').strip()
     cars = Car.objects.filter(
-        Q(brand__icontains=q)|Q(model__icontains=q)|Q(plate__icontains=q)
+        _multi_word_q(q, 'brand', 'model', 'plate')
     ).values('pk','brand','model','plate','price_base','price_prime','deposit','status')[:12]
     result = []
     for c in cars:
@@ -464,9 +489,10 @@ def clients(request):
 
     if q:
         users = users.filter(
-            Q(first_name__icontains=q) | Q(last_name__icontains=q) |
-            Q(email__icontains=q) | Q(username__icontains=q) |
-            Q(profile__phone__icontains=q)
+            _multi_word_q(q,
+                'first_name', 'last_name', 'email',
+                'username', 'profile__phone'
+            )
         )
     if seg:
         users = users.filter(profile__segment=seg)
@@ -645,11 +671,11 @@ def payments(request):
     if meth:   pay_qs = pay_qs.filter(method=meth)
     if q:
         pay_qs = pay_qs.filter(
-            Q(transaction_id__icontains=q) |
-            Q(booking__user__first_name__icontains=q) |
-            Q(booking__user__last_name__icontains=q) |
-            Q(booking__user__email__icontains=q) |
-            Q(booking__number__icontains=q)
+            _multi_word_q(q,
+                'transaction_id', 'booking__number',
+                'booking__user__first_name', 'booking__user__last_name',
+                'booking__user__email'
+            )
         )
     if date_f: pay_qs = pay_qs.filter(created_at__date__gte=date_f)
     if date_t: pay_qs = pay_qs.filter(created_at__date__lte=date_t)
@@ -669,10 +695,10 @@ def payments(request):
         ).order_by("-created_at")
         if q:
             bk_qs = bk_qs.filter(
-                Q(number__icontains=q) |
-                Q(user__first_name__icontains=q) |
-                Q(user__last_name__icontains=q) |
-                Q(user__email__icontains=q)
+                _multi_word_q(q,
+                    'number', 'user__first_name',
+                    'user__last_name', 'user__email'
+                )
             )
         if date_f: bk_qs = bk_qs.filter(date_from__gte=date_f)
         if date_t: bk_qs = bk_qs.filter(date_to__lte=date_t)
@@ -683,10 +709,10 @@ def payments(request):
         ).order_by("-created_at")
         if q:
             fine_qs = fine_qs.filter(
-                Q(number__icontains=q) |
-                Q(booking__user__first_name__icontains=q) |
-                Q(booking__user__last_name__icontains=q) |
-                Q(booking__number__icontains=q)
+                _multi_word_q(q,
+                    'number', 'booking__number',
+                    'booking__user__first_name', 'booking__user__last_name'
+                )
             )
         auto_fines = list(fine_qs)
 
@@ -847,10 +873,10 @@ def booking_search(request):
     if len(q) < 2:
         return JsonResponse({"results": []})
     bks = Booking.objects.select_related("user","car").filter(
-        Q(number__icontains=q) |
-        Q(user__first_name__icontains=q) |
-        Q(user__last_name__icontains=q) |
-        Q(user__email__icontains=q)
+        _multi_word_q(q,
+            'number', 'user__first_name',
+            'user__last_name', 'user__email'
+        )
     ).order_by("-created_at")[:15]
     results = []
     for b in bks:
@@ -875,11 +901,11 @@ def fines(request):
     if sf: qs = qs.filter(status=sf)
     if q:
         qs = qs.filter(
-            Q(number__icontains=q)|
-            Q(booking__number__icontains=q)|
-            Q(booking__user__first_name__icontains=q)|
-            Q(booking__user__last_name__icontains=q)|
-            Q(booking__car__brand__icontains=q)
+            _multi_word_q(q,
+                'number', 'booking__number',
+                'booking__user__first_name', 'booking__user__last_name',
+                'booking__car__brand', 'booking__car__model'
+            )
         )
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -1170,8 +1196,9 @@ def client_search_api(request):
     if len(q) < 2:
         return JsonResponse({'results': []})
     qs = User.objects.filter(
-        Q(first_name__icontains=q) | Q(last_name__icontains=q) |
-        Q(email__icontains=q) | Q(profile__phone__icontains=q)
+        _multi_word_q(q,
+            'first_name', 'last_name', 'email', 'profile__phone'
+        )
     ).select_related('profile')[:10]
     results = []
     for u in qs:

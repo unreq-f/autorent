@@ -198,6 +198,102 @@
 .gallery-thumb.active { border-color:var(--gold); }
 .gallery-thumb:hover { border-color:rgba(201,168,76,.5); }
 
+/* ── LIGHT THEME — car_detail ── */
+body.light-theme .car-detail-section { background: var(--black); }
+body.light-theme .car-main-img {
+  background: linear-gradient(135deg, #ddd8cc, #ccc7bb) !important;
+  border-color: rgba(160,120,40,0.2);
+}
+/* Статус overlay */
+body.light-theme .car-status-overlay.available {
+  background: rgba(76,175,125,.08) !important;
+  color: #1f7a4a !important;
+  border-color: rgba(76,175,125,.3) !important;
+}
+body.light-theme .car-status-overlay.unavailable {
+  background: rgba(207,102,121,.08) !important;
+  color: #9a3040 !important;
+  border-color: rgba(207,102,121,.3) !important;
+}
+/* Бейджи характеристик */
+body.light-theme .badge-item {
+  background: #e4dfd4;
+  border-color: rgba(160,120,40,0.2);
+  color: #5a5650;
+}
+/* Цінова картка */
+body.light-theme .car-pricing-card {
+  background: #e4dfd4;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .pricing-header { border-bottom-color: rgba(160,120,40,0.15); }
+body.light-theme .pricing-price { color: #1a1710; }
+body.light-theme .pricing-price span { color: #5a5650; }
+body.light-theme .pricing-sub { color: #5a5650; }
+body.light-theme .btn-book-detail.unavail {
+  background: #d8d2c6;
+  color: #8a8580;
+}
+body.light-theme .btn-wishlist-detail {
+  border-color: rgba(160,120,40,0.25);
+  color: #5a5650;
+}
+body.light-theme .btn-wishlist-detail:hover,
+body.light-theme .btn-wishlist-detail.active {
+  border-color: #a07828;
+  color: #a07828;
+}
+/* Spec grid */
+body.light-theme .spec-item {
+  background: #e4dfd4;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .spec-val { color: #1a1710; }
+/* Опис і комплектація */
+body.light-theme .car-desc,
+body.light-theme .car-features {
+  background: #e4dfd4;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .car-desc p { color: #5a5650; }
+body.light-theme .feature-tag {
+  background: rgba(160,120,40,0.06);
+  border-color: rgba(160,120,40,0.2);
+  color: #5a5650;
+}
+/* Схожі авто */
+body.light-theme .similar-card {
+  background: #ede9e0;
+  border-color: rgba(160,120,40,0.2);
+}
+body.light-theme .similar-card:hover { border-color: #a07828; }
+body.light-theme .similar-name { color: #1a1710; }
+body.light-theme .similar-price { color: #a07828; }
+body.light-theme .similar-img { background: #d8d2c6; }
+/* Gallery */
+body.light-theme .gallery-nav {
+  background: rgba(245,242,236,.85);
+  border-color: rgba(160,120,40,.3);
+  color: #a07828;
+}
+body.light-theme .gallery-nav:hover {
+  background: rgba(160,120,40,.1);
+  border-color: #a07828;
+}
+body.light-theme .gallery-counter {
+  background: rgba(245,242,236,.85);
+  color: #5a5650;
+}
+body.light-theme .gallery-thumb { border-color: transparent; }
+body.light-theme .gallery-thumb.active { border-color: #a07828; }
+body.light-theme .gallery-thumb:hover { border-color: rgba(160,120,40,.5); }
+/* Breadcrumb */
+body.light-theme .breadcrumb,
+body.light-theme .breadcrumb a { color: #5a5650; }
+body.light-theme .page-header h1 { color: #1a1710; }
+body.light-theme .page-header h1 em { color: #a07828; }
+body.light-theme .page-header p { color: #5a5650; }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 768px) {
   .car-detail-section { padding: 24px 20px 60px; }

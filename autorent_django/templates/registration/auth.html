@@ -54,7 +54,7 @@
           <div class="pwd-row">
             <input type="password" name="password" id="loginPass" placeholder="••••••••" required autocomplete="current-password"
               class="{% if form_errors.password or form_errors.general %}field-error{% endif %}">
-            <button type="button" class="eye-btn" onclick="togglePass('loginPass',this)">👁</button>
+            <button type="button" class="eye-btn" onclick="togglePass('loginPass',this)">🔒</button>
           </div>
           {% if form_errors.password %}<span class="field-err-msg">{{ form_errors.password }}</span>{% endif %}
         </div>
@@ -116,7 +116,7 @@
             <input type="password" name="password" id="regPass" placeholder="Мінімум 6 символів" required
               oninput="checkStrength(this.value)" autocomplete="new-password"
               class="{% if form_errors.password %}field-error{% endif %}">
-            <button type="button" class="eye-btn" onclick="togglePass('regPass',this)">👁</button>
+            <button type="button" class="eye-btn" onclick="togglePass('regPass',this)">🔒</button>
           </div>
           {% if form_errors.password %}<span class="field-err-msg">{{ form_errors.password }}</span>{% endif %}
           <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
@@ -136,6 +136,45 @@
 
 <script src="{% static 'js/main.js' %}"></script>
 <style>
+
+/* ── LIGHT THEME — auth page ── */
+body.light-theme {
+  --black: #f5f2ec; --dark: #ede9e0; --dark2: #e4dfd4;
+  --dark3: #d8d2c6; --white: #1a1710; --gray: #5a5650;
+  --border: rgba(160,120,40,0.25); --gold: #a07828; --gold-light: #c49a30;
+  background: var(--black); color: var(--white);
+}
+body.light-theme .bg-pattern { display: none; }
+body.light-theme .auth-card { background: transparent; }
+body.light-theme .auth-toggle { background: #e4dfd4; border-color: rgba(160,120,40,0.25); }
+body.light-theme .toggle-btn { color: #5a5650; }
+body.light-theme .toggle-btn.active { background: #a07828; color: #f5f2ec; }
+body.light-theme .auth-heading { color: #1a1710; }
+body.light-theme .auth-heading em { color: #a07828; }
+body.light-theme .auth-sub { color: #5a5650; }
+body.light-theme .field input,
+body.light-theme .field textarea,
+body.light-theme .pwd-row input {
+  background: #e4dfd4 !important;
+  color: #1a1710 !important;
+  border-color: rgba(160,120,40,0.3) !important;
+  color-scheme: light;
+}
+body.light-theme .field input::placeholder { color: rgba(26,23,16,0.4) !important; }
+body.light-theme .field input:focus,
+body.light-theme .pwd-row input:focus { border-color: #a07828 !important; }
+body.light-theme .field label { color: #5a5650; }
+body.light-theme .eye-btn { color: #5a5650; }
+body.light-theme .forgot-link { color: #a07828; }
+body.light-theme .auth-note { color: #5a5650; }
+body.light-theme .auth-note a { color: #a07828; }
+body.light-theme .btn-auth { background: #a07828; color: #f5f2ec; }
+body.light-theme .btn-auth:hover { background: #c49a30; }
+body.light-theme .terms-check { color: #5a5650; }
+body.light-theme .terms-check a { color: #a07828; }
+body.light-theme .strength-bar { background: #d8d2c6; }
+body.light-theme nav { background: rgba(237,233,224,0.96); border-bottom-color: rgba(160,120,40,0.25); }
+body.light-theme #themeToggleAuth { border-color: rgba(160,120,40,0.3); color: #5a5650; }
 .field-error { border-color: #cf6679 !important; }
 .field-err-msg {
   display: block;
@@ -159,7 +198,7 @@ function switchTabByName(id){
 function togglePass(id,btn){
   const inp=document.getElementById(id);
   inp.type=inp.type==='password'?'text':'password';
-  btn.textContent=inp.type==='password'?'👁':'🙈';
+  btn.textContent=inp.type==='password'?'🔒':'🔓';
 }
 function checkStrength(val){
   const fill=document.getElementById('strengthFill');
@@ -321,4 +360,20 @@ function submitForgot() {
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeForgot();
 });
+
+// Theme toggle
+function toggleTheme() {
+  var isLight = document.body.classList.toggle('light-theme');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  var btn = document.getElementById('themeToggleAuth');
+  if (btn) btn.textContent = isLight ? '\U0001f319' : '\u2600\ufe0f';
+}
+(function() {
+  if (localStorage.getItem('theme') === 'light') {
+    document.body.classList.add('light-theme');
+    var btn = document.getElementById('themeToggleAuth');
+    if (btn) btn.textContent = '\U0001f319';
+  }
+})();
+
 </script>
