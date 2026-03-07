@@ -14,7 +14,17 @@ import re
 def index(request):
     featured = Car.objects.filter(is_popular=True).prefetch_related('photos')[:6]
     classes = Car.CAR_CLASSES
-    return render(request, 'core/index.html', {'featured': featured, 'classes': classes})
+    # Список класів з реальною кількістю — тільки де є авто (free або rented)
+    class_counts_list = [
+        (slug, label, Car.objects.filter(car_class=slug, status__in=['free', 'rented']).count())
+        for slug, label in Car.CAR_CLASSES
+    ]
+    class_counts_list = [(s, l, c) for s, l, c in class_counts_list if c > 0]
+    return render(request, 'core/index.html', {
+        'featured':          featured,
+        'classes':           classes,
+        'class_counts_list': class_counts_list,
+    })
 
 
 @ensure_csrf_cookie
@@ -23,6 +33,10 @@ def catalog(request):
 
     # Multi-value checkboxes
     class_multi = request.GET.getlist('class_multi')
+    # Підтримка старого ?class= з головної / футера
+    _class_single = request.GET.get('class', '')
+    if _class_single and _class_single not in class_multi:
+        class_multi = [_class_single]
     fuel_multi  = request.GET.getlist('fuel_multi')
     tr_multi    = request.GET.getlist('tr_multi')
     seats_multi = request.GET.getlist('seats_multi')
